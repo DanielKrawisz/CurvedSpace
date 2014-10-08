@@ -23,6 +23,10 @@ func randFloat(min, max float64) float64 {
   return min + (max - min) * rand.Float64()
 }
 
+func closeEnough(a, b, e float64) bool {
+  return math.Abs(a - b) < e
+}
+
 //NewNewtonianParticle should alwys return nil in this test.
 func TestNewNewtonianParticleFailureConditions(t *testing.T) {
   fmt.Println()
@@ -233,7 +237,7 @@ func TestNewtonianParticleFunctions(t *testing.T) {
       t.Error("setDs() error: expected ", newds, ", got ", ds, ".")
     }
 
-    /* These tests are screwed up... need to get them right! 
+    /* TODO These tests are screwed up... 
     var check_p = randInt(0, particles - 1)
     var check_d = randInt(0, dimensions - 1)
     x := np.position()[particles * check_p + check_d]
@@ -340,11 +344,73 @@ func TestNewHarmonicOscillatorFailureConditions(t *testing.T) {
   }
 }
 
+func distanceVectorErrorPropagation(a, b, sa, sb float64) float64 {
+  da := sa * a
+  db := sa * b
+  return math.Sqrt(da*da + db*db)
+}
+
+func quadranceErrorPropagation(dist []float64, sd float64) float64 {
+  var err float64 = 0
+  for i := 0; i < len(dist); i++ {
+    d := dist[i] * sd
+    err += d * d
+  }
+  return 2 * math.Sqrt(err)
+}
+
+func oscillatorForceErrorPropagation(quad float64, K []float64, dx, dk float64) float64 {
+  if len(K) == 0 {return .0000000000001} //The error should not be able to return zero.
+
+  var err float64 = 0
+  var errx float64 = 0
+
+  var xpow float64 = 1
+  var odd float64 = 1
+  var qpow float64 = quad
+  for i := 0; i < len(K); i++ {
+    errx += K[i] * odd * xpow
+    odd += 2
+    xpow *= quad
+
+    err += qpow 
+    qpow *= (quad * quad)
+  }
+  return math.Sqrt(errx * errx * dx * dx + err * dk * dk)
+}
+
 func TestHarmonicOscillatorForceCalculation(t *testing.T) {
+  var tolerance float64 = .0000001 //The accepted error for the inputs of most float calculations. 
+
+  //First we do a few set examples, and then some random ones. 
+  //Here are the set examples. 
+  dimension := 2
+  p1 := []float64{-1, 0}
+  p2 := []float64{1, 0}
+
+  //The set of force constants to be used in each calculation.
+  Klist := [][]float64{[]float64{}, []float64{3}, []float64{2, 1}, []float64{3, 2, 1}}
+
+  //The expected results. (The force is only along the x-axis, so only those numbers are included.)
+  expected_forces := []float64{0, 6, 12, 54}
+
+  for i, K := range Klist {
+    distv := make([]float64, dimension)
+    distanceVector(p1, p2, distv)
+    force := oscillatorForce(distv, K)
+
+    if force[0] != expected_forces[i] {
+      t.Error("Oscillator force calculation error on trial ", i, ": expected ", expected_forces[i], ", got ", force[0])
+    }
+  }
+
+  fmt.Println("Worked out examples done. Now for the random calculations")
+
+  //Here are the random calculations. 
   for j := 0; j < 10; j ++ {
-    dimension := randInt(1, 5)
-    p1 := make([]float64, dimension)
-    p2 := make([]float64, dimension)
+    dimension = randInt(1, 5)
+    p1 = make([]float64, dimension)
+    p2 = make([]float64, dimension)
 
     for i := 0; i < dimension; i++ {
       p1[i] = randFloat(-10, 10)
@@ -361,13 +427,15 @@ func TestHarmonicOscillatorForceCalculation(t *testing.T) {
     }
 
     distv := make([]float64, dimension)
-    quad := quadrance(p1, p2, distv)
+    distanceVector(p1, p2, distv)
+    quad := quadrance(distv)
 
     //check if distv was calculated correctly. 
     vector_check := randInt(0, dimension - 1)
-    var expected float64 = p1[vector_check] - p2[vector_check]
-    if distv[vector_check] != expected {
-      t.Error("Quadrance error: distancev was ", distv[vector_check], "; expected ", expected, ".")
+    var expected float64 = p2[vector_check] - p1[vector_check]
+    if !closeEnough(distv[vector_check], expected,
+      distanceVectorErrorPropagation(p2[vector_check], p1[vector_check], tolerance, tolerance)) {
+      t.Error("Distance vector error: distancev was ", distv[vector_check], "; expected ", expected, ".")
     }
 
     //What about quad? 
@@ -375,66 +443,68 @@ func TestHarmonicOscillatorForceCalculation(t *testing.T) {
     for i:= 0; i < dimension; i++ {
       expected_quad += distv[i] * distv[i]
     }
-    if quad != expected_quad {
+    if !closeEnough(quad, expected_quad, quadranceErrorPropagation(distv, tolerance)) {
       t.Error("Quadrance error: quad was ", quad, "; expected ", expected_quad)
     }
 
     //Finally, check the force. 
-    force := oscillatorForce(quad, K) 
-    var expected_force float64 = 0
-    var temp float64 = quad
-    for i := 0; i < len(K); i++ {
-      expected_force += temp * K[i]
-      temp *= quad
+    force := oscillatorForce(distv, K) 
+
+    var expected_force []float64 = make([]float64, len(force))
+    var xpow float64 = 1
+    var fc float64 = 0
+
+    for k := 0; k < len(K); k++ {
+      fc += xpow * K[k]
+      xpow *= quad
     }
 
-    if force != expected_force {
-      t.Error("oscillatorForce error: force was ", force, "; expected ", expected_force)
+    for i := 0; i < len(distv); i++ {
+      expected_force[i] = distv[i] * fc
+    }
+
+    if !closeEnough(force[vector_check], expected_force[vector_check],
+      oscillatorForceErrorPropagation(quad, K, tolerance, tolerance)) {
+      t.Error("oscillatorForce error: force was ", force[vector_check], "; expected ", expected_force[vector_check])
     }
   }
 }
 
-/*
+//From the previous test, we know that the force is calculated correctly, so we just have a few worked examples
+//to make sure the rest of the function works. 
 func TestHarmonicOscillatorAcceleration(t *testing.T) {
-  for i := 0; i < 10; i ++ {
-    np, dimensions, particles, position, velocity [][]float64 := randomParticleSystem()
+  velocity := [][]float64{[]float64{0, 1}, []float64{0, -1}}
+  p := NewNewtonianParticle(2, 2, 0, 1,
+    [][]float64{[]float64{-1, 0}, []float64{1, 0}},
+    velocity)
 
-    mass = make([]float64, particles)
+  //The set of force constants to be used in each calculation.
+  Klist := [][]float64{[]float64{}, []float64{3}, []float64{2, 1}, []float64{3, 2, 1}}
+  //The masses to be used in each calculation.
+  mlist := [][]float64{[]float64{1, 1}, []float64{1, 2}, []float64{1, 3}, []float64{1, 6}}
 
-    for j := 0 j < particles; j++ {
-      mass[j] = randFloat(1, 3);
+  //The expected accelerations along the x axis for each particle.
+  expected_accel := [][]float64{[]float64{0, 0}, []float64{6, -3}, []float64{12, -4}, []float64{54, -9}}
+
+  for i, K := range Klist {
+    Kmtrx := [][][]float64{nil, [][]float64{K}}
+    ha := NewHarmonicOscillator(p, mlist[i], Kmtrx)
+    ha.DxDs(p.position(), p.velocity())
+
+    if p.vel[1] != velocity[0][1] {
+      t.Error("Oscillator velocity calculation error on trial ", i, ": expected ", velocity[0][1], ", got ", p.vel[1])
     }
 
-    K := make([][][]float64, particles)
-
-    //Test a particle system with only quadradic force constants. 
-    for j := 1; j < particles; j++ {
-      K[j] = make([][]float64, j)
-      for k := 0; k < j; k++ { 
-        K[j][k] := make([]float64, 1)
-        K[j][k][0] = randFloat(0, 3)
-      } 
+    if p.vel[3] != velocity[1][1] {
+      t.Error("Oscillator velocity calculation error on trial ", i, ": expected ", velocity[1][1], ", got ", p.vel[3])
     }
 
-    //Check that the acceleration of a random particle is correct.
-    check = randInt(0, particles - 1)
-    
+    if p.a[0][0] != expected_accel[i][0] {
+      t.Error("Oscillator acceleration calculation error on trial ", i, ": expected ", expected_accel[i][0], ", got ", p.a[0][0])
+    }
 
-    K := make([][][]float64, particles)
-
-    //Test again with up to 4 force constants. 
-    for j := 1; j < particles; j++ {
-      K[j] := make([][]float64, j)
-      for k := 0; k < j; k++ { 
-        max := randInt(0, 4)
-        var d float64 = 1
-        K[j][k] := make([]float64, max)
-
-        for m := 0; m < max; m++ {
-          K[j][k][0] = randFloat(0, 3) / d
-          d *= 2
-        }
-      } 
+    if p.a[1][0] != expected_accel[i][1] {
+      t.Error("Oscillator acceleration calculation error on trial ", i, ": expected ", expected_accel[i][1], ", got ", p.a[1][0])
     }
   }
-}*/
+}

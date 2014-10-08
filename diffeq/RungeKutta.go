@@ -37,6 +37,7 @@ func (rk *rungeKuttaStepSizer) Order() int {
   return rk.order
 }
 
+//Take a single runge kutta step. 
 func (rk *rungeKuttaStepSizer) rkstep(st State, f Derivative) {
   var i, j, k, apos int
   n := st.Length()
@@ -44,11 +45,9 @@ func (rk *rungeKuttaStepSizer) rkstep(st State, f Derivative) {
   pos := st.position()
   vel := st.velocity()
   newpos := st.newPosition()
-  newvel := st.newVelocity()
   err := st.errorEstimate()
 
   //Used to reference the right part of the a parameter.
-  //TODO: model a as an array of arrays. 
   apos = 0; 
 
   //First the intermediate steps are calculated.
@@ -60,7 +59,7 @@ func (rk *rungeKuttaStepSizer) rkstep(st State, f Derivative) {
       }
       rk.tmp[k] = pos[k] + ds*(rk.tmp[k] + rk.a[apos]*vel[k])
     }
-    f.DxDs()
+    f.DxDs(rk.tmp, rk.K[i])
     apos += rk.steps
   }
 
@@ -76,16 +75,25 @@ func (rk *rungeKuttaStepSizer) rkstep(st State, f Derivative) {
     newpos[k] = pos[k] + ds*(newpos[k] + rk.b[0]*vel[k])
     err[k] = ds*(err[k] + rk.db[0]*vel[k])
   }
+}
 
-  //calculate the derivative of the next step. 
-  //TODO: should be moved to the other function. 
+//calculate the derivative of the next step. 
+//Assumes that K has already been calculated. 
+func (rk *rungeKuttaStepSizer) nextVelocity(st State, f Derivative) {
+  newvel := st.newVelocity()
   if rk.fsal {
-    for i = 0; i < n; i++ {
+    for i := 0; i < st.Length(); i++ {
       newvel[i] = rk.K[rk.steps-1][i]
     }
   } else {
-    f.DxDs()
+    f.DxDs(st.newPosition(), newvel)
   }
+}
+
+//Do a runge kutta step without step sizing. For testing purposes.
+func (rk *rungeKuttaStepSizer) stepNoResize(st State, f Derivative) {
+  rk.rkstep(st, f)
+  rk.nextVelocity(st, f)
 }
 
 type UnderflowError struct{
@@ -117,6 +125,7 @@ func (rk *rungeKuttaStepSizer) Step(st State, f Derivative) error{
   vel := st.velocity()
   err := st.errorEstimate()
 
+  //Repeat until the estimated error is within an acceptable limit. 
   for {
     rk.rkstep(st, f)
     errmax=0.0; accelmax=0.0
@@ -147,9 +156,7 @@ func (rk *rungeKuttaStepSizer) Step(st State, f Derivative) error{
     }
   }
 
-  if(!rk.fsal) {
-    f.DxDs()
-  }
+  rk.nextVelocity(st, f)
 
   //Whether to grow or shrink the step size. 
   if(errmax > errcon) {
@@ -172,7 +179,6 @@ func (rk *rungeKuttaStepSizer) rkinitialize(n int, errscale float64) {
   }
 }
 
-//TODO: write tests for these. 
 func NewRungeKuttaSolverMethodEuler(n int, errscale float64) *rungeKuttaStepSizer{
   rk := new(rungeKuttaStepSizer)
   rk.name = "Euler"

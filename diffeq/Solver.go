@@ -18,10 +18,8 @@ type InitialCondition interface {
 }
 
 type Derivative interface {
-  //Sets the derivative of a state. 
-  //The Derivative must be initialized with the state it will be
-  //operating on. 
-  DxDs()
+  //Sets the derivative of a state to v in state x. 
+  DxDs(x []float64, v []float64)
 }
 
 type Step interface {
@@ -71,7 +69,7 @@ func (sol *solver) Run() (i *Instant, l *list.List) {
   //computed at the end of the last cycle. This is necessary in
   //order to take advantage of the first-same-as-last property
   //that some RK methods have. 
-  sol.f.DxDs()
+  sol.f.DxDs(sol.x.position(), sol.x.velocity())
 
   for {
     if(sol.exporthistory) {

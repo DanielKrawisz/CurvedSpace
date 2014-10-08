@@ -1,6 +1,7 @@
 package diffeq
 
 import "math"
+//import "fmt"
 
 //A simple implementation of State.
 type newtonianParticle struct {
@@ -25,12 +26,6 @@ func (p *newtonianParticle) postStep() {
   tmp2 = p.a
   p.a = p.newa
   p.newa = tmp2
-}
-
-func (p *newtonianParticle) copyVel() {
-  for i := 0; i < p.n; i++ {
-    p.vel[i] = p.pos[p.n + i]
-  }
 }
 
 //Returns a new newtonianParticle state. 
@@ -85,76 +80,98 @@ func NewNewtonianParticle(dimension, particles int, initS, initDs float64, initp
   }
 
   return &newtonianParticle{
-    state{2 * dimension * particles, 0, initS, initDs, initDs, pos, vel, newpos, newvel, make([]float64, n)},
+    state{2 * dimension * particles, 0, initS, initDs, initDs, pos, vel, newpos, newvel, make([]float64, 2 * n)},
     dimension, particles, x, v, a, newx, newv, newa}
 }
 
 //A simple derivative function
 type harmonicOscillator struct {
-  p *newtonianParticle
+  dimension, particles int
   mass []float64
   K [][][]float64
 }
 
-//Calculate the quadrance between two particles.
-func quadrance(p1, p2, distancev []float64) float64 {
-  var quad float64 = 0
+//Calculate the distance vector from p1 to p2.
+func distanceVector(p1, p2, dist []float64) {
   for k := 0; k < len(p1); k++ {
-    distancev[k] = p1[k] - p2[k]
-    quad += distancev[k] * distancev[k]
+    dist[k] = p2[k] - p1[k]
+  }
+}
+
+//Calculate the quadrance between two particles.
+func quadrance(dist []float64) float64 {
+  var quad float64 = 0
+  for k := 0; k < len(dist); k++ {
+    quad += dist[k] * dist[k]
   }
   return quad
 }
 
 //Calculate the force between two particles. 
-func oscillatorForce(quad float64, K []float64) float64 {
+func oscillatorForce(dist []float64, K []float64) []float64 {
 
-  var force float64 = 0
-  var xpow float64 = 1
-  for k := 0; k < len(K); k++ {
-    xpow *= quad
-    force += xpow * K[k]
+  var force []float64 = make([]float64, len(dist))
+
+  //If there are no force constants, the force is zero.
+  if(len(K) > 0) {
+
+    //If there is just one, we don't need the quadrance. 
+    for i := 0; i < len(dist); i++ {
+      force[i] = dist[i] * K[0]
+    }
+
+    //If there are more force constants, then we do this. 
+    if len(K) > 1 {
+      var xpow float64 = 1
+      var fc float64 = 0
+      var quad float64 = quadrance(dist)
+
+      for k := 1; k < len(K); k++ {
+        xpow *= quad
+        fc += xpow * K[k]
+      }
+
+      for i := 0; i < len(dist); i++ {
+        force[i] += dist[i] * fc
+      }
+    }
   }
 
   return force
 }
 
 //Does not check that x and v are the right lengths. 
-func (o *harmonicOscillator) DxDs() {
+func (o *harmonicOscillator) DxDs(pos, vel []float64) {
 
   //First set all accelerations to zero and the new
   //velocities to the correct values. 
-  o.p.copyVel();
-  for i := o.p.n; i < 2*o.p.n; i++ {
-    o.p.vel[i] = 0.0
+  n := o.particles * o.dimension 
+  for i := 0; i < n; i++ {
+    vel[i] = pos[n + i]
+    vel[n + i] = 0.0
+  }
+
+  //Generate list of particle positions. 
+  x := make([][]float64, o.particles) 
+  for i := 0; i < o.particles; i++ {
+    x[i] = pos[o.dimension * i : o.dimension * (i + 1) ]
   }
 
   //The distance vector between two particles. 
-  var distancev []float64 = make([]float64, o.p.dim)
+  var dist []float64 = make([]float64, o.dimension)
 
-  for i := 0; i < len(o.K); i++ {
-    for j := 1; j < i; j++ {
-      //Calculate the quadrance between two particles.
-      quad := quadrance(o.p.x[i], o.p.x[j], distancev)
+  //Iterate only over the lower half of the matrix
+  for i := 1; i < len(o.K); i++ {
+    for j := 0; j < i; j++ {
 
-      //If the distance is zero, then the force is zero.
-      if quad == 0.0 {
+      distanceVector(x[i], x[j], dist)
 
-        var distance float64 = math.Sqrt(quad)
+      var force []float64 = oscillatorForce(dist, o.K[i][j])
 
-        var force = oscillatorForce(quad, o.K[i][j])
-
-        //Normalize the force over the distance. 
-        //No possibility of divide by zero here. 
-        force /= distance
-        var avi float64 = force / o.mass[i]
-        var avj float64 = force / o.mass[j]
-
-        //Add the accelerations. 
-        for k := 0; k < o.p.dim; k++ {
-          o.p.a[i][k] += -avi / distancev[k]
-          o.p.a[j][k] += avj / distancev[k]
-        }
+      //Add the accelerations. 
+      for k := 0; k < o.dimension; k++ {
+        vel[o.particles * (o.dimension + i) + k] += force[k] / o.mass[i]
+        vel[o.particles * (o.dimension + j) + k] += -force[k] / o.mass[j]
       }
     }
   }
@@ -187,7 +204,7 @@ func NewHarmonicOscillator(p *newtonianParticle, mass []float64, K [][][]float64
     }
   }
 
-  return &harmonicOscillator{p, mass, K}
+  return &harmonicOscillator{p.dim, p.particles, mass, K}
 }
 
 func NewSpringSystem(dimension, particles int, initpos, initvel [][]float64, mass []float64, K [][][]float64, ds, until float64, step Step) Solver {

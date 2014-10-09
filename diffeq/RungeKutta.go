@@ -91,7 +91,7 @@ func (rk *rungeKuttaStepSizer) nextVelocity(st State, f Derivative) {
 }
 
 //Do a runge kutta step without step sizing. For testing purposes.
-func (rk *rungeKuttaStepSizer) stepNoResize(st State, f Derivative) {
+func (rk *rungeKuttaStepSizer) StepNoResize(st State, f Derivative) {
   rk.rkstep(st, f)
   rk.nextVelocity(st, f)
 }
@@ -253,7 +253,7 @@ func NewRungeKuttaSolverMethodFehlberg(n int, errscale float64) *rungeKuttaStepS
   rk.a = []float64{1/4.,         0,            0,            0,            0,
                    3/32.,        9/32.,        0,            0,            0,
                    1932/2197.,   -7200./2197,  7296./2197,   0,            0,
-                   439./216,     -8.,          3670/513.,    -845/4104.,   0,
+                   439./216,     -8.,          3680/513.,    -845/4104.,   0,
                    -8/27.,       2.,           -3544/2565.,  1859/4104.,   -11/40}
   rk.b = []float64{25/216.,      0.,           1408/2565.,   2197/4104.,   -1/5.,        0}
   rk.c = []float64{1/4.,         3/8.,         12/13.,       1,            1/2.}

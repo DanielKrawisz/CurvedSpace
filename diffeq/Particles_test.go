@@ -404,8 +404,6 @@ func TestHarmonicOscillatorForceCalculation(t *testing.T) {
     }
   }
 
-  fmt.Println("Worked out examples done. Now for the random calculations")
-
   //Here are the random calculations. 
   for j := 0; j < 10; j ++ {
     dimension = randInt(1, 5)

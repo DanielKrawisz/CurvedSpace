@@ -207,6 +207,7 @@ func NewHarmonicOscillator(p *newtonianParticle, mass []float64, K [][][]float64
   return &harmonicOscillator{p.dim, p.particles, mass, K}
 }
 
+//Create a solver that is a system of springs. 
 func NewSpringSystem(dimension, particles int, initpos, initvel [][]float64, mass []float64, K [][][]float64, ds, until float64, step Step) Solver {
   p := NewNewtonianParticle(dimension, particles, 0, ds, initpos, initvel)
   if p == nil {return nil}

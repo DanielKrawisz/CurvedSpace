@@ -344,12 +344,14 @@ func TestNewHarmonicOscillatorFailureConditions(t *testing.T) {
   }
 }
 
+//Error propagation formula for the distance vector formula. 
 func distanceVectorErrorPropagation(a, b, sa, sb float64) float64 {
   da := sa * a
   db := sa * b
   return math.Sqrt(da*da + db*db)
 }
 
+//Error propagation formula for the quadrance. 
 func quadranceErrorPropagation(dist []float64, sd float64) float64 {
   var err float64 = 0
   for i := 0; i < len(dist); i++ {
@@ -359,6 +361,7 @@ func quadranceErrorPropagation(dist []float64, sd float64) float64 {
   return 2 * math.Sqrt(err)
 }
 
+//Error propagation formula for the oscillator force. 
 func oscillatorForceErrorPropagation(quad float64, K []float64, dx, dk float64) float64 {
   if len(K) == 0 {return .0000000000001} //The error should not be able to return zero.
 

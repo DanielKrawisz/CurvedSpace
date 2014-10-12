@@ -1,5 +1,7 @@
 package main
 
+//This will be a program to do ray-tracing over curved spaces. 
+
 import (
   "fmt"
   "./diffeq"

@@ -41,9 +41,11 @@ type Monitor interface {
   end() bool //Reports whether it has detected that an ending condition has been reached. 
 }
 
+//A differential equation solver.  
 type Solver interface {
   Run() (i *Instant, l *list.List)
 }
+
 
 type solver struct {
   maxsteps int
@@ -100,6 +102,7 @@ func (sol *solver) Run() (i *Instant, l *list.List) {
 
   return i, l
 }
+
 
 type State interface {
   //The arc length parameter which defines how far the 
@@ -225,7 +228,7 @@ func (m *untilTime) end() bool {
   return m.endb
 }
 
-//TODO: test this. 
+//A constructor for an UntilTime monitor. 
 //Can return nil! 
 func NewUntilTime(x State, endTime, err float64) *untilTime{
   if math.IsNaN(endTime) || math.IsInf(endTime, 0) {return nil}

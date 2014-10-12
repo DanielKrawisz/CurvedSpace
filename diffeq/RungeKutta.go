@@ -242,8 +242,6 @@ func NewRungeKuttaSolverMethodBogackiSchampine(n int, errscale float64) *rungeKu
   return rk;
 }
 
-//TODO: this one especially needs to be checked because in the original c++ version
-// c and d are reversed. 
 func NewRungeKuttaSolverMethodFehlberg(n int, errscale float64) *rungeKuttaStepSizer{
   rk := new(rungeKuttaStepSizer)
   rk.name = "Fehlberg"

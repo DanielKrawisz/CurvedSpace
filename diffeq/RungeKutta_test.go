@@ -32,7 +32,7 @@ func getRKMethods(n int, errscale float64) (rkmethods []*rungeKuttaStepSizer) {
     NewRungeKuttaSolverMethodDormandPrince(n, errscale)}
 }
 
-var rknames = []string{"Euler", "Midpoint", "Kutta", "BogackiSchampine", "Fehlberg", "CashCarp", "DormandPrince"}
+var rknames = []string{"Midpoint", "Kutta", "BogackiSchampine", "Fehlberg", "CashCarp", "DormandPrince"}
 
 //Test to make sure that the runge kutta objects load properly. 
 func TestRungeKuttaObjects(t *testing.T) {

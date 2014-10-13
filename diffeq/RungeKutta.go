@@ -1,5 +1,9 @@
 package diffeq
 
+//Runge Kutta is a broad class of numerical differential equation
+//solvers. These are all variants that support error estimation,
+//which allows for the step size to be shortened and lengthened. 
+
 import "math"
 
 type RungeKuttaStepSizer interface {

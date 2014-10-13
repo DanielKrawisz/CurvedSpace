@@ -1,5 +1,7 @@
 package diffeq
 
+//The abstract components of a differential equation solver. 
+
 import "container/list"
 import "math"
 

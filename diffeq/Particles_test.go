@@ -1,5 +1,7 @@
 package diffeq
 
+//Tests for the particle system. 
+
 import "testing"
 import "math"
 import "math/rand"
@@ -211,7 +213,7 @@ func TestNewNewtonianParticleConsistency(t *testing.T) {
 //Test all the member functions of a newtonianParticle
 func TestNewtonianParticleFunctions(t *testing.T) {
   for i := 0; i < 10; i ++ {
-    np, dimensions, particles, _, _ := randomParticleSystem()
+    np, dimensions, particles, position, velocity := randomParticleSystem()
 
     //These next few tests are just getters and setters. 
     n := 2 * dimensions * particles
@@ -237,29 +239,31 @@ func TestNewtonianParticleFunctions(t *testing.T) {
       t.Error("setDs() error: expected ", newds, ", got ", ds, ".")
     }
 
-    /* TODO These tests are screwed up... 
+    //Test velocity() and position()
     var check_p = randInt(0, particles - 1)
     var check_d = randInt(0, dimensions - 1)
-    x := np.position()[particles * check_p + check_d]
+    x := np.position()[dimensions * check_p + check_d]
     if x != position[check_p][check_d] {
       t.Error("position() error: expected ", position[check_p][check_d], ", got ", x, ".")
     }
 
-    v := np.velocity()[particles * check_p + check_d]
+    v := np.position()[n/2 + dimensions * check_p + check_d]
     if v != velocity[check_p][check_d] {
       t.Error("velocity() error: expected ", velocity[check_p][check_d], ", got ", v, ".")
     }
 
     //This next part checks newposition(), newvelocity(), and postStep()
-    newx := np.newPosition()[particles * check_p + check_d]
-    newv := np.newVelocity()[particles * check_p + check_d]
+    newx := randFloat(-10, 10)
+    newv := randFloat(-10, 10)
+    np.newPosition()[dimensions * check_p + check_d] = newx
+    np.newPosition()[n / 2 + dimensions * check_p + check_d] = newv
     np.postStep()
-    newx_test := np.position()[particles * check_p + check_d]
-    newv_test := np.velocity()[particles * check_p + check_d]
-    x_test := np.newPosition()[particles * check_p + check_d]
-    v_test := np.newVelocity()[particles * check_p + check_d]
-
-    if newx != newv_test {
+    newx_test := np.position()[dimensions * check_p + check_d]
+    newv_test := np.position()[n / 2 + dimensions * check_p + check_d]
+    x_test := np.newPosition()[dimensions * check_p + check_d]
+    v_test := np.newPosition()[n / 2 + dimensions * check_p + check_d]
+ 
+    if newx != newx_test {
       t.Error("newPosition() error: expected ", newx, ", got ", newx_test, ".")
     }
 
@@ -274,7 +278,6 @@ func TestNewtonianParticleFunctions(t *testing.T) {
     if v != v_test {
       t.Error("postStep() error (2): expected ", v, ", got ", v_test, ".")
     }
-    */
   }
 }
 

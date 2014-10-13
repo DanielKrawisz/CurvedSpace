@@ -1,5 +1,7 @@
 package diffeq
 
+//Tests for the Runge Kutta methods. 
+
 import "testing"
 import "math"
 import "fmt"

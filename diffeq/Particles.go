@@ -1,5 +1,8 @@
 package diffeq
 
+//A model of particles interacting with spring forces. This mainly exists to test the
+//Runge Kutta differential equation solving methods in a variety of controlled conditions. 
+
 import "math"
 //import "fmt"
 

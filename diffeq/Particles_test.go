@@ -4,30 +4,8 @@ package diffeq
 
 import "testing"
 import "math"
-import "math/rand"
 import "fmt"
-import "time"
-
-var seed_set bool = false
-
-func setSeed() {
-  rand.Seed( time.Now().UTC().UnixNano())
-  seed_set = true
-}
-
-func randInt(min int, max int) int {
-  if !seed_set {setSeed()}
-  return min + rand.Intn(max-min+1)
-}
-
-func randFloat(min, max float64) float64 {
-  if !seed_set {setSeed()}
-  return min + (max - min) * rand.Float64()
-}
-
-func closeEnough(a, b, e float64) bool {
-  return math.Abs(a - b) < e
-}
+import "../test"
 
 //NewNewtonianParticle should alwys return nil in this test.
 func TestNewNewtonianParticleFailureConditions(t *testing.T) {
@@ -132,8 +110,8 @@ func TestNewNewtonianParticleFailureConditions(t *testing.T) {
 
 //Set up a random particle system. 
 func randomParticleSystem() (np *newtonianParticle, dimensions, particles int, position, velocity [][]float64) {
-  dimensions = randInt(1, 5)
-  particles = randInt(1, 5)
+  dimensions = test.RandInt(1, 5)
+  particles = test.RandInt(1, 5)
   position = make([][]float64, particles)
   velocity = make([][]float64, particles)
 
@@ -142,8 +120,8 @@ func randomParticleSystem() (np *newtonianParticle, dimensions, particles int, p
     velocity[i] = make([]float64, dimensions)
 
     for j := 0; j < dimensions; j++ {
-      position[i][j] = randFloat(-1000, 1000)
-      velocity[i][j] = randFloat(-1, 1)
+      position[i][j] = test.RandFloat(-1000, 1000)
+      velocity[i][j] = test.RandFloat(-1, 1)
     }
   }
  
@@ -151,10 +129,10 @@ func randomParticleSystem() (np *newtonianParticle, dimensions, particles int, p
 
   for i := 0; i < particles; i++ {
     for j := 0; j < dimensions; j++ {
-      np.a[i][j] = randFloat(-1, 1)
-      np.newx[i][j] = randFloat(-1, 1)
-      np.newv[i][j] = randFloat(-1, 1)
-      np.newa[i][j] = randFloat(-1, 1)
+      np.a[i][j] = test.RandFloat(-1, 1)
+      np.newx[i][j] = test.RandFloat(-1, 1)
+      np.newv[i][j] = test.RandFloat(-1, 1)
+      np.newa[i][j] = test.RandFloat(-1, 1)
     }
   }
 
@@ -175,8 +153,8 @@ func TestNewNewtonianParticleConsistency(t *testing.T) {
 
     //Now generate some random array elements to test. 
     for j := 0; j < 3; j++ {
-      var check_particle = randInt(0, particles - 1)
-      var check_dimension = randInt(0, dimensions - 1)
+      var check_particle = test.RandInt(0, particles - 1)
+      var check_dimension = test.RandInt(0, dimensions - 1)
 
       for k := 0; k < 2; k++ {
 
@@ -232,7 +210,7 @@ func TestNewtonianParticleFunctions(t *testing.T) {
       t.Error("Ds() error: expected ", 1.0, ", got ", ds, ".")
     }
 
-    newds := randFloat(1, 23)
+    newds := test.RandFloat(1, 23)
     np.setDs(newds)
     ds = np.Ds()
     if ds != newds {
@@ -240,8 +218,8 @@ func TestNewtonianParticleFunctions(t *testing.T) {
     }
 
     //Test velocity() and position()
-    var check_p = randInt(0, particles - 1)
-    var check_d = randInt(0, dimensions - 1)
+    var check_p = test.RandInt(0, particles - 1)
+    var check_d = test.RandInt(0, dimensions - 1)
     x := np.position()[dimensions * check_p + check_d]
     if x != position[check_p][check_d] {
       t.Error("position() error: expected ", position[check_p][check_d], ", got ", x, ".")
@@ -253,8 +231,8 @@ func TestNewtonianParticleFunctions(t *testing.T) {
     }
 
     //This next part checks newposition(), newvelocity(), and postStep()
-    newx := randFloat(-10, 10)
-    newv := randFloat(-10, 10)
+    newx := test.RandFloat(-10, 10)
+    newv := test.RandFloat(-10, 10)
     np.newPosition()[dimensions * check_p + check_d] = newx
     np.newPosition()[n / 2 + dimensions * check_p + check_d] = newv
     np.postStep()
@@ -412,21 +390,21 @@ func TestHarmonicOscillatorForceCalculation(t *testing.T) {
 
   //Here are the random calculations. 
   for j := 0; j < 10; j ++ {
-    dimension = randInt(1, 5)
+    dimension = test.RandInt(1, 5)
     p1 = make([]float64, dimension)
     p2 = make([]float64, dimension)
 
     for i := 0; i < dimension; i++ {
-      p1[i] = randFloat(-10, 10)
-      p2[i] = randFloat(10, 10)
+      p1[i] = test.RandFloat(-10, 10)
+      p2[i] = test.RandFloat(10, 10)
     }
 
-    Klen := randInt(0, 5) //The number of terms in the force function. 
+    Klen := test.RandInt(0, 5) //The number of terms in the force function. 
     K := make([]float64, Klen)
 
     var d float64 = 1
     for i := 0; i < Klen; i++ {
-      K[i] = randFloat(0, 3) / d //Each force constant gets smaller and smaller. 
+      K[i] = test.RandFloat(0, 3) / d //Each force constant gets smaller and smaller. 
       d *= 2
     }
 
@@ -435,9 +413,9 @@ func TestHarmonicOscillatorForceCalculation(t *testing.T) {
     quad := quadrance(distv)
 
     //check if distv was calculated correctly. 
-    vector_check := randInt(0, dimension - 1)
+    vector_check := test.RandInt(0, dimension - 1)
     var expected float64 = p2[vector_check] - p1[vector_check]
-    if !closeEnough(distv[vector_check], expected,
+    if !test.CloseEnough(distv[vector_check], expected,
       distanceVectorErrorPropagation(p2[vector_check], p1[vector_check], tolerance, tolerance)) {
       t.Error("Distance vector error: distancev was ", distv[vector_check], "; expected ", expected, ".")
     }
@@ -447,7 +425,7 @@ func TestHarmonicOscillatorForceCalculation(t *testing.T) {
     for i:= 0; i < dimension; i++ {
       expected_quad += distv[i] * distv[i]
     }
-    if !closeEnough(quad, expected_quad, quadranceErrorPropagation(distv, tolerance)) {
+    if !test.CloseEnough(quad, expected_quad, quadranceErrorPropagation(distv, tolerance)) {
       t.Error("Quadrance error: quad was ", quad, "; expected ", expected_quad)
     }
 
@@ -467,7 +445,7 @@ func TestHarmonicOscillatorForceCalculation(t *testing.T) {
       expected_force[i] = distv[i] * fc
     }
 
-    if !closeEnough(force[vector_check], expected_force[vector_check],
+    if !test.CloseEnough(force[vector_check], expected_force[vector_check],
       oscillatorForceErrorPropagation(quad, K, tolerance, tolerance)) {
       t.Error("oscillatorForce error: force was ", force[vector_check], "; expected ", expected_force[vector_check])
     }

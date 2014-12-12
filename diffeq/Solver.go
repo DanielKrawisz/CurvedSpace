@@ -48,8 +48,8 @@ type Solver interface {
   Run() (i *Instant, l *list.List)
 }
 
-
-type solver struct {
+//A solver that supports step monitors. 
+type solverStepMonitor struct {
   maxsteps int
   maxarclength float64
   exporthistory bool
@@ -59,7 +59,8 @@ type solver struct {
   monitor []Monitor
 }
 
-func (sol *solver) Run() (i *Instant, l *list.List) {
+//Runs a system of differential equations. 
+func (sol *solverStepMonitor) Run() (i *Instant, l *list.List) {
   var steps int = 0
 
   //A linked list to export the full history of the evolution.
@@ -105,6 +106,15 @@ func (sol *solver) Run() (i *Instant, l *list.List) {
   return i, l
 }
 
+//TODO: create a solver for path tracing. 
+//A solver for doing path tracing. 
+/*type solverPathTracer struct {
+  maxinteractions int //Maximum number that the ray can interact with objects.
+  maxsteps int        //maximum number of differential equation steps. 
+  exporthistory bool
+  x State
+  step Step
+}*/
 
 type State interface {
   //The arc length parameter which defines how far the 

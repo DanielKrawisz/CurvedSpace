@@ -227,11 +227,11 @@ func TestRungeKuttaHarmonicOscillatorNonlinearNoStepSizing(t *testing.T) {
 //that will happen if the rkstep function is correct. We need to test, rather, that the step
 //size changes in response to the proper conditions. 
 func TestRungeKuttaStepSizing(t *testing.T) {
-  
+  //TODO
 }
 
 //Test that the function returns the correct errors when the differential equation enters
 //singular states. 
 func TestRungeKuttaErrorConditions(t *testing.T) {
-  
+  //TODO
 }

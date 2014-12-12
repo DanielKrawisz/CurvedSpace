@@ -3,6 +3,11 @@ package polynomials
 import "math"
 import "math/cmplx"
 
+//This file finds the real roots of polynomials of degrees 
+// 2 through 4. Higher-degree polynomials can only be
+// solved numerically in general. Higher degree polynomials
+// can be solved if the Galois group is solvable. 
+
 //Solutions for the equation
 //
 //  x^2 + a x + b == 0
@@ -91,7 +96,7 @@ func simplifiedQuarticFormula(a, b, c float64) []float64 {
   // for the cases in which there are zero or four real roots, and comes out as a positive
   // square when there are two real roots. 
   //It doesn't matter which root is used, but it appears always to be possible to choose
-  // a root which makes Ad and Bd positive. No proof for that either; should find one. 
+  // a root which makes Ad and Bd positive. No proof for that, but the tests always pass.
   Zl := CubicFormula((c * c * c - a * c - b * b / 4.0)/2., 2. * c * c - a, (5./2.) * c)
   var Z, Bd float64
 
@@ -107,7 +112,7 @@ func simplifiedQuarticFormula(a, b, c float64) []float64 {
   //Since Z, c, and a are all real, it must be that Ad and Bd are real. 
   //It must be that b == (+/-) 2 A B, and since b is real, the product of A and B must be real. 
 
-  A := math.Sqrt(Ad) //Ad and Bd now always positive (probably)
+  A := math.Sqrt(Ad) //Ad and Bd now always positive (I think)
   B := math.Sqrt(Bd) 
 
   var bs float64

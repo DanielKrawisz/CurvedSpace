@@ -2,11 +2,18 @@ package polynomials
 
 import "testing"
 import "sort"
-import "../test"
+import "../../test"
 
+//The error parameter.
 var e float64 = .000001
 
-//In all these cases, it is important that the polynomial
+//The general strategy for testing all polynomials is to divide
+//the tests into cases based on the number of real roots that
+//the polynomial has. Then the set of roots is created based on
+//some random parameters and the full polynomial is constructed
+//from those. Thus, the roots are known a priori. The function
+//is then run to test whether it finds the same roots as those
+//which we started with. 
 func TestQuadratic(t *testing.T) {
   //Two cases: zero real roots or two roots. 
   //case 1, zero real roots. In this case the complex
@@ -49,6 +56,12 @@ func TestQuadratic(t *testing.T) {
   }
 }
 
+//For the cubic and quartic, we test the functions for the
+//simplified formulas in the most general way possible. The
+//full formula depends on the simplified one, so we do not
+//test that one for a general polynomial. We only go through
+//one case, and if it works for that it will work for all
+//cases.
 func TestCubic(t *testing.T) {
 
   //In the simplified cubic formala, all roots sum to zero. 
@@ -66,18 +79,6 @@ func TestCubic(t *testing.T) {
     } else if !test.CloseEnough(ans[0], p, e) {
       t.Error("simplified cubic formula error: case 1, expected real roots to match p = ",
         p , ", q = ", q, "; ans = ", ans)
-    }
-
-    //Now add a constant to the roots and test them against the more general formula. 
-    r := test.RandFloat(-100, 100)
-    ans2 := CubicFormula(-(p*p*p + p*q*q - 3.*p*p*r + q*q*r)/4. - r*r*r, (-3.*p*p + q*q)/4. + 3.*r*r, -3.*r)
-
-    if len(ans2) != 1 {
-      t.Error("cubic formula error: case 1, expected one real root for p = ",
-        p , ", q = ", q, ", r = ", r, "; ans = ", ans2)
-    } else if !test.CloseEnough(ans[0], ans2[0] - r, e) {
-      t.Error("cubic formula error: case 1, expected real root to match p = ",
-        p , ", q = ", q, ", r = ", r, "; ans = ", ans, "; ans2 = ", ans2)
     }
   }
 
@@ -136,7 +137,6 @@ func TestCubic(t *testing.T) {
 }
 
 func TestSimplifiedQuartic(t *testing.T) {
-  var b_positive, b_negative int
 
   //Three cases: zero roots, two roots, or one root. 
   //case 1: The roots are p + i q, p - i q, -p + i r, -p - i r and b >= 0. 
@@ -150,12 +150,6 @@ func TestSimplifiedQuartic(t *testing.T) {
     a := p*p*p*p + p*p*q*q + p*p*r*r + q*q*r*r
     b := 2*p*q*q - 2*p*r*r
     c := -2*p*p + q*q + r*r
-
-    if b > 0 {
-      b_positive ++ 
-    } else { 
-      b_negative ++
-    }
 
     ans := simplifiedQuarticFormula(a, b, c)
 

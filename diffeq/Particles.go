@@ -221,5 +221,5 @@ func NewSpringSystem(dimension, particles int, initpos, initvel [][]float64, mas
   if step == nil {return nil}
   if step.Dimension() != 2 * dimension * particles {return nil}
 
-  return &solver{10000, 3000, true, p, h, step, []Monitor{u}}
+  return &solverStepMonitor{10000, 3000, true, p, h, step, []Monitor{u}}
 }

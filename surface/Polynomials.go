@@ -97,7 +97,7 @@ func (s *QuadraticCurve) Gradient(x []float64) []float64 {
   for i := 0; i < s.dimension; i++ { 
     z[i] += s.b[i]
 
-    for j := 0; j <= i; i++ {
+    for j := 0; j <= i; j++ {
       z[i] += 2 * s.c[i][j] * x[j]
     }
 

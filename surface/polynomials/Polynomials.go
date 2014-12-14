@@ -10,7 +10,7 @@ import "math/cmplx"
 
 //Solutions for the equation
 //
-//  x^2 + a x + b == 0
+//  x^2 + b x + a == 0
 //
 //The parameters are named in a nonstandard way so
 //that the formula generalizes more easily to qubics
@@ -18,12 +18,12 @@ import "math/cmplx"
 //are real, which means there are two cases. Either
 //both solutions are complex or both are real. 
 func QuadraticFormula(a, b float64) []float64 {
-  desc := a*a - 4 * b
+  desc := b*b - 4 * a
   if desc < 0 {
     return []float64{}
   } else {
     s := math.Sqrt(desc)
-    return []float64{(a - s)/2., (a + s) / 2.}
+    return []float64{(-b - s)/2., (-b + s) / 2.}
   }
 }
 

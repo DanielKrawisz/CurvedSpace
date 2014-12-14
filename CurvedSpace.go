@@ -2,6 +2,19 @@ package main
 
 //This will be a program to do ray-tracing over curved spaces. 
 
+//TODO: complete tests for basic surfaces. 
+//TODO: complete grad tests for polynomials and booleans. 
+//TODO: complete intersection tests for booleans and polynomials.
+//TODO: complete bounce monitor. 
+//TODO: create new default system to run with bounces. 
+//TODO: create solver that can be used for path tracing.
+//TODO: create luminescent materials.
+//TODO: create transparent materials.
+//TODO: create reflective materials.
+//TODO: create refractive materials.
+//TODO: allow for a refractive index that varies over time. 
+//TODO: create polyhedra.
+
 import (
   "fmt"
   "./diffeq"

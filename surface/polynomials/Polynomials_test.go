@@ -17,12 +17,12 @@ var e float64 = .000001
 func TestQuadratic(t *testing.T) {
   //Two cases: zero real roots or two roots. 
   //case 1, zero real roots. In this case the complex
-  //roots are of the form r +/- i s.
+  //roots are of the form p +/- i q.
   for i := 0; i < 10; i++ {
     p := test.RandFloat(-100, 100)
     q := test.RandFloat(-100, 100)
 
-    ans := QuadraticFormula(2 * p, p * p + q * q)
+    ans := QuadraticFormula(p * p + q * q, -2 * p)
 
     //ans should be empty. 
     if len(ans) != 0 {
@@ -30,12 +30,12 @@ func TestQuadratic(t *testing.T) {
     }
   }
 
-  //case 2: two real roots. 
+  //case 2: two real roots. The roots are p and q.
   for i := 0; i < 10; i++ {
     p := test.RandFloat(-100, 100)
     q := test.RandFloat(-100, 100)
 
-    ans := QuadraticFormula(p + q, p * q)
+    ans := QuadraticFormula(p * q, - p - q)
 
     if len(ans) != 2 {
       t.Error("quadratic formula error: case 2, expected two real roots for p = ", p , ", q = ", q, "; ans = ", ans)

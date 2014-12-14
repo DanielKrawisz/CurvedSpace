@@ -10,10 +10,12 @@ import "../test"
 //perform the tensor algebra that can be used to check all the 
 //complicated formulas in main file. 
 
-//TODO test gradiants and intersections. 
+//TODO get grad tester to work.
+
+//TODO test intersections. 
 
 //The error parameter. 
-var err float64 = .000001
+var err_poly float64 = .000001
 
 //Inefficient functions for contracting tensors. Testing use only! 
 func contractSymmetric4Tensor(t [][][][]float64, x []float64 ) [][][]float64 {
@@ -116,18 +118,18 @@ func contractVector(t []float64, x []float64 ) float64 {
 //Four dimensions is enough to handle all possibilites
 func TestLinear(t *testing.T) {
   dim := 4
-  for trial := 0; trial < 10; trial ++ {
+  for trial := 0; trial < 3; trial ++ {
     a := test.RandFloat(-10, -1)
     b := make([]float64, dim)
 
     for i := 0; i < dim; i ++ {
-      b[i] = float64(test.RandSign()) * math.Exp(test.RandFloat(-4, 4))   
+      b[i] = float64(test.RandSign()) * math.Exp(test.RandFloat(-4, 4))  
     }
 
     surface := &LinearCurve{dim, b, a}
 
-    //Test 10 random points. 
-    for p := 0; p < 10; p ++ {
+    //Test 3 random points. 
+    for p := 0; p < 3; p ++ {
       point := make([]float64, dim)
       point[0] = test.RandFloat(-100, 100)
       point[1] = test.RandFloat(-100, 100)
@@ -137,9 +139,22 @@ func TestLinear(t *testing.T) {
       expect := contractVector(b, point) + a
       val := surface.F(point)
 
-      if ! test.CloseEnough(val, expect, err) {
+      if ! test.CloseEnough(val, expect, err_poly) {
         t.Error("linear surface error point ", point, "; expected ", expect, ", got ", val)
       }
+
+      /*grad := surface.Gradient(point)
+      grad_exp := testGradient(surface, point, .000000000001)
+
+      var grad_match bool = true
+
+      for i := 0; i < dim; i++ {
+        grad_match = grad_match && test.CloseEnough(grad[i], grad_exp[i], err_poly)
+      }
+
+      if !grad_match {
+        t.Error("linear surface defined by b = ", b, "grad error. Expected ", grad_exp, ", got ", grad)
+      }*/
     }
   }
 }
@@ -178,7 +193,7 @@ func TestQuadratic(t *testing.T) {
       expect := contractVector(contractSymmetricTensor(c, point), point)
       val := surface.F(point)
 
-      if ! test.CloseEnough(val, expect, err) {
+      if ! test.CloseEnough(val, expect, err_poly) {
         t.Error("quadratic surface defined by c = ", c, ", b = 0, a = 0 has error point ", point, "; expected ", expect, ", got ", val)
       }
     }
@@ -216,9 +231,22 @@ func TestQuadratic(t *testing.T) {
       expect := contractVector(contractSymmetricTensor(c, point), point) + contractVector(b, point) + a
       val := surface.F(point)
 
-      if ! test.CloseEnough(val, expect, err) {
+      if ! test.CloseEnough(val, expect, err_poly) {
         t.Error("quadratic surface defined by c = ", c, ", b = ", b, ", a = ", a, " has error point ", point, "; expected ", expect, ", got ", val)
       }
+
+      /*grad := surface.Gradient(point)
+      grad_exp := testGradient(surface, point, .000001)
+
+      var grad_match bool = true
+
+      for i := 0; i < dim; i++ {
+        grad_match = grad_match && test.CloseEnough(grad[i], grad_exp[i], err_poly)
+      }
+
+      if !grad_match {
+        t.Error("quadratic surface defined by c = ", c, ", b = ", b, ", a = ", a, " grad error. Expected ", grad_exp, ", got ", grad)
+      }*/
     }
   }
 }
@@ -265,9 +293,22 @@ func TestCubic(t *testing.T) {
         contractVector(contractSymmetricTensor(c, point), point) + contractVector(b, point) + a
       val := surface.F(point)
 
-      if ! test.CloseEnough(val, expect, err) {
+      if ! test.CloseEnough(val, expect, err_poly) {
         t.Error("cubic surface defined by d = ", d, ", c = ", c, ", b = ", b, ", a = ", a, " error point ", point, "; expected ", expect, ", got ", val)
       }
+
+      /*grad := surface.Gradient(point)
+      grad_exp := testGradient(surface, point, .000000001)
+
+      var grad_match bool = true
+
+      for i := 0; i < dim; i++ {
+        grad_match = grad_match && test.CloseEnough(grad[i], grad_exp[i], err_poly)
+      }
+
+      if !grad_match {
+        t.Error("quadratic surface defined by c = ", c, ", b = ", b, ", a = ", a, " grad error. Expected ", grad_exp, ", got ", grad)
+      }*/
     }
   }
 }
@@ -325,7 +366,7 @@ func TestQuartic(t *testing.T) {
           point), point), point), point) 
       val := surface.F(point)
 
-      if ! test.CloseEnough(val, expect, err) {
+      if ! test.CloseEnough(val, expect, err_poly) {
         t.Error("quartic surface e = ", e, ", d = 0, c = 0, b = 0, a = 0 error point ", point, "; expected ", expect, ", got ", val)
       }
     }
@@ -384,9 +425,22 @@ func TestQuartic(t *testing.T) {
         contractVector(contractSymmetricTensor(c, point), point) + contractVector(b, point) + a
       val := surface.F(point)
 
-      if ! test.CloseEnough(val, expect, err) {
+      if ! test.CloseEnough(val, expect, err_poly) {
         t.Error("quartic surface e = ", e, ", d = ", d, ", c = ", c, ", b = ", b, ", a = ", a," error point ", point, "; expected ", expect, ", got ", val)
       }
+
+      /*grad := surface.Gradient(point)
+      grad_exp := testGradient(surface, point, .000000001)
+
+      var grad_match bool = true
+
+      for i := 0; i < dim; i++ {
+        grad_match = grad_match && test.CloseEnough(grad[i], grad_exp[i], err_poly)
+      }
+
+      if !grad_match {
+        t.Error("quadratic surface defined by c = ", c, ", b = ", b, ", a = ", a, " grad error. Expected ", grad_exp, ", got ", grad)
+      }*/
     }
   }
 }

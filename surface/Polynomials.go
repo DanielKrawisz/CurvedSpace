@@ -14,17 +14,17 @@ import "./polynomials"
 //an out of bounds exception, whereas c[2][1] or c[2][2] is
 //fine.
 
-type LinearCurve struct {
+type linearSurface struct {
   dimension int
   b []float64
   a float64
 }
 
-func (s *LinearCurve) Dimension() int {
+func (s *linearSurface) Dimension() int {
   return s.dimension
 }
 
-func (s *LinearCurve) F(x []float64) float64 {
+func (s *linearSurface) F(x []float64) float64 {
   var f float64 = 0
   for i := 0; i < s.dimension; i++ {
     f += s.b[i]*x[i]
@@ -32,11 +32,11 @@ func (s *LinearCurve) F(x []float64) float64 {
   return f + s.a
 }
 
-func (s *LinearCurve) Interior(x []float64) bool {
+func (s *linearSurface) Interior(x []float64) bool {
   return s.F(x) >= 0
 }
 
-func (s *LinearCurve) Gradient(x []float64) []float64 {
+func (s *linearSurface) Gradient(x []float64) []float64 {
   z := make([]float64, s.dimension)
   for i := 0; i < s.dimension; i++ {
     z[i] = s.b[i]
@@ -45,7 +45,7 @@ func (s *LinearCurve) Gradient(x []float64) []float64 {
 }
 
 //Solving for b (x + u v) + a == 0
-func (s *LinearCurve) Intersection(x, v []float64) []float64 {
+func (s *linearSurface) Intersection(x, v []float64) []float64 {
   var f = s.F(x)
   var q float64 = 0
   for i := 0; i < 0; i ++ {
@@ -58,7 +58,7 @@ func (s *LinearCurve) Intersection(x, v []float64) []float64 {
   }
 }
 
-type QuadraticCurve struct {
+type quadraticSurface struct {
   dimension int
   //These arrays represent symmetric tensors and include only the lower parts of the tensor. 
   //Thus, all indices must be in descending order. 
@@ -67,15 +67,15 @@ type QuadraticCurve struct {
   a float64
 }
 
-func (s *QuadraticCurve) Dimension() int {
+func (s *quadraticSurface) Dimension() int {
   return s.dimension
 }
 
-func (s *QuadraticCurve) F(x []float64) float64 {
+func (s *quadraticSurface) F(x []float64) float64 {
   var f float64 
 
   for i := 0; i < s.dimension; i ++ {
-    f += s.b[i]*x[i]
+    f += s.b[i]*x[i] 
 
     for j := 0; j < i; j ++ {
       f += 2 * s.c[i][j]*x[i]*x[j]
@@ -87,21 +87,25 @@ func (s *QuadraticCurve) F(x []float64) float64 {
   return f + s.a;
 }
 
-func (s *QuadraticCurve) Interior(x []float64) bool {
+func (s *quadraticSurface) Interior(x []float64) bool {
   return s.F(x) >= 0
 }
 
-func (s *QuadraticCurve) Gradient(x []float64) []float64 {
+func (s *quadraticSurface) Gradient(x []float64) []float64 {
   z := make([]float64, s.dimension)
 
   for i := 0; i < s.dimension; i++ { 
     z[i] += s.b[i]
 
+    /*for j := 0; j < s.dimension; j ++ {
+      if
+    }*/
+
     for j := 0; j <= i; j++ {
       z[i] += 2 * s.c[i][j] * x[j]
     }
 
-    for j := i; j < s.dimension; j ++ {
+    for j := i+1; j < s.dimension; j ++ {
       z[i] += 2 * s.c[j][i] * x[j]
     }
   }
@@ -110,7 +114,7 @@ func (s *QuadraticCurve) Gradient(x []float64) []float64 {
 }
 
 //Solving for c (x + u v) (x + u v) + b (x + u v) + a == 0
-func (s *QuadraticCurve) Intersection(x, v []float64) []float64 {
+func (s *quadraticSurface) Intersection(x, v []float64) []float64 {
   var cxx, cvx, cvv, bx, bv float64
 
   for i := 0; i < s.dimension; i ++ {
@@ -142,7 +146,7 @@ func (s *QuadraticCurve) Intersection(x, v []float64) []float64 {
   return polynomials.QuadraticFormula(pa / cvv, pb / cvv)
 }
 
-type CubicCurve struct {
+type cubicSurface struct {
   dimension int
   //These arrays represent symmetric tensors and include only the lower parts of the tensor. 
   d [][][]float64
@@ -151,11 +155,11 @@ type CubicCurve struct {
   a float64
 }
 
-func (s *CubicCurve) Dimension() int {
+func (s *cubicSurface) Dimension() int {
   return s.dimension
 }
 
-func (s *CubicCurve) F(x []float64) float64 {
+func (s *cubicSurface) F(x []float64) float64 {
   var f float64 
 
   for i := 0; i < s.dimension; i ++ {
@@ -180,51 +184,52 @@ func (s *CubicCurve) F(x []float64) float64 {
 }
 
 
-func (s *CubicCurve) Interior(x []float64) bool {
+func (s *cubicSurface) Interior(x []float64) bool {
   return s.F(x) >= 0
 }
 
-func (s *CubicCurve) Gradient(x []float64) []float64 {
+func (s *cubicSurface) Gradient(x []float64) []float64 {
   z := make([]float64, s.dimension)
   var index [3]int
-  var ordering [3]int
-  var inverse [3]int
-  var swap int
+  var ordering [][]int = make([][]int, 2)
+  var inverse, swap int
+
+  ordering[0] = make([]int, 2)
+  ordering[1] = make([]int, 3)
 
   for index[0] = 0; index[0] < s.dimension; index[0] ++ { 
-    ordering[0] = 0
-    inverse[0] = 0
+    ordering[0][0] = 0
+    ordering[0][1] = 1
+
     z[index[0]] += s.b[index[0]]
 
     for index[1] = 0; index[1] < s.dimension; index[1] ++ {
-      ordering[1] = 1
-      inverse[1] = 1
 
-      z[index[0]] += 2 * s.c[index[ordering[0]]][index[ordering[1]]] * x[index[1]]
-
-      if index[ordering[1]] > index[ordering[2]] { 
-        swap = ordering[1]
-        ordering[1] = ordering[0]
-        ordering[0] = swap
-
-        inverse[1] = ordering[0]
-        inverse[0] = ordering[1]
+      if index[ordering[0][1]] > index[ordering[0][0]] { 
+        swap = ordering[0][1]
+        ordering[0][1] = ordering[0][0]
+        ordering[0][0] = swap
       }
 
+      z[index[0]] += 2 * s.c[index[ordering[0][0]]][index[ordering[0][1]]] * x[index[1]]
+
+      ordering[1][0] = ordering[0][0]
+      ordering[1][1] = ordering[0][1]
+      ordering[1][2] = 2
+      inverse = 2
+
       for index[2] = 0; index[2] < s.dimension; index[2] ++ {
-        ordering[2] = 2
-        inverse[2] = 2 
-        z[index[0]] += 3 * s.d[index[ordering[0]]][index[ordering[1]]][index[ordering[2]]] * x[index[1]] * x[index[2]]
 
-        for inverse[2] > 0 && inverse[2] > index[ordering[inverse[2] - 1]] {
-          swap = ordering[inverse[2]]
-          ordering[inverse[2]] = ordering[inverse[2] - 1]
-          ordering[inverse[2] - 1] = swap
+        for inverse > 0 && index[2] > index[ordering[1][inverse - 1]] {
 
-          swap = inverse[ordering[inverse[2]]] 
-          inverse[ordering[inverse[2]]] = inverse[2]
-          inverse[2] = swap
+          swap = ordering[1][inverse]
+          ordering[1][inverse] = ordering[1][inverse - 1]
+          ordering[1][inverse - 1] = swap
+
+          inverse --
         }
+
+        z[index[0]] += 3 * s.d[index[ordering[1][0]]][index[ordering[1][1]]][index[ordering[1][2]]] * x[index[1]] * x[index[2]]
       }
     }
   }
@@ -233,7 +238,7 @@ func (s *CubicCurve) Gradient(x []float64) []float64 {
 }
 
 //Solving for d (x + u v)^3 + c (x + u v)^2 + b (x + u v) + a == 0
-func (s *CubicCurve) Intersection(x, v []float64) []float64 {
+func (s *cubicSurface) Intersection(x, v []float64) []float64 {
   var cxx, cvx, cvv, bx, bv, dvvv, dxxx, dvvx, dvxx float64
 
   for i := 0; i < s.dimension; i ++ {
@@ -292,7 +297,7 @@ func (s *CubicCurve) Intersection(x, v []float64) []float64 {
   return polynomials.CubicFormula(pa / dvvv, pb / dvvv, pc / dvvv)
 }
 
-type QuarticCurve struct {
+type quarticSurface struct {
   dimension int
   //These arrays represent symmetric tensors and include only the lower parts of the tensor. 
   e [][][][]float64
@@ -302,11 +307,11 @@ type QuarticCurve struct {
   a float64
 }
 
-func (s *QuarticCurve) Dimension() int {
+func (s *quarticSurface) Dimension() int {
   return s.dimension
 }
 
-func (s *QuarticCurve) F(x []float64) float64 {
+func (s *quarticSurface) F(x []float64) float64 {
   var f float64 
 
   for i := 0; i < s.dimension; i ++ {
@@ -345,66 +350,68 @@ func (s *QuarticCurve) F(x []float64) float64 {
   return f + s.a;
 }
 
-func (s *QuarticCurve) Interior(x []float64) bool {
+func (s *quarticSurface) Interior(x []float64) bool {
   return s.F(x) >= 0
 }
 
-func (s *QuarticCurve) Gradient(x []float64) []float64 {
+func (s *quarticSurface) Gradient(x []float64) []float64 {
   z := make([]float64, s.dimension)
   var index [4]int
-  var ordering [4]int
-  var inverse [4]int
+  var ordering [][]int = make([][]int, 3)
+  var inverse [2]int
   var swap int
 
+  ordering[0] = make([]int, 2)
+  ordering[1] = make([]int, 3)
+  ordering[2] = make([]int, 4)
+
   for index[0] = 0; index[0] < s.dimension; index[0] ++ { 
-    ordering[0] = 0
-    inverse[0] = 0
+    ordering[0][0] = 0
+    ordering[0][1] = 1
+
     z[index[0]] += s.b[index[0]]
 
     for index[1] = 0; index[1] < s.dimension; index[1] ++ {
-      ordering[1] = 1
-      inverse[1] = 1
 
-      z[index[0]] += 2 * s.c[index[ordering[0]]][index[ordering[1]]] * x[index[2]]
-
-      if index[ordering[1]] > index[ordering[2]] { 
-        swap = ordering[1]
-        ordering[1] = ordering[0]
-        ordering[0] = swap
-
-        inverse[1] = ordering[0]
-        inverse[0] = ordering[1]
+      if index[ordering[0][1]] > index[ordering[0][0]] { 
+        swap = ordering[0][1]
+        ordering[0][1] = ordering[0][0]
+        ordering[0][0] = swap
       }
 
+      z[index[0]] += 2 * s.c[index[ordering[0][0]]][index[ordering[0][1]]] * x[index[1]]
+
+      ordering[1][0] = ordering[0][0]
+      ordering[1][1] = ordering[0][1]
+      ordering[1][2] = 2
+      inverse[0] = 2
+
       for index[2] = 0; index[2] < s.dimension; index[2] ++ {
-        ordering[2] = 2
-        inverse[2] = 2
-        z[index[0]] += 3 * s.d[index[ordering[0]]][index[ordering[1]]][index[ordering[2]]] * x[index[1]] * x[index[2]]
 
-        for inverse[2] > 0 && inverse[2] >  index[ordering[inverse[2] - 1]] {
-          swap = ordering[inverse[2]]
-          ordering[inverse[2]] = ordering[inverse[2] - 1]
-          ordering[inverse[2] - 1] = swap
+        for inverse[0] > 0 && index[2] > index[ordering[1][inverse[0] - 1]] {
 
-          swap = inverse[ordering[inverse[2]]] 
-          inverse[ordering[inverse[2]]] = inverse[2]
-          inverse[2] = swap
+          swap = ordering[1][inverse[0]]
+          ordering[1][inverse[0]] = ordering[1][inverse[0] - 1]
+          ordering[1][inverse[0] - 1] = swap
+
+          inverse[0] --
         }
 
+        z[index[0]] += 3 * s.d[index[ordering[1][0]]][index[ordering[1][1]]][index[ordering[1][2]]] * x[index[1]] * x[index[2]]
+
+        ordering[2][0] = ordering[1][0]
+        ordering[2][1] = ordering[1][1]
+        ordering[2][2] = ordering[1][2]
+        ordering[2][3] = 3
+        inverse[1] = 3
+
         for index[3] = 0; index[3] < s.dimension; index[3] ++ {
-          ordering[3] = 3
-          inverse[3] = 3
-          z[index[0]] += 4 * s.e[index[ordering[0]]][index[ordering[1]]][index[ordering[2]]][index[ordering[3]]] * x[index[1]] * x[index[2]] * x[index[3]]
 
-          for inverse[3] > 0 && inverse[3] > index[ordering[inverse[3] - 1]] {
-            swap = ordering[inverse[3]]
-            ordering[inverse[3]] = ordering[inverse[3] - 1]
-            ordering[inverse[3] - 1] = swap
-
-            swap = inverse[ordering[inverse[3]]] 
-            inverse[ordering[inverse[3]]] = inverse[3]
-            inverse[3] = swap
+          for inverse[1] > 0 && index[3] > index[ordering[2][inverse[1] - 1]] {
           }
+
+          z[index[0]] += s.e[index[ordering[2][0]]][index[ordering[2][1]]][index[ordering[2][2]]][index[ordering[2][3]]] *
+            4 * x[index[1]] * x[index[2]] * x[index[3]]
         }
       }
     }
@@ -415,7 +422,7 @@ func (s *QuarticCurve) Gradient(x []float64) []float64 {
 
 //TODO: must simplify for testing purposes. 
 //Solving for e (x + u v)^4 + d (x + u v)^3 + c (x + u v)^2 + b (x + u v) + a == 0
-func (s *QuarticCurve) Intersection(x, v []float64) []float64 {
+func (s *quarticSurface) Intersection(x, v []float64) []float64 {
   var cxx, cvx, cvv, bx, bv, dvvv, dxxx, dvvx, dvxx, evvvv, evvvx, evvxx, evxxx, exxxx float64
 
   for i := 0; i < s.dimension; i ++ {

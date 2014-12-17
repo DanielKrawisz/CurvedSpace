@@ -26,24 +26,29 @@ type Surface interface {
 }
 
 //A function to test gradients with numerical approximation against
-//a surface's given formula. Assumes that the F method is correct.
+//a surface's given formula. 
 //For testing purposes only! 
-//TODO need higher-order methods or more digits.
+//Uses a higher-order method. 
 func testGradient(s Surface, x []float64, e float64) []float64 {
   z := make([]float64, s.Dimension())
   delta := make([]float64, s.Dimension())
-  f := s.F(x)
+
+  coefficients := []float64{3, -32, 168, -672, 0, 672, -168, 32, -3}
 
   for i := 0; i < s.Dimension(); i ++ {
-    for j := 0; j < s.Dimension(); j ++ {
-      if i == j {
-        delta[j] = x[j] + e
-      } else {
-        delta[j] = x[j]
+    for j := -4; j <= 4; j ++ {
+      for k := 0; k < s.Dimension(); k ++ {
+        if i == k {
+          delta[k] = x[k] + float64(j) * e
+        } else {
+          delta[k] = x[k]
+        }
       }
+
+      z[i] += coefficients[j + 4] * s.F(delta)
     }
 
-    z[i] = (s.F(delta) - f) / e
+    z[i] /= (840. * e)
   }
 
   return z

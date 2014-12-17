@@ -5,7 +5,7 @@ import "./polynomials"
 //Use polynomial surfaces and solid constructive geometry to
 //make some primitive shapes.
 
-//TODO plane, cylinder, cone, torus, elipse, paraboloid, hyperboloid, box, elliptic curve.
+//TODO cylinder, cone, torus, paraboloid, hyperboloid, paralepiped. 
 
 type Sphere interface {
   Surface
@@ -94,5 +94,36 @@ func NewPlaneByPointAndNormal(point, norm []float64) Surface {
   for i := 0; i < len(point); i++ {
     b[i] = norm[i] / b2
   }
-  return &LinearCurve{len(norm), b, a}
+  return &linearSurface{len(norm), b, a}
 }
+
+//TODO tests
+//Given by the point at the center, n vectors forming an
+//orthonormal set (though not required to be) and n parameters
+//defining the axes of the ellipsoid. The result will only be
+//an elipsoid if the parameters are all positive, but the
+//function does not require them to be. 
+//May return nil
+func NewElipsoidByCenterBasis(point []float64, vec [][]float64, param []float64) Surface {
+  if len(point) != len(param) || len(point) != len(vec) {
+    return nil
+  }
+
+  v := make([][]float64, len(point))
+
+  for i := 0; i < len(point); i ++ {
+    if len(v[i]) != len(point) {
+      return nil
+    }
+
+    v[i] = make([]float64, len(point))
+
+    for j := 0; j < len(point); j ++ {
+      v[i][j] = vec[i][j] * param[i]
+    }
+  }
+
+  return NewQuadraticSurfaceByCenterVectorList(point, v, 1)
+}
+
+

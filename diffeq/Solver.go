@@ -106,16 +106,6 @@ func (sol *solverStepMonitor) Run() (i *Instant, l *list.List) {
   return i, l
 }
 
-//TODO: create a solver for path tracing. 
-//A solver for doing path tracing. 
-/*type solverPathTracer struct {
-  maxinteractions int //Maximum number that the ray can interact with objects.
-  maxsteps int        //maximum number of differential equation steps. 
-  exporthistory bool
-  x State
-  step Step
-}*/
-
 type State interface {
   //The arc length parameter which defines how far the 
   //simulation has gone. In Newtonian physics this would

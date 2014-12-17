@@ -94,7 +94,72 @@ func TestBooleans(t *testing.T) {
     }
   }
 
-  //TODO Tests for Gradient
+  //Tests for Gradient
+  grad_test_points := [][]float64{[]float64{-2, 0}, []float64{2, 0}}
+  var grad_test bool
 
-  //TODO complete tests for intersection functions.
+  //addition grad tests.
+  grad := add.Gradient(grad_test_points[0])
+  grad_expect := a.Gradient(grad_test_points[0])
+  grad_test = true
+  for i := 0; i < len(grad); i ++ {
+    grad_test = grad_test && (grad[i] == grad_expect[i])
+  }
+  if !grad_test {
+    t.Error("Grad test error for addition, test point 1, ", grad_test_points[0])
+  }
+
+  grad = add.Gradient(grad_test_points[1])
+  grad_expect = b.Gradient(grad_test_points[1])
+  grad_test = true
+  for i := 0; i < len(grad); i ++ {
+    grad_test = grad_test && (grad[i] == grad_expect[i])
+  }
+  if !grad_test {
+    t.Error("Grad test error for addition, test point 2, ", grad_test_points[1])
+  }
+
+  //subtraction grad tests.
+  grad = sub.Gradient(grad_test_points[0])
+  grad_expect = b.Gradient(grad_test_points[0])
+  grad_test = true
+  for i := 0; i < len(grad); i ++ {
+    grad_test = grad_test && (grad[i] == -grad_expect[i])
+  }
+  if !grad_test {
+    t.Error("Grad test error for subtraction, test point 1, ", grad_test_points[0])
+  }
+
+  grad = sub.Gradient(grad_test_points[1])
+  grad_expect = b.Gradient(grad_test_points[1])
+  grad_test = true
+  for i := 0; i < len(grad); i ++ {
+    grad_test = grad_test && (grad[i] == -grad_expect[i])
+  }
+  if !grad_test {
+    t.Error("Grad test error for subtraction, test point 2, ", grad_test_points[1])
+  }
+
+  //intersection grad tests.
+  grad = sec.Gradient(grad_test_points[0])
+  grad_expect = b.Gradient(grad_test_points[0])
+  grad_test = true
+  for i := 0; i < len(grad); i ++ {
+    grad_test = grad_test && (grad[i] == grad_expect[i])
+  }
+  if !grad_test {
+    t.Error("Grad test error for intersection and test point 1, ", grad_test_points[0])
+  }
+
+  grad = sec.Gradient(grad_test_points[1])
+  grad_expect = a.Gradient(grad_test_points[1])
+  grad_test = true
+  for i := 0; i < len(grad); i ++ {
+    grad_test = grad_test && (grad[i] == grad_expect[i])
+  }
+  if !grad_test {
+    t.Error("Grad test error for intersection and test point 2, ", grad_test_points[1])
+  }
+
+  //TODO intersection tests
 }

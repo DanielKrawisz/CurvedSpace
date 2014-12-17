@@ -6,6 +6,8 @@ import "../test"
 
 var err_bs float64 = 0.000001
 
+//TODO a lot of tests! 
+
 func TestNewSphere(t *testing.T) {
   if NewSphere(nil, 1) != nil {
     t.Error("sphere position cannot be nil.")

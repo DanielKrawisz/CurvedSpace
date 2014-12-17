@@ -15,7 +15,8 @@ import "../test"
 //TODO test intersections. 
 
 //The error parameter. 
-var err_poly float64 = .000001
+var err_poly float64 = .00001
+var h_d float64 = .0000001
 
 //Inefficient functions for contracting tensors. Testing use only! 
 func contractSymmetric4Tensor(t [][][][]float64, x []float64 ) [][][]float64 {
@@ -126,7 +127,7 @@ func TestLinear(t *testing.T) {
       b[i] = float64(test.RandSign()) * math.Exp(test.RandFloat(-4, 4))  
     }
 
-    surface := &LinearCurve{dim, b, a}
+    surface := &linearSurface{dim, b, a}
 
     //Test 3 random points. 
     for p := 0; p < 3; p ++ {
@@ -143,8 +144,8 @@ func TestLinear(t *testing.T) {
         t.Error("linear surface error point ", point, "; expected ", expect, ", got ", val)
       }
 
-      /*grad := surface.Gradient(point)
-      grad_exp := testGradient(surface, point, .000000000001)
+      grad := surface.Gradient(point)
+      grad_exp := testGradient(surface, point, err_poly)
 
       var grad_match bool = true
 
@@ -154,7 +155,7 @@ func TestLinear(t *testing.T) {
 
       if !grad_match {
         t.Error("linear surface defined by b = ", b, "grad error. Expected ", grad_exp, ", got ", grad)
-      }*/
+      }
     }
   }
 }
@@ -181,7 +182,7 @@ func TestQuadratic(t *testing.T) {
       } 
     }
 
-    surface := &QuadraticCurve{dim, c, b, 0}
+    surface := &quadraticSurface{dim, c, b, 0}
 
     //Test 5 random points. 
     for p := 0; p < 5; p ++ {
@@ -195,6 +196,19 @@ func TestQuadratic(t *testing.T) {
 
       if ! test.CloseEnough(val, expect, err_poly) {
         t.Error("quadratic surface defined by c = ", c, ", b = 0, a = 0 has error point ", point, "; expected ", expect, ", got ", val)
+      }
+
+      grad := surface.Gradient(point)
+      grad_exp := testGradient(surface, point, err_poly)
+
+      var grad_match bool = true
+
+      for i := 0; i < dim; i++ {
+        grad_match = grad_match && test.CloseEnough(grad[i], grad_exp[i], err_poly)
+      }
+
+      if !grad_match {
+        t.Error("quadratic surface defined by c = ", c, ", b = 0, a = 0; grad error at point ", point, ". Expected ", grad_exp, ", got ", grad)
       }
     }
   }
@@ -219,7 +233,7 @@ func TestQuadratic(t *testing.T) {
       } 
     }
 
-    surface := &QuadraticCurve{dim, c, b, a}
+    surface := &quadraticSurface{dim, c, b, a}
 
     //Test 5 random points. 
     for p := 0; p < 5; p ++ {
@@ -235,8 +249,8 @@ func TestQuadratic(t *testing.T) {
         t.Error("quadratic surface defined by c = ", c, ", b = ", b, ", a = ", a, " has error point ", point, "; expected ", expect, ", got ", val)
       }
 
-      /*grad := surface.Gradient(point)
-      grad_exp := testGradient(surface, point, .000001)
+      grad := surface.Gradient(point)
+      grad_exp := testGradient(surface, point, err_poly)
 
       var grad_match bool = true
 
@@ -245,8 +259,8 @@ func TestQuadratic(t *testing.T) {
       }
 
       if !grad_match {
-        t.Error("quadratic surface defined by c = ", c, ", b = ", b, ", a = ", a, " grad error. Expected ", grad_exp, ", got ", grad)
-      }*/
+        t.Error("quadratic surface defined by c = ", c, ", b = ", b, ", a = ", a, " grad error at point ", point, ". Expected ", grad_exp, ", got ", grad)
+      }
     }
   }
 }
@@ -280,7 +294,7 @@ func TestCubic(t *testing.T) {
       } 
     }
 
-    surface := &CubicCurve{dim, d, c, b, a}
+    surface := &cubicSurface{dim, d, c, b, a}
 
     //Test 5 random points. 
     for p := 0; p < 5; p ++ {
@@ -297,8 +311,8 @@ func TestCubic(t *testing.T) {
         t.Error("cubic surface defined by d = ", d, ", c = ", c, ", b = ", b, ", a = ", a, " error point ", point, "; expected ", expect, ", got ", val)
       }
 
-      /*grad := surface.Gradient(point)
-      grad_exp := testGradient(surface, point, .000000001)
+      grad := surface.Gradient(point)
+      grad_exp := testGradient(surface, point, err_poly)
 
       var grad_match bool = true
 
@@ -308,7 +322,7 @@ func TestCubic(t *testing.T) {
 
       if !grad_match {
         t.Error("quadratic surface defined by c = ", c, ", b = ", b, ", a = ", a, " grad error. Expected ", grad_exp, ", got ", grad)
-      }*/
+      }
     }
   }
 }
@@ -353,7 +367,7 @@ func TestQuartic(t *testing.T) {
       } 
     }
 
-    surface := &QuarticCurve{dim, e, d, c, b, 0.0}
+    surface := &quarticSurface{dim, e, d, c, b, 0.0}
 
     //Test 5 random points. 
     for p := 0; p < 5; p ++ {
@@ -410,7 +424,7 @@ func TestQuartic(t *testing.T) {
       } 
     }
 
-    surface := &QuarticCurve{dim, e, d, c, b, a}
+    surface := &quarticSurface{dim, e, d, c, b, a}
 
     //Test 5 random points. 
     for p := 0; p < 5; p ++ {
@@ -430,7 +444,7 @@ func TestQuartic(t *testing.T) {
       }
 
       /*grad := surface.Gradient(point)
-      grad_exp := testGradient(surface, point, .000000001)
+      grad_exp := testGradient(surface, point, err_poly)
 
       var grad_match bool = true
 

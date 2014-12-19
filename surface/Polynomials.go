@@ -408,6 +408,11 @@ func (s *quarticSurface) Gradient(x []float64) []float64 {
         for index[3] = 0; index[3] < s.dimension; index[3] ++ {
 
           for inverse[1] > 0 && index[3] > index[ordering[2][inverse[1] - 1]] {
+            swap = ordering[2][inverse[1]]
+            ordering[2][inverse[1]] = ordering[2][inverse[1] - 1]
+            ordering[2][inverse[1] - 1] = swap
+
+            inverse[1] --
           }
 
           z[index[0]] += s.e[index[ordering[2][0]]][index[ordering[2][1]]][index[ordering[2][2]]][index[ordering[2][3]]] *
@@ -420,7 +425,7 @@ func (s *quarticSurface) Gradient(x []float64) []float64 {
   return z
 }
 
-//TODO: must simplify for testing purposes. 
+//TODO: must simplify so as to be easier to test. 
 //Solving for e (x + u v)^4 + d (x + u v)^3 + c (x + u v)^2 + b (x + u v) + a == 0
 func (s *quarticSurface) Intersection(x, v []float64) []float64 {
   var cxx, cvx, cvv, bx, bv, dvvv, dxxx, dvvx, dvxx, evvvv, evvvx, evvxx, evxxx, exxxx float64

@@ -1,6 +1,8 @@
 package surface
 
-//TODO: test
+//TODO: test. It should be ok to test only the cases in which it returns
+//nil because this function is used by other functions and if those functions
+//work, this one will. 
 //A general quadratic surface from a central point and a list of vectors
 //defining a quadratic form on the coordinates. The vectors do not need
 //to satisfy any particular properties, but a set which is all normal
@@ -48,46 +50,80 @@ func NewQuadraticSurfaceByCenterVectorList(p []float64, v [][]float64, r2 float6
   return &quadraticSurface{dim, c, b, a}
 }
 
-//A surface that consists of two parallel planes.
+//A surface that is infinite in some directions and finite in others.
+//The vectors define the finite directions. 
 //May return nil. 
-func NewBiplane(point []float64, vector []float64, dist float64) Surface {
-  if point == nil || vector == nil {
+func NewInfiniteCylinder(p []float64, vector [][]float64, dist float64) Surface {
+  if p == nil || vector == nil {
     return nil
   }
-  if len(point) != len(vector) {
+  if len(p) < len(vector) {
     return nil
   }
-  dim := len(point)
-  v := make([][]float64, dim) 
-  v[0] = vector
-  for i := 1; i < dim; i ++ {
-    v[i] = make([]float64, dim)
+
+  var i int
+  dim := len(p)
+  for i = 0; i < len(vector); i ++ {
+    if len(vector[i]) != dim {
+      return nil
+    }
   }
 
-  return NewQuadraticSurfaceByCenterVectorList(point, v, dist*dist)
-}
+  v := make([][]float64, dim)
 
-//A surface that consists of two parallel planes.
-//May return nil. 
-/*func NewInfiniteCylinder(point []float64, vector []float64, dist float64) Surface {
-  
+  for i = 0; i < len(vector); i ++ {
+    v[i] = vector[i]
+  }
+  for ; i < dim; i ++ {
+    x := make([]float64, dim)
+    v[i] = x
+  }
+
+  return NewQuadraticSurfaceByCenterVectorList(p, v, dist*dist)
 }
 
 //Vectors are made to be orthonormal. 
-func NewInfinite2SheetHyperboloid(point []float64, vector []float64) Surface {
-  
-}
+func NewInfiniteHyperboloid(p []float64, vp, vn [][]float64) Surface {
+  if p == nil || vp == nil || vn == nil {
+    return nil
+  }
+  if len(p) != len(vp) + len(vn) {
+    return nil
+  }
 
-//Given by the point at the center and the 
-func NewInfinite1SheetHyperboloid(p []float64, a, b, c []float64) Surface {
-  
+  dim := len(p)
+  for i := 0; i < len(vp); i ++ {
+    if len(vp[i]) != dim {
+      return nil
+    }
+  }
+  for i := 0; i < len(vn); i ++ {
+    if len(vn[i]) != dim {
+      return nil
+    }
+  }
+
+  v := make([][]float64, len(vp) + len(vn))
+
+  for i := 0; i < len(vp); i ++ {
+    v[i] = vp[i]
+  }
+  for i := 0; i < len(vn); i ++ {
+    x := make([]float64, dim)
+    for j := 0; j < dim; j ++ {
+      x[j] = -v[len(vp) + i][j]
+    }
+    v[i] = x
+  }
+
+  return NewQuadraticSurfaceByCenterVectorList(p, v, 1)
 }
 
 //Given by the point at the apex of the paraboloid, 
 //a set of vectors defining the symmetric tensor and a set
 //defining the vector part of the quadratic surface. 
 //May return nil.
-func NewInfiniteParaboloid(p []float64, vc [][]float64, vb [][]float64) Surface {
+/*func NewInfiniteParaboloid(p []float64, vc [][]float64, vb [][]float64) Surface {
   if p == nil || vc == nil || vb == nil {
     return nil
   }
@@ -95,9 +131,23 @@ func NewInfiniteParaboloid(p []float64, vc [][]float64, vb [][]float64) Surface 
     return nil
   }
 
-  
-}
+  dim := len(p)
+  for i := 0; i < len(vp); i ++ {
+    if len(vp[i]) != dim {
+      return nil
+    }
+  }
+  for i := 0; i < len(vn); i ++ {
+    if len(vn[i]) != dim {
+      return nil
+    }
+  }
 
+  
+}*/
+
+//The first set of vectors define what is inside the cone, the rest define
+//what is outside. 
 func NewInfiniteCone(p []float64, vp [][]float64, vn [][]float64) Surface {
   if p == nil || vp == nil || vn == nil {
     return nil
@@ -118,5 +168,19 @@ func NewInfiniteCone(p []float64, vp [][]float64, vn [][]float64) Surface {
     }
   }
 
-  
-}*/
+  v := make([][]float64, len(vp) + len(vn))
+
+  for i := 0; i < len(vp); i ++ {
+    v[i] = vp[i]
+  }
+  for i := 0; i < len(vn); i ++ {
+    x := make([]float64, dim)
+    for j := 0; j < dim; j ++ {
+      x[j] = -v[len(vp) + i][j]
+    }
+    v[i] = x
+  }
+
+  return NewQuadraticSurfaceByCenterVectorList(p, v, 0)
+}
+

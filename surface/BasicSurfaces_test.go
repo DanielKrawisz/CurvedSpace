@@ -7,6 +7,7 @@ import "../test"
 var err_bs float64 = 0.000001
 
 //TODO a lot of tests! 
+//TODO intersection tests
 
 func TestNewSphere(t *testing.T) {
   if NewSphere(nil, 1) != nil {
@@ -40,10 +41,6 @@ func TestNewSphere(t *testing.T) {
     t.Error("Invalid sphere value 4.")
   }  
 }
-
-func TestNewPlane(t *testing.T) {
-
-} 
 
 func TestSphereF(t *testing.T) {
   for i := 0; i < 10; i++ {
@@ -84,9 +81,15 @@ func TestSphereF(t *testing.T) {
   }
 }
 
-func TestPlaneF(t *testing.T) {
-  
-}
+func TestSphereInterior(t *testing.T) { 
+  sphere := NewSphere([]float64{0,0}, 2) 
+  if !sphere.Interior([]float64{0,0}) {
+    t.Error("Sphere interior error 1")
+  }
+  if sphere.Interior([]float64{4,0}) {
+    t.Error("Sphere interior error 2")
+  }
+} 
 
 //Tests some preset cases for sphere intersection. 
 func TestSphereIntersectionSetCases(t *testing.T) {
@@ -147,4 +150,135 @@ func TestSphereIntersectionSetCases(t *testing.T) {
       }
     }
   }
+}
+
+func TestSphereIntersection(t *testing.T) {
+  
+}
+
+func TestNewPlane(t *testing.T) {
+  
+}
+
+func TestPlaneF(t *testing.T) {
+  
+}
+
+func TestPlaneInterior(t *testing.T) {
+  
+}
+
+func TestNewQuadraticSurface(t *testing.T) {
+  if nil != NewQuadraticSurfaceByCenterVectorList(nil, [][]float64{[]float64{1,0}, []float64{0, 1}}, 1) {
+    t.Error("New quadratic surface error 1")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, nil, 1) {
+    t.Error("New quadratic surface error 2")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{nil, []float64{0, 1}}, 1) {
+    t.Error("New quadratic surface error 3")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}}, 1) {
+    t.Error("New quadratic surface error 4")
+  }
+}
+
+func TestNewEllipsoid(t *testing.T) {
+  
+}
+
+func TestEllipsoidF(t *testing.T) {
+  
+}
+
+func TestEllipsoidInterior(t *testing.T) {
+  
+}
+
+func TestEllipsiodGradient(t *testing.T) {
+  
+}
+
+func TestEllipsiodIntersection(t *testing.T) {
+  
+}
+
+func TestNewInfiniteCylinder(t *testing.T) {
+  
+}
+
+func TestInfiniteCylinderF(t *testing.T) {
+  
+}
+
+func TestInfiniteCylinderInterior(t *testing.T) {
+  
+}
+
+func TestInfiniteCylinderGradient(t *testing.T) {
+  
+}
+
+func TestInfiniteCylinderIntersection(t *testing.T) {
+  
+}
+
+func TestNewInfiniteCone(t *testing.T) {
+  
+}
+
+func TestInfiniteConeF(t *testing.T) {
+  
+}
+
+func TestInfiniteConeInterior(t *testing.T) {
+  
+}
+
+func TestInfiniteConeGradient(t *testing.T) {
+  
+}
+
+func TestInfiniteConeIntersection(t *testing.T) {
+  
+}
+
+func TestNewInfiniteParaboloid(t *testing.T) {
+  
+}
+
+func TestInfiniteParaboloidF(t *testing.T) {
+  
+}
+
+func TestInfiniteParaboloidInterior(t *testing.T) {
+  
+}
+
+func TestInfiniteParaboloidGradient(t *testing.T) {
+  
+}
+
+func TestInfiniteParaboloidIntersection(t *testing.T) {
+  
+}
+
+func TestNewInfiniteHyperboloid(t *testing.T) {
+  
+}
+
+func TestInfiniteHyperboloidF(t *testing.T) {
+  
+}
+
+func TestInfiniteHyperboloidInterior(t *testing.T) {
+  
+}
+
+func TestInfiniteHyperboloidGradient(t *testing.T) {
+  
+}
+
+func TestInfiniteHyperboloidIntersection(t *testing.T) {
+  
 }

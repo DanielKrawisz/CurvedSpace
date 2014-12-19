@@ -5,7 +5,7 @@ import "./polynomials"
 //Use polynomial surfaces and solid constructive geometry to
 //make some primitive shapes.
 
-//TODO cylinder, cone, torus, paraboloid, hyperboloid, paralepiped. 
+//TODO cylinder, cone, paraboloid, hyperboloid, paralepiped, torus. 
 
 type Sphere interface {
   Surface
@@ -125,5 +125,3 @@ func NewElipsoidByCenterBasis(point []float64, vec [][]float64, param []float64)
 
   return NewQuadraticSurfaceByCenterVectorList(point, v, 1)
 }
-
-

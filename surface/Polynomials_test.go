@@ -443,7 +443,7 @@ func TestQuartic(t *testing.T) {
         t.Error("quartic surface e = ", e, ", d = ", d, ", c = ", c, ", b = ", b, ", a = ", a," error point ", point, "; expected ", expect, ", got ", val)
       }
 
-      /*grad := surface.Gradient(point)
+      grad := surface.Gradient(point)
       grad_exp := testGradient(surface, point, err_poly)
 
       var grad_match bool = true
@@ -454,7 +454,7 @@ func TestQuartic(t *testing.T) {
 
       if !grad_match {
         t.Error("quadratic surface defined by c = ", c, ", b = ", b, ", a = ", a, " grad error. Expected ", grad_exp, ", got ", grad)
-      }*/
+      }
     }
   }
 }

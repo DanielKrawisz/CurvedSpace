@@ -1,11 +1,13 @@
 package surface
 
 import "./polynomials"
+import "fmt"
+import "strings"
 
 //Use polynomial surfaces and solid constructive geometry to
 //make some primitive shapes.
 
-//TODO cylinder, cone, paraboloid, hyperboloid, paralepiped, torus. 
+//TODO cone, paraboloid, hyperboloid, paralepiped, torus. 
 
 type Sphere interface {
   Surface
@@ -16,8 +18,12 @@ type Sphere interface {
 type sphere struct {
   dim int
   p []float64
-  p2 float64
   r2 float64 //Must not be negative; may be zero or infinity.
+  p2 float64 //A pre-computed number. 
+}
+
+func (s *sphere) String() string {
+  return strings.Join([]string{"sphere{", fmt.Sprint(s.p), ", ", fmt.Sprint(s.r2), "}"}, "")
 }
 
 func (s *sphere) R2() float64 {
@@ -75,26 +81,7 @@ func NewSphere(p []float64, r float64) Sphere {
   for i := 0; i < len(p); i++ {
     p2 += p[i] * p[i]
   }
-  return &sphere{len(p), p, p2, r*r}
-}
-
-//May return nil
-func NewPlaneByPointAndNormal(point, norm []float64) Surface {
-  if point == nil || norm == nil {return nil}
-  if len(point) != len(norm) {return nil}
-  var b2, a float64 = 0, 0
-  for i := 0; i < len(norm); i++ {
-    b2 += norm[i] * norm[i]
-    a += norm[i] * point[i]
-  }
-  //Ensure that norm is actually a normalizable vector. 
-  if b2 == 0.0 {return nil}
-  a /= b2
-  b := make([]float64, len(norm))
-  for i := 0; i < len(point); i++ {
-    b[i] = norm[i] / b2
-  }
-  return &linearSurface{len(norm), b, a}
+  return &sphere{len(p), p, r*r, p2}
 }
 
 //TODO tests
@@ -105,6 +92,9 @@ func NewPlaneByPointAndNormal(point, norm []float64) Surface {
 //function does not require them to be. 
 //May return nil
 func NewElipsoidByCenterBasis(point []float64, vec [][]float64, param []float64) Surface {
+  if point == nil || vec == nil || param == nil {
+    return nil
+  }
   if len(point) != len(param) || len(point) != len(vec) {
     return nil
   }
@@ -112,7 +102,7 @@ func NewElipsoidByCenterBasis(point []float64, vec [][]float64, param []float64)
   v := make([][]float64, len(point))
 
   for i := 0; i < len(point); i ++ {
-    if len(v[i]) != len(point) {
+    if len(vec[i]) != len(point) {
       return nil
     }
 
@@ -123,5 +113,63 @@ func NewElipsoidByCenterBasis(point []float64, vec [][]float64, param []float64)
     }
   }
 
-  return NewQuadraticSurfaceByCenterVectorList(point, v, 1)
+  return NewQuadraticSurfaceByCenterVectorList(point, v, [][]float64{}, make([]float64, len(point)), 1)
 }
+
+//A surface that is infinite in some directions and finite in others.
+//The vectors define the finite directions. 
+//May return nil. 
+func NewInfiniteCylinder(p []float64, vector [][]float64) Surface {
+
+  return NewQuadraticSurfaceByCenterVectorList(p, vector, [][]float64{}, make([]float64, len(p)), 1)
+}
+
+//Vectors are made to be orthonormal. 
+func NewInfiniteHyperboloid(p []float64, vp, vn [][]float64) Surface {
+  return NewQuadraticSurfaceByCenterVectorList(p, vp, vn, []float64{}, 1)
+}
+
+//Given by the point at the apex of the paraboloid, 
+//a set of vectors defining the symmetric tensor and a set
+//defining the vector part of the quadratic surface. 
+//May return nil.
+func NewInfiniteParaboloid(p []float64, vc [][]float64, vb []float64) Surface {
+  return NewQuadraticSurfaceByCenterVectorList(p, vc, [][]float64{}, vb, 0)
+}
+
+//The first set of vectors define what is inside the cone, the rest define
+//what is outside. 
+func NewInfiniteCone(p []float64, vp [][]float64, vn [][]float64) Surface {
+  return NewQuadraticSurfaceByCenterVectorList(p, vp, vn, []float64{}, 0)
+}
+
+//The intersection of two infinite cylinder objects. In 3 dimensions, this
+//just becomes a regular cylinder. Param gives the radii of the cylinder
+//in each direction. (so you can have an elliptical cylinder too)
+//May return nil
+func NewCylinder(p []float64, vp, vn [][]float64, param []float64) Surface {
+  if p == nil || vp == nil || vn == nil || param == nil {
+    return nil
+  }
+
+  dim := len(p)
+  if len(vp) + len(vn) != dim || len(param) != dim {
+    return nil
+  }
+
+  for i := 0; i < len(vp); i++ {
+    for j := 0; j < dim; j ++ {
+      vp[i][j] *= param[i]
+    }
+  }
+
+  for i := 0; i < len(vp); i++ {
+    for j := 0; j < dim; j ++ {
+      vn[i][j] *= param[i + len(vp)]
+    }
+  }
+
+  return NewIntersection(NewInfiniteCylinder(p, vp), NewInfiniteCylinder(p, vn))
+}
+
+

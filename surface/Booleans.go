@@ -1,6 +1,7 @@
 package surface
 
 import "math"
+import "strings"
 
 type Boolean interface {
   Surface
@@ -18,6 +19,10 @@ func (s *addition) SurfaceA() Surface {
 
 func (s *addition) SurfaceB() Surface {
   return s.b 
+}
+
+func (s *addition) String() string {
+  return strings.Join([]string{"addition{", s.a.String(), ", ", s.b.String(), "}"}, "")
 }
 
 //Assumes that a and b have been checked to have the 
@@ -93,6 +98,10 @@ func (s *intersection) SurfaceB() Surface {
   return s.b 
 }
 
+func (s *intersection) String() string {
+  return strings.Join([]string{"intersection{", s.a.String(), ", ", s.b.String(), "}"}, "")
+}
+
 //Assumes that a and b have been checked to have the 
 //same dimension when the object was created. 
 func (s *intersection) Dimension() int {
@@ -164,6 +173,10 @@ func (s *subtraction) SurfaceA() Surface {
 
 func (s *subtraction) SurfaceB() Surface {
   return s.b 
+}
+
+func (s *subtraction) String() string {
+  return strings.Join([]string{"subtraction{", s.a.String(), ", ", s.b.String(), "}"}, "")
 }
 
 //Assumes that a and b have been checked to have the 

@@ -23,6 +23,8 @@ type Surface interface {
   Interior(x []float64) bool
   //The gradianThe normal to a surface at a given point on the surface.
   Gradient(x []float64) []float64
+  //Turn the surface into a string for testing purposes.
+  String() string
 }
 
 //A function to test gradients with numerical approximation against
@@ -60,6 +62,8 @@ func testGradient(s Surface, x []float64, e float64) []float64 {
 //x and x + v should be on different sides of the surface. The
 //intersection is assumed to be between these two points. 
 func testIntersection(s Surface, x []float64, v []float64, max_steps int) []float64 {
+  //max_steps = 5
+
   var u0, u1, u2 float64 = 0.0, 1.0, 0.0
   p0 := make([]float64, len(x))
   p1 := make([]float64, len(x))
@@ -95,10 +99,10 @@ func testIntersection(s Surface, x []float64, v []float64, max_steps int) []floa
   for i := 0; i < max_steps; i ++ {
     if u0 == u1 {return []float64{u0}}
 
-    u2 = u0 + (u0 - u1) * f0 / (f0 - f1)
+    u2 = u0 + (u1 - u0) * f0 / (f0 - f1)
 
     for j := 0; j < len(x); j ++ {
-      p2[i] = p0[i] + u2 * p1[i]
+      p2[j] = p0[j] + u2 * v[j]
     }
 
     f2 = s.F(p2)
@@ -113,8 +117,8 @@ func testIntersection(s Surface, x []float64, v []float64, max_steps int) []floa
   }
 
   if swap {
-    return []float64{1 - u0}
+    return []float64{1 - u2}
   } else {
-    return []float64{u0}
+    return []float64{u2}
   }
 }

@@ -10,13 +10,13 @@ import "../test"
 //perform the tensor algebra that can be used to check all the 
 //complicated formulas in main file. 
 
-//TODO get grad tester to work.
-
 //TODO test intersections. 
 
+//TODO Need to adjust error allowance to take propagation of error into account
+//or use a more accurate numerical grad tester with 128-bit floats. 
 //The error parameter. 
-var err_poly float64 = .00001
-var h_d float64 = .0000001
+var err_poly float64 = .001
+var h_d float64 = .000001
 
 //Inefficient functions for contracting tensors. Testing use only! 
 func contractSymmetric4Tensor(t [][][][]float64, x []float64 ) [][][]float64 {
@@ -150,13 +150,86 @@ func TestLinear(t *testing.T) {
       var grad_match bool = true
 
       for i := 0; i < dim; i++ {
-        grad_match = grad_match && test.CloseEnough(grad[i], grad_exp[i], err_poly)
+        //TODO using less error than usual here. 
+        grad_match = grad_match && test.CloseEnough(grad[i], grad_exp[i], .0001)
       }
 
       if !grad_match {
         t.Error("linear surface defined by b = ", b, "grad error. Expected ", grad_exp, ", got ", grad)
       }
     }
+  }
+}
+
+//The strategy of this test is to ensure that one point of the segment
+//is inside and the other is outside the surface. There should always
+//be one intersection. 
+func TestLinearIntersection(t *testing.T) {
+  dim := 3
+  for i := 0; i < 4; i ++ {
+    plane := &linearSurface{3, []float64{test.RandFloat(1, 2), test.RandFloat(1, 2), test.RandFloat(1, 2)},
+      test.RandFloat(-1, 1)}
+
+    for j := 0; j < 4; j ++ {
+
+      p2 := []float64{test.RandFloat(4, 6), test.RandFloat(4, 6), test.RandFloat(4, 6)}
+      p1 := []float64{test.RandFloat(-4, -6), test.RandFloat(-4, -6), test.RandFloat(-4, -6)}
+      v := make([]float64, len(p1))
+      for i := 0; i < len(p1); i ++ {
+        v[i] = p2[i] - p1[i]
+      }
+
+      u := plane.Intersection(p1, v)
+      u_test := testIntersection(plane, p1, v, 100)
+
+      if len(u) == 0 {
+        t.Error("No intersection point found for ", plane.String(), ", p1 = ", p1, "; v = ", v)
+        return 
+      } 
+
+      if len(u_test) == 0 {
+        t.Error("No test intersection point found for ", plane.String(), ", p1 = ", p1, "; v = ", v)
+        return
+      }
+
+      intersection_point := make([]float64, dim)
+      for i := 0; i < dim; i++ {
+        intersection_point[i] = p1[i] + u[0] * v[i]
+      }
+
+      if !test.CloseEnough(plane.F(intersection_point), 0.0, err_bs) {
+        t.Error("intersection error for linear surface {",
+          plane.b, ", ", plane.a, "} p1 = ", p1, "; v = ", v, "; u = ", u, "; F = ", plane.F(intersection_point))
+      }
+
+      close_enough := false
+      for _, uu := range u {
+        if test.CloseEnough(u_test[0], uu, err_poly) {
+          close_enough = true
+          break
+        }
+      }
+
+      if !close_enough {
+        t.Error("test point and intersection point do not agree: u = ", u, "; u_test = ", u_test)
+      }
+    }
+  }
+}
+
+func TestNewPlane(t *testing.T) {
+  if nil != NewPlaneByPointAndNormal(nil, []float64{1, 0}) {
+    t.Error("New linear surface error 1")
+  }
+  if nil != NewPlaneByPointAndNormal([]float64{1, 0}, nil) {
+    t.Error("New linear surface error 2")
+  }
+  if nil != NewPlaneByPointAndNormal([]float64{1, 0}, []float64{0, 0}) {
+    t.Error("New linear surface error 3")
+  }
+
+  if nil == NewPlaneByPointAndNormal([]float64{1, 0}, []float64{1, 0}) {
+    t.Error("New linear surface error 4")
   }
 }
 
@@ -199,7 +272,7 @@ func TestQuadratic(t *testing.T) {
       }
 
       grad := surface.Gradient(point)
-      grad_exp := testGradient(surface, point, err_poly)
+      grad_exp := testGradient(surface, point, h_d)
 
       var grad_match bool = true
 
@@ -265,6 +338,173 @@ func TestQuadratic(t *testing.T) {
   }
 }
 
+func TestNewQuadraticSurface(t *testing.T) {
+  if nil != NewQuadraticSurfaceByCenterVectorList(nil, [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New quadratic surface error 1")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New quadratic surface error 2")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0}, [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New quadratic surface error 3")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, nil, [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New quadratic surface error 4")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{}, nil, []float64{0,0}, 1) {
+    t.Error("New quadratic surface error 5")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{[]float64{0, 1}}, []float64{0, 0}, 1) {
+    t.Error("New quadratic surface error 6")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{nil, []float64{0, 1}},
+      [][]float64{}, []float64{0, 0}, 1) {
+    t.Error("New quadratic surface error 7")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1,0}},
+      [][]float64{nil}, []float64{0, 0}, 1) {
+    t.Error("New quadratic surface error 8")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1, 0, 0}},
+      [][]float64{[]float64{1, 0}}, []float64{0, 0}, 1) {
+    t.Error("New quadratic surface error 9")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1, 0}},
+      [][]float64{[]float64{1, 0, 0}}, []float64{0, 0}, 1) {
+    t.Error("New quadratic surface error 10")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1}},
+      [][]float64{[]float64{1, 0}}, []float64{0, 0}, 1) {
+    t.Error("New quadratic surface error 11")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1, 0}},
+      [][]float64{[]float64{1}}, []float64{0, 0}, 1) {
+    t.Error("New quadratic surface error 12")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1, 0}},
+      [][]float64{[]float64{1, 0}}, nil, 1) {
+    t.Error("New quadratic surface error 13")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1, 0}},
+      [][]float64{[]float64{1, 0}}, []float64{0, 0, 0}, 1) {
+    t.Error("New quadratic surface error 14")
+  }
+  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1, 0}},
+      [][]float64{[]float64{1, 0}}, []float64{0}, 1) {
+    t.Error("New quadratic surface error 15")
+  }
+
+  if nil == NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New quadratic surface error 16")
+  }
+  if nil == NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1,0}},
+      [][]float64{[]float64{0, 1}}, []float64{0,0}, 1) {
+    t.Error("New quadratic surface error 17")
+  }
+  if nil == NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1,0}},
+      [][]float64{}, []float64{0, 0}, 1) {
+    t.Error("New quadratic surface error 18")
+  }
+}
+
+//The strategy of this test is to ensure that one point of the segment
+//is inside and the other is outside the surface. There should always
+//be one intersection. Thus, the kind of quadratic surface being tested
+//is somewhat restricted, but that shouldn't matter because the quadratic
+//formula underlying it has been elsewhere tested in all its generality
+//and this test only needs to ensure that the intersection problem is
+//being translated into a quadratic formula properly. 
+func TestQuadraticIntersection(t *testing.T) {
+  test.SetSeed(7820)
+
+  dim := 3
+  for i := 0; i < 4; i ++ {
+    basis := [][]float64{[]float64{1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
+      []float64{test.RandFloat(-.25, .25), 1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
+      []float64{test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), 1 + test.RandFloat(-.25, .25)}}
+    point := []float64{test.RandFloat(-2, 2), test.RandFloat(-2, 2), test.RandFloat(-2, 2)}
+    a := test.RandFloat(8, 80)
+
+    quadratic := NewQuadraticSurfaceByCenterVectorList(point, basis, [][]float64{}, make([]float64, dim), a)
+
+    for j := 0; j < 4; j ++ {
+
+      var p1, p2, v []float64
+
+      n := 0
+      for {
+        p1 = []float64{test.RandFloat(-10, 10), test.RandFloat(-10, 10), test.RandFloat(-10, 10)}
+        //fmt.Println("X trial: ", n, "; ", quadratic, "; point = ", p1, " F = ", quadratic.F(p1)) 
+        n++
+        if !quadratic.Interior(p1) { break }
+        if n > 100 { return }
+      }
+
+      n = 0
+      for {
+        //fmt.Println("Y trial ", n) 
+        n++
+        p2 = []float64{test.RandFloat(point[0] - 1, point[0] + 1),
+          test.RandFloat(point[1] - 1, point[1] + 1), test.RandFloat(point[2] - 1, point[2] + 1)}
+        if quadratic.Interior(p2) { break }
+      }
+
+      v = make([]float64, len(p1))
+      for i := 0; i < len(p1); i ++ {
+        v[i] = p2[i] - p1[i]
+      }
+
+      u := quadratic.Intersection(p1, v)
+      u_test := testIntersection(quadratic, p1, v, 100)
+
+      if len(u) == 0 {
+        t.Error("No intersection point found for ", quadratic.String(), ", p1 = ", p1, "; v = ", v)
+        return 
+      } 
+
+      if len(u_test) == 0 {
+        t.Error("No test intersection point found for ", quadratic.String(), ", p1 = ", p1, "; v = ", v)
+        return
+      }
+
+      intersection_point := make([]float64, dim)
+
+      close_enough_test := false
+      close_enough_F := true
+      f := make([]float64, len(u))
+      for q, uu := range u {
+        for i := 0; i < dim; i++ {
+          intersection_point[i] = p1[i] + uu * v[i]
+        }
+
+        f[q] = quadratic.F(intersection_point)
+
+        if !test.CloseEnough(f[q], 0.0, err_bs) {
+          close_enough_F = false
+        }
+
+        if test.CloseEnough(u_test[0], uu, err_bs) {
+          close_enough_test = true
+        }
+      }
+
+      if !close_enough_F {
+        t.Error("intersection error for ", quadratic.String(), ", p1 = ",
+          p1, "; v = ", v, "; u = ", u, "; F = ", f)
+      }
+
+      if !close_enough_test {
+        t.Error("test point and intersection point do not agree: u = ", u, "; u_test = ", u_test)
+      }
+    }
+  }
+}
+
 func TestCubic(t *testing.T) {
   dim := 4
   for trial := 0; trial < 5; trial ++ {
@@ -325,6 +565,13 @@ func TestCubic(t *testing.T) {
       }
     }
   }
+}
+
+//The strategy of this test is to ensure that one point of the segment
+//is inside and the other is outside the surface. There should always
+//be one intersection. 
+func TestCubicIntersection(t *testing.T) {
+
 }
 
 func TestQuartic(t *testing.T) {
@@ -458,3 +705,11 @@ func TestQuartic(t *testing.T) {
     }
   }
 }
+
+//The strategy of this test is to ensure that one point of the segment
+//is inside and the other is outside the surface. There should always
+//be one intersection. 
+func TestQuarticIntersection(t *testing.T) {
+  
+}
+

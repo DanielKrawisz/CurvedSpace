@@ -1,6 +1,8 @@
 package surface
 
 import "./polynomials"
+import "strings"
+import "fmt"
 
 //Polynomial surfaces for degrees 1 to 4.
 //Since the solutions to the polynomials are already given, 
@@ -22,6 +24,10 @@ type linearSurface struct {
 
 func (s *linearSurface) Dimension() int {
   return s.dimension
+}
+
+func (s *linearSurface) String() string {
+  return strings.Join([]string{"linearSurface{", fmt.Sprint(s.b), ", ", fmt.Sprint(s.a), "}"}, "")
 }
 
 func (s *linearSurface) F(x []float64) float64 {
@@ -48,7 +54,7 @@ func (s *linearSurface) Gradient(x []float64) []float64 {
 func (s *linearSurface) Intersection(x, v []float64) []float64 {
   var f = s.F(x)
   var q float64 = 0
-  for i := 0; i < 0; i ++ {
+  for i := 0; i < s.dimension; i ++ {
     q += v[i] * s.b[i]
   }
   if q == 0.0 {
@@ -69,6 +75,10 @@ type quadraticSurface struct {
 
 func (s *quadraticSurface) Dimension() int {
   return s.dimension
+}
+
+func (s *quadraticSurface) String() string {
+  return strings.Join([]string{"quadraticSurface{", fmt.Sprint(s.c), ", ", fmt.Sprint(s.b), ", ", fmt.Sprint(s.a), "}"}, "")
 }
 
 func (s *quadraticSurface) F(x []float64) float64 {
@@ -119,7 +129,7 @@ func (s *quadraticSurface) Intersection(x, v []float64) []float64 {
 
   for i := 0; i < s.dimension; i ++ {
     bx += s.b[i]*x[i]
-    bv += s.b[i]*x[i]
+    bv += s.b[i]*v[i]
 
     for j := 0; j < i; j ++ { 
       cxx += 2 * s.c[i][j]*x[i]*x[j]
@@ -157,6 +167,11 @@ type cubicSurface struct {
 
 func (s *cubicSurface) Dimension() int {
   return s.dimension
+}
+
+func (s *cubicSurface) String() string {
+  return strings.Join([]string{"cubicSurface{", fmt.Sprint(s.d), ", ",
+    fmt.Sprint(s.c), ", ", fmt.Sprint(s.b), ", ", fmt.Sprint(s.a), "}"}, "")
 }
 
 func (s *cubicSurface) F(x []float64) float64 {
@@ -243,7 +258,7 @@ func (s *cubicSurface) Intersection(x, v []float64) []float64 {
 
   for i := 0; i < s.dimension; i ++ {
     bx += s.b[i]*x[i]
-    bv += s.b[i]*x[i]
+    bv += s.b[i]*v[i]
 
     for j := 0; j < i; j ++ { 
       cxx += 2 * s.c[i][j]*x[i]*x[j]
@@ -309,6 +324,11 @@ type quarticSurface struct {
 
 func (s *quarticSurface) Dimension() int {
   return s.dimension
+}
+
+func (s *quarticSurface) String() string {
+  return strings.Join([]string{"quarticSurface{", fmt.Sprint(s.e), ", ", fmt.Sprint(s.d), ", ",
+    fmt.Sprint(s.c), ", ", fmt.Sprint(s.b), ", ", fmt.Sprint(s.a), "}"}, "")
 }
 
 func (s *quarticSurface) F(x []float64) float64 {
@@ -432,7 +452,7 @@ func (s *quarticSurface) Intersection(x, v []float64) []float64 {
 
   for i := 0; i < s.dimension; i ++ {
     bx += s.b[i]*x[i]
-    bv += s.b[i]*x[i]
+    bv += s.b[i]*v[i]
 
     for j := 0; j < i; j ++ { 
       cxx += 2 * s.c[i][j]*x[i]*x[j]
@@ -458,7 +478,7 @@ func (s *quarticSurface) Intersection(x, v []float64) []float64 {
         }
 
         //TODO basically there is no way these formulas are all correct as written now. 
-        //they should be tested algebraically and be given unit tests. 
+        //Testing still not done. 
         evvvv += 12 * s.e[i][j][k][k] * v[i] * v[j] * v[k] * v[k]
         evvvx += s.e[i][j][k][k] * (6 * v[i] * v[j] * v[k] * x[k] + 3 * v[i] * v[k] * v[k] * x[j] + 3 * v[k] * v[j] * v[k] * x[i])
         evvxx += s.e[i][j][k][k] * (2 * v[i] * v[j] * x[k] * x[k] + 2 * v[k] * v[k] * x[i] * x[j] +
@@ -548,4 +568,114 @@ func (s *quarticSurface) Intersection(x, v []float64) []float64 {
   }
 
   return polynomials.QuarticFormula(pa / evvvv, pb / evvvv, pc / evvvv, pd / evvvv)
+}
+
+//May return nil
+func NewPlaneByPointAndNormal(point, norm []float64) Surface {
+  if point == nil || norm == nil {return nil}
+  if len(point) != len(norm) {return nil}
+
+  var b2, a float64 = 0, 0
+  for i := 0; i < len(norm); i++ {
+    b2 += norm[i] * norm[i]
+    a += norm[i] * point[i]
+  }
+
+  //Ensure that norm is actually a normalizable vector. 
+  if b2 == 0.0 {return nil}
+  a /= b2
+  b := make([]float64, len(norm))
+  for i := 0; i < len(point); i++ {
+    b[i] = norm[i] / b2
+  }
+  return &linearSurface{len(norm), b, a}
+}
+
+//A general quadratic surface from a central point and a list of vectors
+//defining a quadratic form on the coordinates. The vectors do not need
+//to satisfy any particular properties, but a set which is all normal
+//to one another is the most general possibility. 
+//
+//   p  - a vector that translates the entire curve. 
+//   vp - the vectors which are positive definite in c.
+//   vp - the vectors which are negative definite in c.
+//   y  - the linear component of the curve before the curve is translated by p.
+//   r2 - a linear component that is also independent if the effects of p. 
+//
+// (using some mixed notation here, but it works.)
+//  (x - p) (v_i v_i) (x - p) + b (x - p) + r2 == 0
+//  p.v_i v_i.p - x.v_i v_i.p + x.v_i v_i.x + y.x + y.p + r2 == 0
+//
+//May return nil
+func NewQuadraticSurfaceByCenterVectorList(p []float64, vp, vn [][]float64, y[] float64, r2 float64) Surface {
+  if p == nil || vp == nil || vn == nil || y == nil {
+    return nil
+  }
+
+  if len(p) < len(vp) + len(vn) || len(p) != len(y) {
+    return nil
+  }
+
+  dim := len(p)
+  for i := 0; i < len(vp); i++ {
+    if vp[i] == nil || len(vp[i]) != dim {
+      return nil
+    }
+  }
+  for i := 0; i < len(vn); i++ {
+    if vn[i] == nil || len(vn[i]) != dim {
+      return nil
+    }
+  }
+
+  var a float64 = r2
+  var b []float64 = make([]float64, dim)
+  var c [][]float64 = make([][]float64, dim)
+  var pv, py float64 = 0, 0
+
+  //Calculate pv and py. 
+  for i := 0; i < dim; i ++ {
+    c[i] = make([]float64, i + 1)
+
+    for j := 0; j < len(vp); j ++ {
+      pv += vp[j][i] * p[i]
+      b[i] += vp[j][i]
+    }
+    for j := 0; j < len(vn); j ++ {
+      pv -= vn[j][i] * p[i]
+      b[i] -= vn[j][i]
+    }
+
+    py += y[i] * p[i]
+  }
+
+  //Calculate b.
+  for i := 0; i < dim; i ++ {
+    b[i] *= pv
+    b[i] += y[i]
+
+    py += y[i] * p[i]
+  }
+
+  for i := 0; i < len(p); i ++ {
+    for j := 0; j <= i; j ++ {
+      c[i][j] = 0.0
+      for k := 0; k < len(vp); k ++ {
+        c[i][j] -= vp[k][i] * vp[k][j]
+      }
+      for k := 0; k < len(vn); k ++ {
+        c[i][j] += vn[k][i] * vn[k][j]
+      }
+    }
+  }
+
+  return &quadraticSurface{dim, c, b, a + py + pv * pv}
+}
+
+func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r2 float64) {
+  
+}
+
+func NewQuarticSurface(p []float64, vqp, vqn, vd, vp, vn [][]float64, y[] float64, r2 float64) {
+  
 }

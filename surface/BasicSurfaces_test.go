@@ -1,10 +1,10 @@
 package surface
 
 import "testing"
-import "sort"
 import "../test"
+import "sort"
 
-var err_bs float64 = 0.000001
+var err_bs float64 = 0.00001
 
 //TODO a lot of tests! 
 //TODO intersection tests
@@ -26,7 +26,7 @@ func TestNewSphere(t *testing.T) {
   }
 
   if !test.CloseEnough(s2.R2(), 4, err_bs) {
-    t.Error("Invalid sphere value 1.")
+    t.Error("Invalid sphere value 1: got ", s2.R2(), ", expected 4.")
   }  
 
   if !test.CloseEnough(s1.R2(), 4, err_bs) {
@@ -153,38 +153,107 @@ func TestSphereIntersectionSetCases(t *testing.T) {
 }
 
 func TestSphereIntersection(t *testing.T) {
-  
-}
+  for i := 0; i < 4; i ++ {
+    point := []float64{test.RandFloat(-2, 2), test.RandFloat(-2, 2)}
+    r := test.RandFloat(1, 2)
+    sphere := NewSphere(point, r)
 
-func TestNewPlane(t *testing.T) {
-  
-}
+    for j := 0; j < 4; j ++ {
+      var p1, p2 []float64
 
-func TestPlaneF(t *testing.T) {
-  
-}
+      for {
+        p2 = []float64{test.RandFloat(point[0] - r, point[0] + r), test.RandFloat(point[1] - r, point[1] + r)}
 
-func TestPlaneInterior(t *testing.T) {
-  
-}
+        if (p2[0] - point[0])*(p2[0] - point[0]) + (p2[1] - point[1])*(p2[1] - point[1]) < r*r {
+          break;
+        }
+      }
 
-func TestNewQuadraticSurface(t *testing.T) {
-  if nil != NewQuadraticSurfaceByCenterVectorList(nil, [][]float64{[]float64{1,0}, []float64{0, 1}}, 1) {
-    t.Error("New quadratic surface error 1")
-  }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, nil, 1) {
-    t.Error("New quadratic surface error 2")
-  }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{nil, []float64{0, 1}}, 1) {
-    t.Error("New quadratic surface error 3")
-  }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}}, 1) {
-    t.Error("New quadratic surface error 4")
+      for {
+        p1 = []float64{test.RandFloat(-10, 10), test.RandFloat(-10, 10)}
+
+        if (p1[0] - point[0])*(p1[0] - point[0]) + (p1[1] - point[1])*(p1[1] - point[1]) > r*r {
+          break;
+        }
+      }
+
+      v := make([]float64, len(p1))
+      for i := 0; i < len(p1); i ++ {
+        v[i] = p2[i] - p1[i]
+      }
+
+      u := sphere.Intersection(p1, v)
+      u_test := testIntersection(sphere, p1, v, 100)
+
+      if len(u) == 0 {
+        t.Error("No intersection point found for ", sphere.String(), " p1 = ", p1, "; v = ", v)
+        return 
+      } 
+
+      if len(u_test) == 0 {
+        t.Error("No test intersection point found for ", sphere.String(), " p1 = ", p1, "; v = ", v)
+        return
+      }
+
+      intersection_point := make([]float64, 2)
+
+      close_enough_test := false
+      close_enough_F := true
+      f := make([]float64, len(u))
+      for q, uu := range u {
+        for i := 0; i < 2; i++ {
+          intersection_point[i] = p1[i] + uu * v[i]
+        }
+
+        f[q] = sphere.F(intersection_point)
+
+        if !test.CloseEnough(f[q], 0.0, err_bs) {
+          close_enough_F = false
+        }
+
+        if test.CloseEnough(u_test[0], uu, err_bs) {
+          close_enough_test = true
+        }
+      }
+
+      if !close_enough_F {
+        t.Error("sphere intersection error for ", sphere.String(), ", p1 = ",
+          p1, "; v = ", v, "; u = ", u, "; F = ", f)
+      }
+
+      if !close_enough_test {
+        t.Error("test point and intersection point do not agree: u = ", u, "; u_test = ", u_test)
+      }
+    }
   }
 }
 
 func TestNewEllipsoid(t *testing.T) {
-  
+  if nil != NewElipsoidByCenterBasis(nil, [][]float64{[]float64{1,0}, []float64{0, 1}}, []float64{1, 1}) {
+    t.Error("New ellipsoid surface error 1")
+  }
+  if nil != NewElipsoidByCenterBasis([]float64{0,0}, nil, []float64{1, 1}) {
+    t.Error("New ellipsoid surface error 2")
+  }
+  if nil != NewElipsoidByCenterBasis([]float64{0,0}, [][]float64{nil, []float64{0, 1}}, []float64{1, 1}) {
+    t.Error("New ellipsoid surface error 3")
+  }
+  if nil != NewElipsoidByCenterBasis([]float64{0,0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}}, []float64{1, 1}) {
+    t.Error("New ellipsoid surface error 4")
+  }
+  if nil != NewElipsoidByCenterBasis([]float64{0,0}, [][]float64{[]float64{1,0,0}, []float64{0, 1}}, []float64{1, 1}) {
+    t.Error("New ellipsoid surface error 5")
+  }
+  if nil != NewElipsoidByCenterBasis([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}}, []float64{1, 1,1}) {
+    t.Error("New ellipsoid surface error 6")
+  }
+  if nil != NewElipsoidByCenterBasis([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}, []float64{0, 1}}, []float64{1, 1}) {
+    t.Error("New ellipsoid surface error 7")
+  }
+
+  if nil == NewElipsoidByCenterBasis([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}}, []float64{1, 1}) {
+    t.Error("New ellipsoid surface error 8")
+  }
 }
 
 func TestEllipsoidF(t *testing.T) {
@@ -204,7 +273,22 @@ func TestEllipsiodIntersection(t *testing.T) {
 }
 
 func TestNewInfiniteCylinder(t *testing.T) {
-  
+  if nil != NewInfiniteCylinder(nil, [][]float64{[]float64{1,0}, []float64{0, 1}}) {
+    t.Error("New infinite cylinder error 1")
+  }
+  if nil != NewInfiniteCylinder([]float64{0,0}, [][]float64{[]float64{1,0}, nil}) {
+    t.Error("New infinite cylinder error 2")
+  }
+  if nil != NewInfiniteCylinder([]float64{0,0}, nil) {
+    t.Error("New infinite cylinder error 3")
+  }
+
+  if nil == NewInfiniteCylinder([]float64{0,0}, [][]float64{[]float64{1, 0}, []float64{0, 1}}) {
+    t.Error("New infinite cylinder error 4")
+  }
+  if nil == NewInfiniteCylinder([]float64{0,0}, [][]float64{[]float64{1,0}}) {
+    t.Error("New infinite cylinder error 5")
+  }
 }
 
 func TestInfiniteCylinderF(t *testing.T) {
@@ -280,5 +364,13 @@ func TestInfiniteHyperboloidGradient(t *testing.T) {
 }
 
 func TestInfiniteHyperboloidIntersection(t *testing.T) {
+  
+}
+
+func TestNewCylinder(t *testing.T) {
+  
+}
+
+func TestCylinder(t *testing.T) {
   
 }

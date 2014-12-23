@@ -13,7 +13,6 @@ type newtonianParticle struct {
   particles int //Number of particles in the system.
   x, v, a, newx, newv, newa [][]float64
 }
-
 //Swap the new points with the old one to begin the next step.
 func (p *newtonianParticle) postStep() {
   var tmp2 [][]float64
@@ -92,6 +91,10 @@ type harmonicOscillator struct {
   dimension, particles int
   mass []float64
   K [][][]float64
+}
+
+func (o *harmonicOscillator ) Dimension() int {
+  return 2*o.dimension*o.particles
 }
 
 //Calculate the distance vector from p1 to p2.
@@ -184,8 +187,10 @@ func (o *harmonicOscillator) DxDs(pos, vel []float64) {
 //Can return nil! 
 //  p    - the newtonianParticle object. 
 //  mass - the masses of the particles. 
-//  K    - the sets of spring constants between the particles. It is a square matrix in which only
-//         the entries below the diagonal are used.
+//  K    - the sets of spring constants between the particles. The first two indices represent
+//         an antisymmetric square matrix, so only the entries below the diagonal are used. The
+//         third index is a list of spring constants for higher and higher orders. The first is
+//         x^2, the second x^4 and so on. 
 func NewHarmonicOscillator(p *newtonianParticle, mass []float64, K [][][]float64) *harmonicOscillator{
   if K == nil {return nil}
   if p == nil {return nil}
@@ -198,7 +203,6 @@ func NewHarmonicOscillator(p *newtonianParticle, mass []float64, K [][][]float64
   }
 
   for i := 1; i < p.particles; i++ {
-    if math.IsNaN(mass[i]) || math.IsInf(mass[i], 0) || mass[i] <= 0 {return nil}
     if K[i] == nil {return nil}
     if len(K[i]) < i {return nil}
     

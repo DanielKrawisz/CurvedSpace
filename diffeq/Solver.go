@@ -22,6 +22,8 @@ type InitialCondition interface {
 type Derivative interface {
   //Sets the derivative of a state to v in state x. 
   DxDs(x []float64, v []float64)
+  //tells the size of the vectors that DxDs expects.
+  Dimension() int
 }
 
 type Step interface {

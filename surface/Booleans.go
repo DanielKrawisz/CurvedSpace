@@ -35,15 +35,6 @@ func (s *addition) F(x []float64) float64 {
   return math.Max(s.a.F(x), s.b.F(x))
 }
 
-func (s *addition) Interior(x []float64) bool {
-  if s.a.Interior(x) {
-    return true
-  } else if s.b.Interior(x) {
-    return true
-  }
-  return false
-}
-
 func (s *addition) Gradient(x []float64) []float64 {
   if s.a.F(x) >= s.b.F(x) {
     return s.a.Gradient(x)
@@ -66,7 +57,7 @@ func (s *addition) Intersection(x, v []float64) []float64 {
       p[j] = x[j] + inta[i] * v[j]
     }
 
-    if !s.b.Interior(p) {
+    if !SurfaceInterior(s.b, p) {
       z[zi] = inta[i]
       zi ++
     }
@@ -77,7 +68,7 @@ func (s *addition) Intersection(x, v []float64) []float64 {
       p[j] = x[j] + intb[i] * v[j]
     }
 
-    if !s.a.Interior(p) {
+    if !SurfaceInterior(s.a, p) {
       z[zi] = intb[i]
       zi ++
     }
@@ -112,15 +103,6 @@ func (s *intersection) F(x []float64) float64 {
   return math.Min(s.a.F(x), s.b.F(x))
 }
 
-func (s *intersection) Interior(x []float64) bool {
-  if !s.a.Interior(x) {
-    return false
-  } else if !s.b.Interior(x) {
-    return false
-  }
-  return true
-}
-
 func (s *intersection) Gradient(x []float64) []float64 {
   if s.a.F(x) < s.b.F(x) {
     return s.a.Gradient(x)
@@ -143,7 +125,7 @@ func (s *intersection) Intersection(x, v []float64) []float64 {
       p[j] = x[j] + inta[i] * v[j]
     }
 
-    if s.b.Interior(p) {
+    if SurfaceInterior(s.b, p) {
       z[zi] = inta[i]
       zi ++
     }
@@ -154,7 +136,7 @@ func (s *intersection) Intersection(x, v []float64) []float64 {
       p[j] = x[j] + intb[i] * v[j]
     }
 
-    if s.a.Interior(p) {
+    if SurfaceInterior(s.a, p) {
       z[zi] = intb[i]
       zi ++
     }
@@ -189,15 +171,6 @@ func (s *subtraction) F(x []float64) float64 {
   return math.Min(s.a.F(x), -s.b.F(x))
 }
 
-func (s *subtraction) Interior(x []float64) bool {
-  if s.b.Interior(x) {
-    return false
-  } else if s.a.Interior(x) {
-    return true
-  }
-  return false
-}
-
 func (s *subtraction) Gradient(x []float64) []float64 {
   if s.a.F(x) < -s.b.F(x) {
     return s.a.Gradient(x)
@@ -224,7 +197,7 @@ func (s *subtraction) Intersection(x, v []float64) []float64 {
       p[j] = x[j] + inta[i] * v[j]
     }
 
-    if !s.b.Interior(p) {
+    if !SurfaceInterior(s.b, p) {
       z[zi] = inta[i]
       zi ++
     }
@@ -235,7 +208,7 @@ func (s *subtraction) Intersection(x, v []float64) []float64 {
       p[j] = x[j] + intb[i] * v[j]
     }
 
-    if s.a.Interior(p) {
+    if SurfaceInterior(s.a, p) {
       z[zi] = intb[i]
       zi ++
     }

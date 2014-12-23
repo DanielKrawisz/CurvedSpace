@@ -38,10 +38,6 @@ func (s *linearSurface) F(x []float64) float64 {
   return f + s.a
 }
 
-func (s *linearSurface) Interior(x []float64) bool {
-  return s.F(x) >= 0
-}
-
 func (s *linearSurface) Gradient(x []float64) []float64 {
   z := make([]float64, s.dimension)
   for i := 0; i < s.dimension; i++ {
@@ -95,10 +91,6 @@ func (s *quadraticSurface) F(x []float64) float64 {
   }
 
   return f + s.a;
-}
-
-func (s *quadraticSurface) Interior(x []float64) bool {
-  return s.F(x) >= 0
 }
 
 func (s *quadraticSurface) Gradient(x []float64) []float64 {
@@ -196,11 +188,6 @@ func (s *cubicSurface) F(x []float64) float64 {
   }
 
   return f + s.a
-}
-
-
-func (s *cubicSurface) Interior(x []float64) bool {
-  return s.F(x) >= 0
 }
 
 func (s *cubicSurface) Gradient(x []float64) []float64 {
@@ -368,10 +355,6 @@ func (s *quarticSurface) F(x []float64) float64 {
   }
 
   return f + s.a;
-}
-
-func (s *quarticSurface) Interior(x []float64) bool {
-  return s.F(x) >= 0
 }
 
 func (s *quarticSurface) Gradient(x []float64) []float64 {
@@ -603,8 +586,8 @@ func NewPlaneByPointAndNormal(point, norm []float64) Surface {
 //   r2 - a linear component that is also independent if the effects of p. 
 //
 // (using some mixed notation here, but it works.)
-//  (x - p) (v_i v_i) (x - p) + b (x - p) + r2 == 0
-//  p.v_i v_i.p - x.v_i v_i.p + x.v_i v_i.x + y.x + y.p + r2 == 0
+//  (x - p) (v_i v_i) (x - p) + y (x - p) + r2 == 0
+//  p.v_i v_i.p - 2 x.v_i v_i.p + x.v_i v_i.x + y.x + y.p + r2 == 0
 //
 //May return nil
 func NewQuadraticSurfaceByCenterVectorList(p []float64, vp, vn [][]float64, y[] float64, r2 float64) Surface {
@@ -628,7 +611,6 @@ func NewQuadraticSurfaceByCenterVectorList(p []float64, vp, vn [][]float64, y[] 
     }
   }
 
-  var a float64 = r2
   var b []float64 = make([]float64, dim)
   var c [][]float64 = make([][]float64, dim)
   var pv, py float64 = 0, 0
@@ -651,15 +633,14 @@ func NewQuadraticSurfaceByCenterVectorList(p []float64, vp, vn [][]float64, y[] 
 
   //Calculate b.
   for i := 0; i < dim; i ++ {
-    b[i] *= pv
+    b[i] *= 2*pv
     b[i] += y[i]
-
-    py += y[i] * p[i]
   }
 
-  for i := 0; i < len(p); i ++ {
+  //Calculate c.
+  for i := 0; i < dim; i ++ {
     for j := 0; j <= i; j ++ {
-      c[i][j] = 0.0
+      //c[i][j] = 0.0
       for k := 0; k < len(vp); k ++ {
         c[i][j] -= vp[k][i] * vp[k][j]
       }
@@ -669,13 +650,187 @@ func NewQuadraticSurfaceByCenterVectorList(p []float64, vp, vn [][]float64, y[] 
     }
   }
 
-  return &quadraticSurface{dim, c, b, a + py + pv * pv}
+  return &quadraticSurface{dim, c, b, r2 + py + pv * pv}
 }
 
-func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r2 float64) {
-  
+//A general cubic surface from a central point and a list of vectors
+//defining a quadratic form on the coordinates. The vectors do not need
+//to satisfy any particular properties, but a set which is all normal
+//to one another is the most general possibility. 
+//
+//   p  - a vector that translates the entire curve. 
+//   vd - vectors used to make d. 
+//   vp - the vectors which are positive definite in c.
+//   vp - the vectors which are negative definite in c.
+//   y  - the linear component of the curve before the curve is translated by p.
+//   r2 - a linear component that is also independent if the effects of p. 
+//
+// (using some mixed notation here, but it works.)
+//  (w_i w_i w_i) (x - p) (x - p) (x - p)
+//    + (v_i v_i) (x - p) (x - p) + y (x - p) + r3 == 0
+//  w_i.x w_i.x w_i.x - 3 w_i.x w_i.x w_i.p + 3 w_i.x w_i.p w_i.p - w_i.p w_i.p w_i.p
+//    + p.v_i v_i.p - 2 x.v_i v_i.p + x.v_i v_i.x + y.x + y.p + r3 == 0
+//  w_i.x w_i.x w_i.x + (- 3 w_i.x w_i.x w_i.p + x.v_i v_i.x) 
+//    + (3 w_i.x w_i.p w_i.p - 2 x.v_i v_i.p + y.x)
+//    + (- w_i.p w_i.p w_i.p + p.v_i v_i.p + y.p + r3) == 0
+//
+//May return nil
+func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r3 float64) Surface {
+  if p == nil || vp == nil || vn == nil || y == nil || vd == nil{
+    return nil
+  }
+
+  if len(p) < len(vp) + len(vn) || len(p) < len(vd) || len(p) != len(y) {
+    return nil
+  }
+
+  dim := len(p)
+  for i := 0; i < len(vp); i++ {
+    if vp[i] == nil || len(vp[i]) != dim {
+      return nil
+    }
+  }
+  for i := 0; i < len(vn); i++ {
+    if vn[i] == nil || len(vn[i]) != dim {
+      return nil
+    }
+  }
+  for i := 0; i < len(vd); i++ {
+    if vd[i] == nil || len(vd[i]) != dim {
+      return nil
+    }
+  }
+
+  var b []float64 = make([]float64, dim)
+  var c [][]float64 = make([][]float64, dim)
+  var d [][][]float64 = make([][][]float64, dim)
+  var pv, py, pvd float64 = 0, 0, 0
+  var bv, bvd []float64 = make([]float64, dim), make([]float64, dim)
+
+  //Calculate pv, py, pvd. 
+  for i := 0; i < dim; i ++ {
+
+    for j := 0; j < len(vp); j ++ {
+      pv += vp[j][i] * p[i]
+      bv[i] += vp[j][i]
+    }
+    for j := 0; j < len(vn); j ++ {
+      pv -= vn[j][i] * p[i]
+      bv[i] -= vn[j][i]
+    }
+    for j := 0; j < len(vd); j ++ {
+      pvd += vd[j][i] * p[i]
+      bvd[i] += vd[j][i]
+    }
+
+    py += y[i] * p[i]
+    b[i] = y[i]
+  }
+
+  //Calculate b.
+  for i := 0; i < dim; i ++ {
+    b[i] += (-2*pv*bv[i] + 3*bvd[i]*pvd*pvd)
+  }
+
+  //Calculate c.
+  for i := 0; i < dim; i ++ {
+    c[i] = make([]float64, i + 1)
+
+    for j := 0; j <= i; j ++ {
+      //c[i][j] = 0.0
+      for k := 0; k < len(vp); k ++ {
+        c[i][j] -= vp[k][i] * vp[k][j]
+      }
+      for k := 0; k < len(vn); k ++ {
+        c[i][j] += vn[k][i] * vn[k][j]
+      }
+      for k := 0; k < len(vd); k ++ {
+        c[i][j] -= 3 * vd[k][i] * vd[k][j] * pvd
+      }
+    }
+  }
+
+  //calculate d.
+  for i := 0; i < dim; i ++ {
+    d[i] = make([][]float64, i + 1)
+    for j := 0; j <= i; j ++ {
+      d[i][j] = make([]float64, j + 1)
+      for k := 0; k <= j; k ++ {
+        for l := 0; l <= len(vd); l ++ {
+          d[i][j][k] += vd[l][i] * vd[l][j] * vd[l][k]
+        }
+      }
+    }
+  }
+
+  return &cubicSurface{dim, d, c, b, r3 + py + pv * pv - pvd * pvd * pvd}
 }
 
-func NewQuarticSurface(p []float64, vqp, vqn, vd, vp, vn [][]float64, y[] float64, r2 float64) {
-  
+//A general cubic surface from a central point and a list of vectors
+//defining a quadratic form on the coordinates. The vectors do not need
+//to satisfy any particular properties, but a set which is all normal
+//to one another is the most general possibility. 
+//
+//   p   - a vector that translates the entire curve. 
+//   vqp - the vectors which are positive definite in e.
+//   vqp - the vectors which are negative definite in e.
+//   vd  - vectors used to make d. 
+//   vp  - the vectors which are positive definite in c.
+//   vp  - the vectors which are negative definite in c.
+//   y   - the linear component of the curve before the curve is translated by p.
+//   r2  - a linear component that is also independent if the effects of p. 
+//
+// (using some mixed notation here, but it works.)
+//  (u_i u_i u_i u_i) (x - p) (x - p) (x - p) (x - p) + (w_i w_i w_i) (x - p) (x - p) (x - p)
+//    + (v_i v_i) (x - p) (x - p) + y (x - p) + r4 == 0
+//  (u_i.x)^4 - 4 (u_i.p) (u_i.x)^3 + 6 (u_i.p)^2 (u_i.x)^2 + 4 (u_i.p)^3 (u_i.x) + (u_i.p)^4 
+//    + w_i.x w_i.x w_i.x - 3 w_i.x w_i.x w_i.p + 3 w_i.x w_i.p w_i.p - w_i.p w_i.p w_i.p
+//    + p.v_i v_i.p - 2 x.v_i v_i.p + x.v_i v_i.x + y.x + y.p + r4 == 0
+//  w_i.x w_i.x w_i.x + (- 3 w_i.x w_i.x w_i.p + x.v_i v_i.x) 
+//    + (3 w_i.x w_i.p w_i.p - 2 x.v_i v_i.p + y.x)
+//    + (- w_i.p w_i.p w_i.p + p.v_i v_i.p + y.p + r4) == 0
+//
+//May return nil
+func NewQuarticSurface(p []float64, vqp, vqn, vd, vp, vn [][]float64, y[] float64, r4 float64) Surface {
+  if p == nil || vp == nil || vn == nil || y == nil || vd == nil || vqp == nil || vqn == nil {
+    return nil
+  }
+
+  if len(p) < len(vp) + len(vn) || len(p) < len(vp) + len(vn) || len(p) < len(vd) || len(p) != len(y) {
+    return nil
+  }
+
+  dim := len(p)
+  for i := 0; i < len(vp); i++ {
+    if vp[i] == nil || len(vp[i]) != dim {
+      return nil
+    }
+  }
+  for i := 0; i < len(vn); i++ {
+    if vn[i] == nil || len(vn[i]) != dim {
+      return nil
+    }
+  }
+  for i := 0; i < len(vd); i++ {
+    if vd[i] == nil || len(vd[i]) != dim {
+      return nil
+    }
+  }
+  for i := 0; i < len(vqp); i++ {
+    if vqp[i] == nil || len(vqp[i]) != dim {
+      return nil
+    }
+  }
+  for i := 0; i < len(vqn); i++ {
+    if vqn[i] == nil || len(vqn[i]) != dim {
+      return nil
+    }
+  }
+
+  /*var b []float64 = make([]float64, dim)
+  var c [][]float64 = make([][]float64, dim)
+  var d [][][]float64 = make([][][]float64, dim)
+  var e [][][][]float64 = make([][][][]float64, dim)*/
+
+  return nil //TODO Finish this.
 }

@@ -410,6 +410,27 @@ func TestNewQuadraticSurface(t *testing.T) {
       [][]float64{}, []float64{0, 0}, 1) {
     t.Error("New quadratic surface error 18")
   }
+
+  //TODO test whether the shape actually comes out as expected. 
+  /*dim = 4;
+  for i := 0; i < 20; i ++ {
+    point := make([]float64, dim)
+    basis := make([][]float64, dim)
+    y := make([]float64, dim)
+    a := test.Rand(-5, 5)
+
+    for j := 0; j < dim; j ++ {
+      point[j] = test.Rand(-5, 5)
+      basis[j] = make([]float64, dim)
+      y[j] = test.Rand(-2, 2)
+
+      for k := 0; k < dim; k ++ {
+        basis[j][k] = 
+      }
+    }
+
+    
+  }*/
 }
 
 //The strategy of this test is to ensure that one point of the segment
@@ -420,7 +441,6 @@ func TestNewQuadraticSurface(t *testing.T) {
 //and this test only needs to ensure that the intersection problem is
 //being translated into a quadratic formula properly. 
 func TestQuadraticIntersection(t *testing.T) {
-  test.SetSeed(7820)
 
   dim := 3
   for i := 0; i < 4; i ++ {
@@ -441,7 +461,7 @@ func TestQuadraticIntersection(t *testing.T) {
         p1 = []float64{test.RandFloat(-10, 10), test.RandFloat(-10, 10), test.RandFloat(-10, 10)}
         //fmt.Println("X trial: ", n, "; ", quadratic, "; point = ", p1, " F = ", quadratic.F(p1)) 
         n++
-        if !quadratic.Interior(p1) { break }
+        if !SurfaceInterior(quadratic, p1) { break }
         if n > 100 { return }
       }
 
@@ -451,7 +471,7 @@ func TestQuadraticIntersection(t *testing.T) {
         n++
         p2 = []float64{test.RandFloat(point[0] - 1, point[0] + 1),
           test.RandFloat(point[1] - 1, point[1] + 1), test.RandFloat(point[2] - 1, point[2] + 1)}
-        if quadratic.Interior(p2) { break }
+        if SurfaceInterior(quadratic, p2) { break }
       }
 
       v = make([]float64, len(p1))
@@ -561,16 +581,32 @@ func TestCubic(t *testing.T) {
       }
 
       if !grad_match {
-        t.Error("quadratic surface defined by c = ", c, ", b = ", b, ", a = ", a, " grad error. Expected ", grad_exp, ", got ", grad)
+        t.Error("quadratic surface defined by c = ",
+          c, ", b = ", b, ", a = ", a, " grad error. Expected ", grad_exp, ", got ", grad)
       }
     }
   }
+}
+
+func TestNewCubic(t *testing.T) {
+  //TODO
 }
 
 //The strategy of this test is to ensure that one point of the segment
 //is inside and the other is outside the surface. There should always
 //be one intersection. 
 func TestCubicIntersection(t *testing.T) {
+  /*dim := 4
+  shapes := 4
+  points := 4
+  for i := 0; i < shapes; i ++ {
+    basis := [][]float64{[]float64{1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
+      []float64{test.RandFloat(-.25, .25), 1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
+      []float64{test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), 1 + test.RandFloat(-.25, .25)}}
+    point := []float64{test.RandFloat(-2, 2), test.RandFloat(-2, 2), test.RandFloat(-2, 2)}
+    a := test.RandFloat(8, 80)
+
+    quadratic := NewQuadraticSurfaceByCenterVectorList(point, basis, [][]float64{}, make([]float64, dim), a)*/
 
 }
 
@@ -706,10 +742,14 @@ func TestQuartic(t *testing.T) {
   }
 }
 
+func TestNewQuartic(t *testing.T) {
+  //TODO
+}
+
 //The strategy of this test is to ensure that one point of the segment
 //is inside and the other is outside the surface. There should always
 //be one intersection. 
 func TestQuarticIntersection(t *testing.T) {
-  
+  //TODO
 }
 

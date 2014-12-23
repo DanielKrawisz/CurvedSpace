@@ -3,7 +3,7 @@ package surface
 import "testing"
 
 //Test construction of booleans as well as the Dimension,
-// F, Gradient, Interior, and Intersection functions.
+// F, Gradient, and Intersection functions.
 func TestBooleans(t *testing.T) {
   p1 := []float64{-2,0}
   p2 := []float64{2,0}
@@ -83,7 +83,7 @@ func TestBooleans(t *testing.T) {
 
   for i, boolean := range []Surface{add, sub, sec} {
     for j, point := range test_points {
-      if boolean.Interior(point) != interior_tests[i][j] {
+      if SurfaceInterior(boolean, point) != interior_tests[i][j] {
         t.Error("For boolean ", i, ", point ", point, " is on the wrong side.")
       }
 

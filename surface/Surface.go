@@ -1,5 +1,7 @@
 package surface
 
+import "math"
+
 //A surface is here defined as an equation f(x_i) == 0, although
 //this is slightly different from what a surface normally is
 //mathematically. Here a surface is always an (n-1)-dimensional
@@ -19,12 +21,38 @@ type Surface interface {
   //the surface. Returns an empty list if there is no intersection.
   //May return several intersection parameters. 
   Intersection(x, v []float64) []float64
-  //Whether a given point is on the interior of the surface. 
-  Interior(x []float64) bool
   //The gradianThe normal to a surface at a given point on the surface.
   Gradient(x []float64) []float64
   //Turn the surface into a string for testing purposes.
   String() string
+}
+
+//Whether a given point is on the interior of the surface. 
+func SurfaceInterior(s Surface, x []float64) bool {
+  return s.F(x) >= 0
+}
+
+//The normal vector to the surface. 
+func SurfaceNormal(s Surface, x []float64) []float64 {
+  grad := s.Gradient(x)
+  var norm float64
+
+  for i := 0; i < len(x); i ++ {
+    norm += grad[i] * grad[i]
+  }
+
+  if norm == 0 {
+    for i := 0; i < len(x); i ++ {
+      grad[i] = 0.
+    }
+  } else {
+    norm = math.Sqrt(norm)
+    for i := 0; i < len(x); i ++ {
+      grad[i] /= norm
+    }
+  }
+
+  return grad
 }
 
 //A function to test gradients with numerical approximation against

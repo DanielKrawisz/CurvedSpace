@@ -590,7 +590,7 @@ func NewPlaneByPointAndNormal(point, norm []float64) Surface {
 //  p.v_i v_i.p - 2 x.v_i v_i.p + x.v_i v_i.x + y.x + y.p + r2 == 0
 //
 //May return nil
-func NewQuadraticSurfaceByCenterVectorList(p []float64, vp, vn [][]float64, y[] float64, r2 float64) Surface {
+func NewQuadraticSurface(p []float64, vp, vn [][]float64, y[] float64, r2 float64) Surface {
   if p == nil || vp == nil || vn == nil || y == nil {
     return nil
   }
@@ -613,32 +613,37 @@ func NewQuadraticSurfaceByCenterVectorList(p []float64, vp, vn [][]float64, y[] 
 
   var b []float64 = make([]float64, dim)
   var c [][]float64 = make([][]float64, dim)
-  var pv, py float64 = 0, 0
+  var pv []float64 = make([]float64, dim)
+  var pvp, py float64 = 0, 0
 
-  //Calculate pv and py. 
+  //Calculate py and pv. 
   for i := 0; i < dim; i ++ {
-    c[i] = make([]float64, i + 1)
-
     for j := 0; j < len(vp); j ++ {
-      pv += vp[j][i] * p[i]
-      b[i] += vp[j][i]
+      pv[j] -= vp[j][i] * p[i]
     }
     for j := 0; j < len(vn); j ++ {
-      pv -= vn[j][i] * p[i]
-      b[i] -= vn[j][i]
+      pv[j + len(vp)] += vn[j][i] * p[i]
     }
 
     py += y[i] * p[i]
   }
 
-  //Calculate b.
+  //Calculate pvp and b.
   for i := 0; i < dim; i ++ {
-    b[i] *= 2*pv
-    b[i] += y[i]
+    pvp += pv[i] * pv[i]
+
+    b[i] = y[i]
+    for j := 0; j < len(vp); j ++ {
+      b[i] -= 2 * vp[j][i] * pv[j]
+    }
+    for j := 0; j < len(vn); j ++ {
+      b[i] += 2 * vn[j][i] * pv[j + len(vp)]
+    }
   }
 
   //Calculate c.
   for i := 0; i < dim; i ++ {
+    c[i] = make([]float64, i + 1)
     for j := 0; j <= i; j ++ {
       //c[i][j] = 0.0
       for k := 0; k < len(vp); k ++ {
@@ -650,7 +655,7 @@ func NewQuadraticSurfaceByCenterVectorList(p []float64, vp, vn [][]float64, y[] 
     }
   }
 
-  return &quadraticSurface{dim, c, b, r2 + py + pv * pv}
+  return &quadraticSurface{dim, c, b, r2 + py - pvp}
 }
 
 //A general cubic surface from a central point and a list of vectors
@@ -704,32 +709,47 @@ func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r3 float6
   var b []float64 = make([]float64, dim)
   var c [][]float64 = make([][]float64, dim)
   var d [][][]float64 = make([][][]float64, dim)
-  var pv, py, pvd float64 = 0, 0, 0
-  var bv, bvd []float64 = make([]float64, dim), make([]float64, dim)
+  var pv, pvd []float64  = make([]float64, dim), make([]float64, dim)
+
+  var pvp, py, pvdp float64 = 0, 0, 0
+  var bv []float64 = make([]float64, dim)
 
   //Calculate pv, py, pvd. 
   for i := 0; i < dim; i ++ {
 
     for j := 0; j < len(vp); j ++ {
-      pv += vp[j][i] * p[i]
+      pv[j] -= vp[j][i] * p[i]
       bv[i] += vp[j][i]
     }
     for j := 0; j < len(vn); j ++ {
-      pv -= vn[j][i] * p[i]
+      pv[j + len(vp)] += vn[j][i] * p[i]
       bv[i] -= vn[j][i]
     }
+
     for j := 0; j < len(vd); j ++ {
-      pvd += vd[j][i] * p[i]
-      bvd[i] += vd[j][i]
+      pvd[j] = vd[j][i] * p[i]
     }
 
     py += y[i] * p[i]
     b[i] = y[i]
   }
 
-  //Calculate b.
+  //Calculate pvp and b.
   for i := 0; i < dim; i ++ {
-    b[i] += (-2*pv*bv[i] + 3*bvd[i]*pvd*pvd)
+    pvp += pv[i] * pv[i]
+    pvdp += pvd[i] * pvd[i] * pvd[i]
+
+    b[i] = y[i]
+    for j := 0; j < len(vp); j ++ {
+      b[i] -= 2 * vp[j][i] * pv[j]
+    }
+    for j := 0; j < len(vn); j ++ {
+      b[i] += 2 * vn[j][i] * pv[j + len(vp)]
+    }
+
+    for j := 0; j < dim; j ++ {
+      b[i] += 3 * vd[j][i] * pvd[j] * pvd[j]
+    }
   }
 
   //Calculate c.
@@ -737,15 +757,15 @@ func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r3 float6
     c[i] = make([]float64, i + 1)
 
     for j := 0; j <= i; j ++ {
-      //c[i][j] = 0.0
       for k := 0; k < len(vp); k ++ {
         c[i][j] -= vp[k][i] * vp[k][j]
       }
       for k := 0; k < len(vn); k ++ {
         c[i][j] += vn[k][i] * vn[k][j]
       }
+
       for k := 0; k < len(vd); k ++ {
-        c[i][j] -= 3 * vd[k][i] * vd[k][j] * pvd
+        c[i][j] -= 3 * vd[k][i] * vd[k][j] * pvd[k]
       }
     }
   }
@@ -756,14 +776,14 @@ func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r3 float6
     for j := 0; j <= i; j ++ {
       d[i][j] = make([]float64, j + 1)
       for k := 0; k <= j; k ++ {
-        for l := 0; l <= len(vd); l ++ {
+        for l := 0; l < len(vd); l ++ {
           d[i][j][k] += vd[l][i] * vd[l][j] * vd[l][k]
         }
       }
     }
   }
 
-  return &cubicSurface{dim, d, c, b, r3 + py + pv * pv - pvd * pvd * pvd}
+  return &cubicSurface{dim, d, c, b, r3 + py - pvp + pvdp}
 }
 
 //A general cubic surface from a central point and a list of vectors
@@ -786,9 +806,10 @@ func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r3 float6
 //  (u_i.x)^4 - 4 (u_i.p) (u_i.x)^3 + 6 (u_i.p)^2 (u_i.x)^2 + 4 (u_i.p)^3 (u_i.x) + (u_i.p)^4 
 //    + w_i.x w_i.x w_i.x - 3 w_i.x w_i.x w_i.p + 3 w_i.x w_i.p w_i.p - w_i.p w_i.p w_i.p
 //    + p.v_i v_i.p - 2 x.v_i v_i.p + x.v_i v_i.x + y.x + y.p + r4 == 0
-//  w_i.x w_i.x w_i.x + (- 3 w_i.x w_i.x w_i.p + x.v_i v_i.x) 
-//    + (3 w_i.x w_i.p w_i.p - 2 x.v_i v_i.p + y.x)
-//    + (- w_i.p w_i.p w_i.p + p.v_i v_i.p + y.p + r4) == 0
+//  (u_i.x)^4 + (- 4 (u_i.p) (u_i.x)^3 + w_i.x w_i.x w_i.x)
+//    + (6 (u_i.p)^2 (u_i.x)^2 - 3 w_i.x w_i.x w_i.p + x.v_i v_i.x) 
+//    + (4 (u_i.p)^3 (u_i.x) + 3 w_i.x w_i.p w_i.p - 2 x.v_i v_i.p + y.x)
+//    + ((u_i.p)^4 - w_i.p w_i.p w_i.p + p.v_i v_i.p + y.p + r4) == 0
 //
 //May return nil
 func NewQuarticSurface(p []float64, vqp, vqn, vd, vp, vn [][]float64, y[] float64, r4 float64) Surface {
@@ -827,10 +848,108 @@ func NewQuarticSurface(p []float64, vqp, vqn, vd, vp, vn [][]float64, y[] float6
     }
   }
 
-  /*var b []float64 = make([]float64, dim)
+  var b []float64 = make([]float64, dim)
   var c [][]float64 = make([][]float64, dim)
   var d [][][]float64 = make([][][]float64, dim)
-  var e [][][][]float64 = make([][][][]float64, dim)*/
+  var e [][][][]float64 = make([][][][]float64, dim)
 
-  return nil //TODO Finish this.
+  var pv, py, pvd, pvq float64 = 0, 0, 0, 0
+  var bv, bvd, bvq []float64 = make([]float64, dim), make([]float64, dim), make([]float64, dim)
+
+  //Calculate pv, py, pvd. 
+  for i := 0; i < dim; i ++ {
+
+    for j := 0; j < len(vp); j ++ {
+      pv += vp[j][i] * p[i]
+      bv[i] += vp[j][i]
+    }
+    for j := 0; j < len(vn); j ++ {
+      pv -= vn[j][i] * p[i]
+      bv[i] -= vn[j][i]
+    }
+    for j := 0; j < len(vd); j ++ {
+      pvd += vd[j][i] * p[i]
+      bvd[i] += vd[j][i]
+    }
+    for j := 0; j < len(vqp); j ++ {
+      pvq += vqp[j][i] * p[i]
+      bvq[i] += vqp[j][i]
+    }
+    for j := 0; j < len(vqn); j ++ {
+      pvq -= vqn[j][i] * p[i]
+      bvq[i] -= vqn[j][i]
+    }
+
+    py += y[i] * p[i]
+    b[i] = y[i]
+  }
+
+  //Calculate b.
+  for i := 0; i < dim; i ++ {
+    b[i] += (-2*pv*bv[i] + 3*bvd[i]*pvd*pvd - 4*bvq[i]*pvq*pvq*pvq)
+  }
+
+  //Calculate c.
+  for i := 0; i < dim; i ++ {
+    c[i] = make([]float64, i + 1)
+
+    for j := 0; j <= i; j ++ {
+      //c[i][j] = 0.0
+      for k := 0; k < len(vp); k ++ {
+        c[i][j] -= vp[k][i] * vp[k][j]
+      }
+      for k := 0; k < len(vn); k ++ {
+        c[i][j] += vn[k][i] * vn[k][j]
+      }
+      for k := 0; k < len(vd); k ++ {
+        c[i][j] -= 3 * vd[k][i] * vd[k][j] * pvd
+      }
+      for k := 0; k < len(vqp); k ++ {
+        c[i][j] += 6 * vqp[k][i] * vqp[k][j] * pvq * pvq
+      }
+      for k := 0; k < len(vqn); k ++ {
+        c[i][j] -= 6 * vqn[k][i] * vqn[k][j] * pvq * pvq
+      }
+    }
+  }
+
+  //calculate d.
+  for i := 0; i < dim; i ++ {
+    d[i] = make([][]float64, i + 1)
+    for j := 0; j <= i; j ++ {
+      d[i][j] = make([]float64, j + 1)
+      for k := 0; k <= j; k ++ {
+        for l := 0; l < len(vd); l ++ {
+          d[i][j][k] += vd[l][i] * vd[l][j] * vd[l][k]
+        }
+        for l := 0; l < len(vqp); l ++ {
+          d[i][j][k] -= 4 * vqp[l][i] * vqp[l][j] * vqp[l][k] * pvq
+        }
+        for l := 0; l < len(vqn); l ++ {
+          d[i][j][k] += 4 * vqn[l][i] * vqn[l][j] * vqn[l][k] * pvq
+        }
+      }
+    }
+  }
+
+  //calculate e.
+  for i := 0; i < dim; i ++ {
+    e[i] = make([][][]float64, i + 1)
+    for j := 0; j <= i; j ++ {
+      e[i][j] = make([][]float64, j + 1)
+      for k := 0; k <= j; k ++ {
+        e[i][j][k] = make([]float64, k + 1)
+        for l := 0; l <= k; l ++ {
+          for m := 0; m < len(vqp); m ++ {
+            e[i][j][k][l] += vqp[m][i] * vqp[m][j] * vqp[m][k] * vqp[m][l]
+          }
+          for m := 0; m < len(vqn); m ++ {
+            e[i][j][k][l] -= vqn[m][i] * vqn[m][j] * vqn[m][k] * vqn[m][l]
+          }
+        }
+      }
+    }
+  }
+
+  return &quarticSurface{dim, e, d, c, b, r4 + py + pv * pv - pvd * pvd * pvd + pvq * pvq * pvq * pvq}
 }

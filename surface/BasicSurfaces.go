@@ -3,6 +3,7 @@ package surface
 import "./polynomials"
 import "fmt"
 import "strings"
+import "math"
 
 //Use polynomial surfaces and solid constructive geometry to
 //make some primitive shapes.
@@ -84,14 +85,13 @@ func NewSphere(p []float64, r float64) Sphere {
   return &sphere{len(p), p, r*r, p2}
 }
 
-//TODO tests
 //Given by the point at the center, n vectors forming an
 //orthonormal set (though not required to be) and n parameters
 //defining the axes of the ellipsoid. The result will only be
 //an elipsoid if the parameters are all positive, but the
 //function does not require them to be. 
 //May return nil
-func NewElipsoidByCenterBasis(point []float64, vec [][]float64, param []float64) Surface {
+func NewEllipsoid(point []float64, vec [][]float64, param []float64) Surface {
   if point == nil || vec == nil || param == nil {
     return nil
   }
@@ -106,14 +106,18 @@ func NewElipsoidByCenterBasis(point []float64, vec [][]float64, param []float64)
       return nil
     }
 
+    if param[i] < 0.0 {
+      return nil
+    }
+
     v[i] = make([]float64, len(point))
 
     for j := 0; j < len(point); j ++ {
-      v[i][j] = vec[i][j] * param[i]
+      v[i][j] = vec[i][j] / math.Sqrt(param[i])
     }
   }
 
-  return NewQuadraticSurfaceByCenterVectorList(point, v, [][]float64{}, make([]float64, len(point)), 1)
+  return NewQuadraticSurface(point, v, [][]float64{}, make([]float64, len(point)), 1)
 }
 
 //A surface that is infinite in some directions and finite in others.
@@ -121,12 +125,12 @@ func NewElipsoidByCenterBasis(point []float64, vec [][]float64, param []float64)
 //May return nil. 
 func NewInfiniteCylinder(p []float64, vector [][]float64) Surface {
 
-  return NewQuadraticSurfaceByCenterVectorList(p, vector, [][]float64{}, make([]float64, len(p)), 1)
+  return NewQuadraticSurface(p, vector, [][]float64{}, make([]float64, len(p)), 1)
 }
 
 //Vectors are made to be orthonormal. 
 func NewInfiniteHyperboloid(p []float64, vp, vn [][]float64) Surface {
-  return NewQuadraticSurfaceByCenterVectorList(p, vp, vn, []float64{}, 1)
+  return NewQuadraticSurface(p, vp, vn, []float64{}, 1)
 }
 
 //Given by the point at the apex of the paraboloid, 
@@ -134,13 +138,20 @@ func NewInfiniteHyperboloid(p []float64, vp, vn [][]float64) Surface {
 //defining the vector part of the quadratic surface. 
 //May return nil.
 func NewInfiniteParaboloid(p []float64, vc [][]float64, vb []float64) Surface {
-  return NewQuadraticSurfaceByCenterVectorList(p, vc, [][]float64{}, vb, 0)
+  return NewQuadraticSurface(p, vc, [][]float64{}, vb, 0)
 }
 
 //The first set of vectors define what is inside the cone, the rest define
 //what is outside. 
 func NewInfiniteCone(p []float64, vp [][]float64, vn [][]float64) Surface {
-  return NewQuadraticSurfaceByCenterVectorList(p, vp, vn, []float64{}, 0)
+  return NewQuadraticSurface(p, vp, vn, []float64{}, 0)
+}
+
+//The intersection of two conic sections into something which has a finite area
+//if the vectors defining it are non zero. 
+func NewCompoundConic(p []float64, vp, vn [][]float64) Surface {
+  //TODO
+  return nil
 }
 
 //The intersection of two infinite cylinder objects. In 3 dimensions, this
@@ -172,4 +183,41 @@ func NewCylinder(p []float64, vp, vn [][]float64, param []float64) Surface {
   return NewIntersection(NewInfiniteCylinder(p, vp), NewInfiniteCylinder(p, vn))
 }
 
+func NewCone(p []float64, axis []float64, v[][]float64,  param []float64) Surface {
+  if p == nil || param == nil || axis == nil || v == nil {
+    return nil 
+  }
 
+  dim := len(p)
+  if len(p) != len(param) + 1 || len(param) != len(v) || len(axis) != dim {
+    return nil
+  }
+
+  //TODO
+  return nil
+}
+
+func NewConoid(p []float64, vp, vn [][]float64, param []float64) Surface {
+  //TODO
+  return nil
+}
+
+func NewParaboloid(p []float64, vp, vn [][]float64, param []float64) Surface {
+  //TODO
+  return nil
+}
+
+func NewHyperboloid(p []float64, vp, vn [][]float64, param []float64) Surface {
+  //TODO
+  return nil
+}
+
+func NewParallelpiped(p []float64, v[][]float64) Surface {
+  //TODO
+  return nil
+}
+
+func NewTorus(p []float64) Surface {
+  //TODO
+  return nil
+}

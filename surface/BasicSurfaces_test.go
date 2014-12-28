@@ -3,6 +3,7 @@ package surface
 import "testing"
 import "../test"
 import "sort"
+import "math"
 
 var err_bs float64 = 0.00001
 
@@ -219,29 +220,29 @@ func TestSphereIntersection(t *testing.T) {
 }
 
 func TestNewEllipsoid(t *testing.T) {
-  if nil != NewElipsoidByCenterBasis(nil, [][]float64{[]float64{1,0}, []float64{0, 1}}, []float64{1, 1}) {
+  if nil != NewEllipsoid(nil, [][]float64{[]float64{1,0}, []float64{0, 1}}, []float64{1, 1}) {
     t.Error("New ellipsoid surface error 1")
   }
-  if nil != NewElipsoidByCenterBasis([]float64{0,0}, nil, []float64{1, 1}) {
+  if nil != NewEllipsoid([]float64{0,0}, nil, []float64{1, 1}) {
     t.Error("New ellipsoid surface error 2")
   }
-  if nil != NewElipsoidByCenterBasis([]float64{0,0}, [][]float64{nil, []float64{0, 1}}, []float64{1, 1}) {
+  if nil != NewEllipsoid([]float64{0,0}, [][]float64{nil, []float64{0, 1}}, []float64{1, 1}) {
     t.Error("New ellipsoid surface error 3")
   }
-  if nil != NewElipsoidByCenterBasis([]float64{0,0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}}, []float64{1, 1}) {
+  if nil != NewEllipsoid([]float64{0,0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}}, []float64{1, 1}) {
     t.Error("New ellipsoid surface error 4")
   }
-  if nil != NewElipsoidByCenterBasis([]float64{0,0}, [][]float64{[]float64{1,0,0}, []float64{0, 1}}, []float64{1, 1}) {
+  if nil != NewEllipsoid([]float64{0,0}, [][]float64{[]float64{1,0,0}, []float64{0, 1}}, []float64{1, 1}) {
     t.Error("New ellipsoid surface error 5")
   }
-  if nil != NewElipsoidByCenterBasis([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}}, []float64{1, 1,1}) {
+  if nil != NewEllipsoid([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}}, []float64{1, 1,1}) {
     t.Error("New ellipsoid surface error 6")
   }
-  if nil != NewElipsoidByCenterBasis([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}, []float64{0, 1}}, []float64{1, 1}) {
+  if nil != NewEllipsoid([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}, []float64{0, 1}}, []float64{1, 1}) {
     t.Error("New ellipsoid surface error 7")
   }
 
-  if nil == NewElipsoidByCenterBasis([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}}, []float64{1, 1}) {
+  if nil == NewEllipsoid([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}}, []float64{1, 1}) {
     t.Error("New ellipsoid surface error 8")
   }
 }
@@ -249,8 +250,57 @@ func TestNewEllipsoid(t *testing.T) {
 //No need to test other functions because we know from testing the
 //general polynomial surfaces. 
 func TestEllipsoidF(t *testing.T) {
+  test.SetSeed(78777)
+
+  basis := [][]float64{[]float64{1, 0, 0}, []float64{0, 1, 0}, []float64{0, 0, 1}}
+
+  //First some tests centered at the origin.
   for i := 0; i < 5; i ++ {
-    
+    point := []float64{0,0,0}
+
+    param := []float64{math.Exp(test.RandFloat(-1, 1)),
+      math.Exp(test.RandFloat(-1, 1)), math.Exp(test.RandFloat(-1, 1))}
+
+    ellipsoid := NewEllipsoid(point, basis, param)
+
+    for j := 0; j < 5; j ++ {
+      test_point := []float64{test.RandFloat(-5, 5), test.RandFloat(-5, 5), test.RandFloat(-5, 5)}
+
+      var f_exp float64 = 1
+      f_test := ellipsoid.F(test_point)
+
+      for k := 0; k < 3; k ++ {
+        f_exp -= (test_point[k]-point[k])*(test_point[k]-point[k])/param[k]
+      }
+
+      if !test.CloseEnough(f_test, f_exp, err_bs) {
+        t.Error("ellipsoid error: ", ellipsoid.String(), "; for parameters ", param, " at point ", test_point, ": expected ", f_exp, ", got ", f_test)
+      }
+    }
+  }
+
+  for i := 0; i < 5; i ++ {
+    point := []float64{test.RandFloat(-5, 5), test.RandFloat(-5, 5), test.RandFloat(-5, 5)}
+
+    param := []float64{math.Exp(test.RandFloat(-1, 1)),
+      math.Exp(test.RandFloat(-1, 1)), math.Exp(test.RandFloat(-1, 1))}
+
+    ellipsoid := NewEllipsoid(point, basis, param)
+
+    for j := 0; j < 5; j ++ {
+      test_point := []float64{test.RandFloat(-5, 5), test.RandFloat(-5, 5), test.RandFloat(-5, 5)}
+
+      var f_exp float64 = 1
+      f_test := ellipsoid.F(test_point)
+
+      for k := 0; k < 3; k ++ {
+        f_exp -= (test_point[k]-point[k])*(test_point[k]-point[k])/param[k]
+      }
+
+      if !test.CloseEnough(f_test, f_exp, err_bs) {
+        t.Error("ellipsoid error for ", ellipsoid.String(), "; for parameters ", param, ", central point ", point, ", at point ", test_point, ": expected ", f_exp, ", got ", f_test)
+      }
+    }
   }
 }
 

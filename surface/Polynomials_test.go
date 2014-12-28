@@ -339,98 +339,133 @@ func TestQuadratic(t *testing.T) {
 }
 
 func TestNewQuadraticSurface(t *testing.T) {
-  if nil != NewQuadraticSurfaceByCenterVectorList(nil, [][]float64{[]float64{1,0}, []float64{0, 1}},
+  if nil != NewQuadraticSurface(nil, [][]float64{[]float64{1,0}, []float64{0, 1}},
       [][]float64{}, []float64{0,0}, 1) {
     t.Error("New quadratic surface error 1")
   }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}},
+  if nil != NewQuadraticSurface([]float64{0,0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}},
       [][]float64{}, []float64{0,0}, 1) {
     t.Error("New quadratic surface error 2")
   }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0}, [][]float64{[]float64{1,0}, []float64{0, 1}},
+  if nil != NewQuadraticSurface([]float64{0}, [][]float64{[]float64{1,0}, []float64{0, 1}},
       [][]float64{}, []float64{0,0}, 1) {
     t.Error("New quadratic surface error 3")
   }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, nil, [][]float64{}, []float64{0,0}, 1) {
+  if nil != NewQuadraticSurface([]float64{0,0}, nil, [][]float64{}, []float64{0,0}, 1) {
     t.Error("New quadratic surface error 4")
   }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{}, nil, []float64{0,0}, 1) {
+  if nil != NewQuadraticSurface([]float64{0,0}, [][]float64{}, nil, []float64{0,0}, 1) {
     t.Error("New quadratic surface error 5")
   }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}},
+  if nil != NewQuadraticSurface([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}},
       [][]float64{[]float64{0, 1}}, []float64{0, 0}, 1) {
     t.Error("New quadratic surface error 6")
   }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{nil, []float64{0, 1}},
+  if nil != NewQuadraticSurface([]float64{0,0}, [][]float64{nil, []float64{0, 1}},
       [][]float64{}, []float64{0, 0}, 1) {
     t.Error("New quadratic surface error 7")
   }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1,0}},
+  if nil != NewQuadraticSurface([]float64{0,0}, [][]float64{[]float64{1,0}},
       [][]float64{nil}, []float64{0, 0}, 1) {
     t.Error("New quadratic surface error 8")
   }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1, 0, 0}},
+  if nil != NewQuadraticSurface([]float64{0,0}, [][]float64{[]float64{1, 0, 0}},
       [][]float64{[]float64{1, 0}}, []float64{0, 0}, 1) {
     t.Error("New quadratic surface error 9")
   }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1, 0}},
+  if nil != NewQuadraticSurface([]float64{0,0}, [][]float64{[]float64{1, 0}},
       [][]float64{[]float64{1, 0, 0}}, []float64{0, 0}, 1) {
     t.Error("New quadratic surface error 10")
   }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1}},
+  if nil != NewQuadraticSurface([]float64{0,0}, [][]float64{[]float64{1}},
       [][]float64{[]float64{1, 0}}, []float64{0, 0}, 1) {
     t.Error("New quadratic surface error 11")
   }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1, 0}},
+  if nil != NewQuadraticSurface([]float64{0,0}, [][]float64{[]float64{1, 0}},
       [][]float64{[]float64{1}}, []float64{0, 0}, 1) {
     t.Error("New quadratic surface error 12")
   }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1, 0}},
+  if nil != NewQuadraticSurface([]float64{0,0}, [][]float64{[]float64{1, 0}},
       [][]float64{[]float64{1, 0}}, nil, 1) {
     t.Error("New quadratic surface error 13")
   }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1, 0}},
+  if nil != NewQuadraticSurface([]float64{0,0}, [][]float64{[]float64{1, 0}},
       [][]float64{[]float64{1, 0}}, []float64{0, 0, 0}, 1) {
     t.Error("New quadratic surface error 14")
   }
-  if nil != NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1, 0}},
+  if nil != NewQuadraticSurface([]float64{0,0}, [][]float64{[]float64{1, 0}},
       [][]float64{[]float64{1, 0}}, []float64{0}, 1) {
     t.Error("New quadratic surface error 15")
   }
 
-  if nil == NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}},
+  if nil == NewQuadraticSurface([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}},
       [][]float64{}, []float64{0,0}, 1) {
     t.Error("New quadratic surface error 16")
   }
-  if nil == NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1,0}},
+  if nil == NewQuadraticSurface([]float64{0,0}, [][]float64{[]float64{1,0}},
       [][]float64{[]float64{0, 1}}, []float64{0,0}, 1) {
     t.Error("New quadratic surface error 17")
   }
-  if nil == NewQuadraticSurfaceByCenterVectorList([]float64{0,0}, [][]float64{[]float64{1,0}},
+  if nil == NewQuadraticSurface([]float64{0,0}, [][]float64{[]float64{1,0}},
       [][]float64{}, []float64{0, 0}, 1) {
     t.Error("New quadratic surface error 18")
   }
 
   //TODO test whether the shape actually comes out as expected. 
-  /*dim = 4;
+  dim := 4;
   for i := 0; i < 20; i ++ {
     point := make([]float64, dim)
     basis := make([][]float64, dim)
     y := make([]float64, dim)
-    a := test.Rand(-5, 5)
+    a := test.RandFloat(-5, 5)
 
     for j := 0; j < dim; j ++ {
-      point[j] = test.Rand(-5, 5)
+      point[j] = test.RandFloat(-5, 5)
       basis[j] = make([]float64, dim)
-      y[j] = test.Rand(-2, 2)
+      y[j] = test.RandFloat(-2, 2)
 
       for k := 0; k < dim; k ++ {
-        basis[j][k] = 
+        basis[j][k] = test.RandFloat(-2, 2)
       }
     }
 
-    
-  }*/
+    ib := test.RandInt(0, dim)
+
+    vp := basis[0:ib]
+    vn := basis[ib:dim]
+
+    quadratic := NewQuadraticSurface(point, vp, vn, y, a)
+
+    for j := 0; j < 5; j ++ {
+      test_point := make([]float64, dim)
+      tp := make([]float64, dim)
+      for k := 0; k < dim; k ++ {
+        test_point[k] = test.RandFloat(-2, 2)
+        tp[k] = test_point[k] - point[k]
+      }
+
+      f_test := quadratic.F(test_point)
+
+      f_exp := a
+
+      for k := 0; k < dim; k ++ {
+        f_exp += y[k] * tp[k]
+
+        for l := 0; l < dim; l ++ {
+          for m := 0; m < len(vp); m ++ {
+            f_exp += tp[k] * vp[m][k] * vp[m][l] * tp[l]
+          }
+          for m := 0; m < len(vn); m ++ {
+            f_exp += tp[k] * vp[m][k] * vp[m][l] * tp[l]
+          }
+        }
+      }
+
+      if !test.CloseEnough(f_test, f_exp, .000001) {
+        t.Error("Quadratic surface error; expected ", f_exp, " got ", f_test)
+      }
+    }
+  }
 }
 
 //The strategy of this test is to ensure that one point of the segment
@@ -450,7 +485,7 @@ func TestQuadraticIntersection(t *testing.T) {
     point := []float64{test.RandFloat(-2, 2), test.RandFloat(-2, 2), test.RandFloat(-2, 2)}
     a := test.RandFloat(8, 80)
 
-    quadratic := NewQuadraticSurfaceByCenterVectorList(point, basis, [][]float64{}, make([]float64, dim), a)
+    quadratic := NewQuadraticSurface(point, basis, [][]float64{}, make([]float64, dim), a)
 
     for j := 0; j < 4; j ++ {
 
@@ -568,7 +603,8 @@ func TestCubic(t *testing.T) {
       val := surface.F(point)
 
       if ! test.CloseEnough(val, expect, err_poly) {
-        t.Error("cubic surface defined by d = ", d, ", c = ", c, ", b = ", b, ", a = ", a, " error point ", point, "; expected ", expect, ", got ", val)
+        t.Error("cubic surface defined by d = ", d, ", c = ", c, ", b = ", b, ", a = ",
+          a, " error point ", point, "; expected ", expect, ", got ", val)
       }
 
       grad := surface.Gradient(point)
@@ -607,7 +643,7 @@ func TestCubicIntersection(t *testing.T) {
     a := test.RandFloat(8, 80)
 
     quadratic := NewQuadraticSurfaceByCenterVectorList(point, basis, [][]float64{}, make([]float64, dim), a)*/
-
+  //TODO
 }
 
 func TestQuartic(t *testing.T) {

@@ -116,7 +116,7 @@ type State interface {
   S() float64
   //The step size. 
   Ds() float64
-  setDs(dt float64);
+  setDs(dt float64)
   //Set the next ds.
   nextDs(ds float64)
   //The number of elements in the arrays.
@@ -138,50 +138,50 @@ type State interface {
 }
 
 type state struct {
-  n int // equal to dim * particles
+  n int 
   region int
   s, ds, newds float64
   pos, vel, newpos, newvel, err []float64
 }
 
 func (p *state) Length() int {
-  return p.n;
+  return p.n
 }
 
 func (p *state) S() float64 {
-  return p.s;
+  return p.s
 }
 
 func (p *state) Ds() float64 {
-  return p.ds;
+  return p.ds
 }
 
 func (p *state) setDs(ds float64) {
-  p.ds = ds;
+  p.ds = ds
 }
 
 func (p *state) nextDs(ds float64) {
-  p.newds = ds;
+  p.newds = ds
 }
 
 func (p *state) position() []float64 {
-  return p.pos;
+  return p.pos
 }
 
 func (p *state) velocity() []float64 {
-  return p.vel;
+  return p.vel
 }
 
 func (p *state) newPosition() []float64 {
-  return p.newpos;
+  return p.newpos
 }
 
 func (p *state) newVelocity() []float64 {
-  return p.newvel;
+  return p.newvel
 }
 
 func (p *state) errorEstimate() []float64 {
-  return p.err;
+  return p.err
 }
 
 func (p *state) ExportInstant() *Instant {

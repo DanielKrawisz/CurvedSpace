@@ -86,12 +86,12 @@ func pathtrace_activity_01() {
       //fmt.Println("pixel ", i, ", ", j)
 
       var ou float64 = 2*float64(i - size_u/2)/float64(size_u)
-      var ov float64 = 2*float64(j - size_u/2)/float64(size_u)
+      var ov float64 = 2*float64(j - size_v/2)/float64(size_v)
 
       //Set up the ray.
       for k := 0; k < 3; k ++ {
         ray_pos[k] = cam_pos[k]
-        ray_dir[k] = cam_dir[k] + ou * cam_up[k] + ov * cam_right[k]
+        ray_dir[k] = cam_dir[k] + ov * cam_up[k] + ou * cam_right[k]
       }
 
       for k := 0; k < depth; k ++ {
@@ -108,11 +108,10 @@ func pathtrace_activity_01() {
               c = colors[l]
             }
           }
+        }
 
-          if s == nil {
-            c = background
-            break
-          }
+        if s == nil {
+          c = background
         }
 
         img.Set(i, j, c)

@@ -4,12 +4,14 @@ import "math/rand"
 import "math"
 import "../distributions"
 
+/*type Color interface {
+}*/
+
 type RayInteraction interface {
   Interact(direction, normal []float64)
 }
 
 type noInteraction struct {
-  c Color
 }
 
 func (m *noInteraction) Interact(direction, normal []float64) {
@@ -65,10 +67,12 @@ type mirrorReflectance struct {
 
 func (m *mirrorReflectance) Interact(direction, normal []float64) {
   var d float64	
-  for l := 0; l < 3; l ++ {
+  //Find the dot product of the normal with the incoming ray.
+  for l := 0; l < len(normal); l ++ {
     d += normal[l] * direction[l]
   }
-  for l := 0; l < 3; l ++ {
+  //Mirror the ray in the direction of the normal. 
+  for l := 0; l < len(normal); l ++ {
     direction[l] = direction[l] - 2 * normal[l] * d
   }
 }
@@ -77,22 +81,65 @@ func NewMirrorReflectance() RayInteraction {
   return &mirrorReflectance{}
 }
 
-/*type refract struct {
-  c Color
-  n float64
+//TODO
+type specularReflectance struct {
   scatter float64
 }
 
-type phongSpecularReflectance struct {
-  scatter float64
+func (m *specularReflectance) Interact(direction, normal []float64) {
+  var d float64	
+  //Find the dot product of the normal with the incoming ray.
+  for l := 0; l < len(normal); l ++ {
+    d += normal[l] * direction[l]
+  }
+
+  //Mirror the ray in the direction of the normal. 
+  for l := 0; l < len(normal); l ++ {
+    direction[l] = direction[l] - 2 * normal[l] * d
+    d += direction[l] * direction[l]
+  }
+
+  //Normalize the outgoing ray. 
+  d = math.Sqrt(d)
+  for l := 0; l < len(normal); l ++ {
+    direction[l] /= d
+  }
+
+  //Add a random jostling. 
+  spec := distributions.RandomNormallyDistributedVector(len(normal), 0, m.scatter)
+  for l := 0; l < len(normal); l ++ {
+    direction[l] += spec[l]
+  }
+
+  //Test find the dot product of the new vector with the normal.
+  d = 0
+  for l := 0; l < len(normal); l ++ {
+    d += normal[l] * direction[l]
+  }
+
+  //If the light ray has gone into the surface, mirror it with
+  //the normal vector again. 
+  if d < 0 {
+    for l := 0; l < len(normal); l ++ {
+      direction[l] = direction[l] - 2 * normal[l] * d
+    }
+  }
 }
 
-func (m *phongReflectance) Interact(l LightRay, normal float64) {
+//This refraction does not take into account the way that refraction
+//changes with color. 
+//TODO
+type basicRefractive struct {
+  index float64
 }
 
+func (m *basicRefractive) Interact(direction, normal []float64) {
+  
+}
+
+//TODO
 type orenNayerReflectance struct {
-  c Color
-}*/
+}
 
 /*type compoundMaterial struct {
   probability []float64

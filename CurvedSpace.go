@@ -27,11 +27,12 @@ import (
   "./geometry"
   "./surface"
   "./pathtrace"
+  "./distributions"
   //"./BlackHoles"
 )
 
 func main() {
-  pathtrace_activity_02()
+  //pathtrace_activity_02()
   pathtrace_activity_03()
 }
 
@@ -161,7 +162,7 @@ func pathtrace_activity_02() {
 
   var ray_pos, ray_dir, col []float64 = make([]float64, 3), make([]float64, 3), make([]float64, 3)
 
-  var depth, rpix int = 20, 400
+  var depth, rpix int = 40, 400
   var absorbed float64 = .3
 
   var n int = 0
@@ -249,6 +250,7 @@ func pathtrace_activity_02() {
   }
 }
 
+//A prototype showing a variety of materials. 
 func pathtrace_activity_03() {
   var size_u, size_v int = 800, 600
   var total_pixels = size_u * size_v
@@ -256,7 +258,7 @@ func pathtrace_activity_03() {
   img := image.NewNRGBA(image.Rect(0, 0, size_u, size_v))
 
   shapes := []surface.Surface{
-    surface.NewSphere([]float64{0, 0, 26}, 2),
+    surface.NewSphere([]float64{0, 0, 26}, 14),
     surface.NewSphere([]float64{0, 0, 1}, 1),
     surface.NewSphere([]float64{2, 0, 1}, 1),
     surface.NewSphere([]float64{-2, 0, 1}, 1),
@@ -277,7 +279,8 @@ func pathtrace_activity_03() {
 
   var ray_pos, ray_dir, col []float64 = make([]float64, 3), make([]float64, 3), make([]float64, 3)
 
-  var depth, rpix int = 20, 100
+  var depth, minp int = 40, 40
+  var maxMeanVariance float64 = .001
 
   var n int = 0
   for i := 0; i < size_u; i ++ {
@@ -290,7 +293,16 @@ func pathtrace_activity_03() {
         col[k] = 0
       }
 
-      for p := 0; p < rpix; p ++ {
+      var p int = 0
+      var variance_check bool
+
+      for {
+        //Set up the variance monitor.
+        var monitor []*distributions.SampleStatistics = []*distributions.SampleStatistics{
+          distributions.NewSampleStatistics(), 
+          distributions.NewSampleStatistics(), 
+          distributions.NewSampleStatistics()}
+
         //Set up the ray.
         var ou float64 = 2*(float64(i - size_u/2) + rand.Float64() - .5)/float64(size_u)
         var ov float64 = 2*(float64(j - size_v/2) + rand.Float64() - .5)/float64(size_v)
@@ -300,6 +312,9 @@ func pathtrace_activity_03() {
           ray_dir[k] = cam_dir[k] + ov * cam_up[k] + ou * cam_right[k]
         }
 
+        p ++
+
+        //Go as far as the depth requires. 
         for k := 0; k < depth; k ++ {
           var u float64 = math.Inf(1)
           var s surface.Surface = nil
@@ -318,18 +333,27 @@ func pathtrace_activity_03() {
             }
           }
 
-          if s == nil {
+          if s == nil { //The ray has diverged to infinity. 
             for l := 0; l < 3; l ++ {
-              col[l] += background[l];
+              col[l] += background[l]
+              monitor[l].AddVariable(background[l])
             }
             break
-          } else {
-            if selected == 0 || selected == 1 {
+          } else { //The ray has interacted with something.
+            last = selected
+            if selected == 0 {
               for l := 0; l < 3; l ++ {
                 col[l] += 1
+                monitor[l].AddVariable(1)
               }
+              break
+            } else if selected == 1 {
+              for l := 0; l < 3; l ++ {
+                col[l] += 1
+                monitor[l].AddVariable(1)
+              }
+              break
             } else {
-              last = selected
               for l := 0; l < 3; l ++ {
                 ray_pos[l] = ray_pos[l] + u * ray_dir[l]
               }
@@ -337,10 +361,23 @@ func pathtrace_activity_03() {
             } 
           }
         }
+
+        //Check variance
+        if p > minp {
+          variance_check = true
+          for l := 0; l < 3; l ++ {
+            if monitor[l].MeanVariance() > maxMeanVariance {
+              variance_check = false
+            }
+          }
+        }
+        if variance_check {
+          break
+        }
       }
 
       for l := 0; l < 3; l ++ {
-        col[l] = math.Min(255 * col[l] / float64(rpix), 255)
+        col[l] = math.Min(255 * col[l] / float64(p), 255)
       }
 
       img.Set(i, j, &color.NRGBA{uint8(col[0]), uint8(col[1]), uint8(col[2]), 255})
@@ -356,5 +393,4 @@ func pathtrace_activity_03() {
   } else {
     fmt.Println("Could not write file")
   }
-  fmt.Println(img)
 }

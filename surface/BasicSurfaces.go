@@ -70,7 +70,7 @@ func (s *sphere) Interior(x []float64) bool {
 func (s *sphere) Gradient(x []float64) []float64 {
   z := make([]float64, s.dim)
   for i := 0; i < s.dim; i++ {
-    z[i] = -2 * (x[i] - s.p[i])
+    z[i] = 2 * (x[i] - s.p[i])
   }
   return z
 }

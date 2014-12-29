@@ -162,8 +162,9 @@ func pathtrace_activity_02() {
 
   var ray_pos, ray_dir, col []float64 = make([]float64, 3), make([]float64, 3), make([]float64, 3)
 
-  var depth, rpix int = 40, 400
-  var absorbed float64 = .3
+  var depth, minp int = 40, 100
+  var maxMeanVariance float64 = .0001
+  var absorbed float64 = .5
 
   var n int = 0
   for i := 0; i < size_u; i ++ {
@@ -176,7 +177,16 @@ func pathtrace_activity_02() {
         col[k] = 0
       }
 
-      for p := 0; p < rpix; p ++ {
+      var p int = 0
+      var variance_check bool
+
+      for {
+        //Set up the variance monitor.
+        var monitor []*distributions.SampleStatistics = []*distributions.SampleStatistics{
+          distributions.NewSampleStatistics(), 
+          distributions.NewSampleStatistics(), 
+          distributions.NewSampleStatistics()}
+
         //Set up the ray.
         var ou float64 = 2*(float64(i - size_u/2) + rand.Float64() - .5)/float64(size_u)
         var ov float64 = 2*(float64(j - size_v/2) + rand.Float64() - .5)/float64(size_v)
@@ -184,6 +194,8 @@ func pathtrace_activity_02() {
           ray_pos[k] = cam_pos[k]
           ray_dir[k] = cam_dir[k] + ov * cam_up[k] + ou * cam_right[k]
         }
+
+        p ++
 
         var last int = -1
         var selected int
@@ -229,10 +241,23 @@ func pathtrace_activity_02() {
             }
           }
         }
+
+        //Check variance
+        if p > minp {
+          variance_check = true
+          for l := 0; l < 3; l ++ {
+            if monitor[l].MeanVariance() > maxMeanVariance {
+              variance_check = false
+            }
+          }
+        }
+        if variance_check {
+          break
+        }
       }
 
       for l := 0; l < 3; l ++ {
-        col[l] = math.Min(255 * col[l] / float64(rpix), 255)
+        col[l] = math.Min(255 * col[l] / float64(p), 255)
       }
 
       img.Set(i, j, &color.NRGBA{uint8(col[0]), uint8(col[1]), uint8(col[2]), 255})

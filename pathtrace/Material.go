@@ -128,13 +128,21 @@ func (m *specularReflectance) Interact(direction, normal []float64) {
 
 //This refraction does not take into account the way that refraction
 //changes with color. 
-//TODO
 type basicRefractive struct {
   index float64
 }
 
 func (m *basicRefractive) Interact(direction, normal []float64) {
-  
+  var d float64	
+  //Find the dot product of the normal with the incoming ray.
+  for l := 0; l < len(normal); l ++ {
+    d += normal[l] * direction[l]
+  }
+  d = (m.index - 1) * d / m.index
+  //Mirror the ray in the direction of the normal. 
+  for l := 0; l < len(normal); l ++ {
+    direction[l] = direction[l] - normal[l] * d
+  }
 }
 
 //TODO

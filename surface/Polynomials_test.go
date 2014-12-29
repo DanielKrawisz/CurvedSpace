@@ -2,7 +2,6 @@ package surface
 
 import "testing"
 import "math"
-import "sort"
 //import "fmt"
 import "../test"
 
@@ -17,104 +16,6 @@ import "../test"
 //The error parameter. 
 var err_poly float64 = .001
 var h_d float64 = .000001
-
-//Inefficient functions for contracting tensors. Testing use only! 
-func contractSymmetric4Tensor(t [][][][]float64, x []float64 ) [][][]float64 {
-  z := make([][][]float64, len(x))
-  index := make([]int, 4)
-  symind := make([]int, 4)
-  conind := make([]int, 3)
-
-  for i := 0; i < len(x); i ++ {
-    z[i] = make([][]float64, i + 1)
-    for j := 0; j <= i; j ++ {
-      z[i][j] = make([]float64, j + 1)
-    }
-  }
-
-  for index[3] = 0; index[3] < len(x); index[3] ++ {
-    for index[2] = 0; index[2] < len(x); index[2] ++ {
-      for index[1] = 0; index[1] < len(x); index[1] ++ {
-        for index[0] = 0; index[0] < len(x); index[0] ++ {
-          for d := 0; d < 4; d ++ {
-            symind[d] = index[d]
-          }
-          for d := 1; d < 4; d++ {
-            conind[d - 1] = index[d]
-          }
-          if sort.IntsAreSorted(conind) {
-            sort.Ints(symind)
-
-            z[conind[2]][conind[1]][conind[0]] += t[symind[3]][symind[2]][symind[1]][symind[0]] * x[index[0]]
-          }
-        }
-      }
-    }
-  }
-
-  return z
-}
-
-func contractSymmetric3Tensor(t [][][]float64, x []float64 ) [][]float64 {
-  z := make([][]float64, len(x))
-  index := make([]int, 3)
-  symind := make([]int, 3)
-  conind := make([]int, 2)
-
-  for i := 0; i < len(x); i ++ {
-    z[i] = make([]float64, i + 1)
-  }
-
-  for index[2] = 0; index[2] < len(x); index[2] ++ {
-    for index[1] = 0; index[1] < len(x); index[1] ++ {
-      for index[0] = 0; index[0] < len(x); index[0] ++ {
-        for d := 0; d < 3; d ++ {
-          symind[d] = index[d]
-        }
-        for d := 1; d < 3; d++ {
-          conind[d - 1] = index[d]
-        }
-        if sort.IntsAreSorted(conind) {
-          sort.Ints(symind)
-
-          z[conind[1]][conind[0]] += t[symind[2]][symind[1]][symind[0]] * x[index[0]]
-        }
-      }
-    }
-  }
-
-  return z
-}
-
-// t is a symmetric 2-tensor. 
-func contractSymmetricTensor(t [][]float64, x []float64 ) []float64 {
-  z := make([]float64, len(x))
-  index := make([]int, 2)
-  symind := make([]int, 2)
-
-  for index[1] = 0; index[1] < len(x); index[1] ++ {
-    for index[0] = 0; index[0] < len(x); index[0] ++ {
-      for d := 0; d < 2; d ++ {
-        symind[d] = index[d]
-      }
-      sort.Ints(symind)
-
-      z[index[0]] += t[symind[1]][symind[0]] * x[index[1]]
-    }
-  }
-
-  return z
-}
-
-func contractVector(t []float64, x []float64 ) float64 {
-  var z float64 = 0.0
-
-  for i := 0; i < len(x); i ++ {
-    z += t[i] * x[i]
-  }
-
-  return z
-}
 
 //Four dimensions is enough to handle all possibilites
 func TestLinear(t *testing.T) {
@@ -411,18 +312,21 @@ func TestNewQuadraticSurface(t *testing.T) {
     t.Error("New quadratic surface error 18")
   }
 
-  //TODO test whether the shape actually comes out as expected. 
   dim := 4;
+  test.SetSeed(40498)
   for i := 0; i < 20; i ++ {
     point := make([]float64, dim)
     basis := make([][]float64, dim)
     y := make([]float64, dim)
     a := test.RandFloat(-5, 5)
+    a = 0
 
     for j := 0; j < dim; j ++ {
       point[j] = test.RandFloat(-5, 5)
+      //point[j] = 0
       basis[j] = make([]float64, dim)
       y[j] = test.RandFloat(-2, 2)
+      y[j] = 0
 
       for k := 0; k < dim; k ++ {
         basis[j][k] = test.RandFloat(-2, 2)
@@ -453,16 +357,17 @@ func TestNewQuadraticSurface(t *testing.T) {
 
         for l := 0; l < dim; l ++ {
           for m := 0; m < len(vp); m ++ {
-            f_exp += tp[k] * vp[m][k] * vp[m][l] * tp[l]
+            f_exp -= tp[k] * vp[m][k] * vp[m][l] * tp[l]
           }
           for m := 0; m < len(vn); m ++ {
-            f_exp += tp[k] * vp[m][k] * vp[m][l] * tp[l]
+            f_exp += tp[k] * vn[m][k] * vn[m][l] * tp[l]
           }
         }
       }
 
       if !test.CloseEnough(f_test, f_exp, .000001) {
-        t.Error("Quadratic surface error; expected ", f_exp, " got ", f_test)
+        t.Error("Quadratic surface error for ", quadratic, "; ib = ", ib, ", p = ",point, ", vp = , ", vp, ", vn = ", vn,
+          "; x = ", test_point, "; expected ", f_exp, " got ", f_test)
       }
     }
   }

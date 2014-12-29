@@ -62,7 +62,7 @@ func TestSphereF(t *testing.T) {
 
       f_exp := r*r - (p[0] - test_point[0]) * (p[0] - test_point[0]) - (p[1] - test_point[1]) * (p[1] - test_point[1])
       f := s.F(test_point)
-      grad_exp := []float64{-2 * (p[0] - test_point[0]), -2 * (p[1] - test_point[1])}
+      grad_exp := []float64{2 * (p[0] - test_point[0]), 2 * (p[1] - test_point[1])}
       grad := s.Gradient(test_point)
 
       if !test.CloseEnough(f_exp, f, err_bs) {
@@ -250,7 +250,6 @@ func TestNewEllipsoid(t *testing.T) {
 //No need to test other functions because we know from testing the
 //general polynomial surfaces. 
 func TestEllipsoidF(t *testing.T) {
-  test.SetSeed(78777)
 
   basis := [][]float64{[]float64{1, 0, 0}, []float64{0, 1, 0}, []float64{0, 0, 1}}
 
@@ -324,37 +323,37 @@ func TestNewInfiniteCylinder(t *testing.T) {
 }
 
 func TestInfiniteCylinderF(t *testing.T) {
-  
+  //TODO
 }
 
 func TestNewInfiniteCone(t *testing.T) {
-  
+  //TODO
 }
 
 func TestInfiniteConeF(t *testing.T) {
-  
+  //TODO
 }
 
 func TestNewInfiniteParaboloid(t *testing.T) {
-  
+  //TODO
 }
 
 func TestInfiniteParaboloidF(t *testing.T) {
-  
+  //TODO
 }
 
 func TestNewInfiniteHyperboloid(t *testing.T) {
-  
+  //TODO
 }
 
 func TestInfiniteHyperboloidF(t *testing.T) {
-  
+  //TODO
 }
 
 func TestNewCylinder(t *testing.T) {
-  
+  //TODO
 }
 
 func TestCylinderF(t *testing.T) {
-  
+  //TODO
 }

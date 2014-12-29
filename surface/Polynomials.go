@@ -3,6 +3,7 @@ package surface
 import "./polynomials"
 import "strings"
 import "fmt"
+import "sort"
 
 //Polynomial surfaces for degrees 1 to 4.
 //Since the solutions to the polynomials are already given, 
@@ -15,6 +16,106 @@ import "fmt"
 //other words, c[1][2] is not defined and will probably give
 //an out of bounds exception, whereas c[2][1] or c[2][2] is
 //fine.
+
+//Functions for contracting tensors. These functions are inefficient and should
+//not be used in the main loop of a program.
+
+func contractSymmetric4Tensor(t [][][][]float64, x []float64 ) [][][]float64 {
+  z := make([][][]float64, len(x))
+  index := make([]int, 4)
+  symind := make([]int, 4)
+  conind := make([]int, 3)
+
+  for i := 0; i < len(x); i ++ {
+    z[i] = make([][]float64, i + 1)
+    for j := 0; j <= i; j ++ {
+      z[i][j] = make([]float64, j + 1)
+    }
+  }
+
+  for index[3] = 0; index[3] < len(x); index[3] ++ {
+    for index[2] = 0; index[2] < len(x); index[2] ++ {
+      for index[1] = 0; index[1] < len(x); index[1] ++ {
+        for index[0] = 0; index[0] < len(x); index[0] ++ {
+          for d := 0; d < 4; d ++ {
+            symind[d] = index[d]
+          }
+          for d := 1; d < 4; d++ {
+            conind[d - 1] = index[d]
+          }
+          if sort.IntsAreSorted(conind) {
+            sort.Ints(symind)
+
+            z[conind[2]][conind[1]][conind[0]] += t[symind[3]][symind[2]][symind[1]][symind[0]] * x[index[0]]
+          }
+        }
+      }
+    }
+  }
+
+  return z
+}
+
+func contractSymmetric3Tensor(t [][][]float64, x []float64 ) [][]float64 {
+  z := make([][]float64, len(x))
+  index := make([]int, 3)
+  symind := make([]int, 3)
+  conind := make([]int, 2)
+
+  for i := 0; i < len(x); i ++ {
+    z[i] = make([]float64, i + 1)
+  }
+
+  for index[2] = 0; index[2] < len(x); index[2] ++ {
+    for index[1] = 0; index[1] < len(x); index[1] ++ {
+      for index[0] = 0; index[0] < len(x); index[0] ++ {
+        for d := 0; d < 3; d ++ {
+          symind[d] = index[d]
+        }
+        for d := 1; d < 3; d++ {
+          conind[d - 1] = index[d]
+        }
+        if sort.IntsAreSorted(conind) {
+          sort.Ints(symind)
+
+          z[conind[1]][conind[0]] += t[symind[2]][symind[1]][symind[0]] * x[index[0]]
+        }
+      }
+    }
+  }
+
+  return z
+}
+
+// t is a symmetric 2-tensor. 
+func contractSymmetricTensor(t [][]float64, x []float64 ) []float64 {
+  z := make([]float64, len(x))
+  index := make([]int, 2)
+  symind := make([]int, 2)
+
+  for index[1] = 0; index[1] < len(x); index[1] ++ {
+    for index[0] = 0; index[0] < len(x); index[0] ++ {
+      for d := 0; d < 2; d ++ {
+        symind[d] = index[d]
+      }
+      sort.Ints(symind)
+
+      z[index[0]] += t[symind[1]][symind[0]] * x[index[1]]
+    }
+  }
+
+  return z
+}
+
+func contractVector(t []float64, x []float64 ) float64 {
+  var z float64 = 0.0
+
+  for i := 0; i < len(x); i ++ {
+    z += t[i] * x[i]
+  }
+
+  return z
+}
 
 type linearSurface struct {
   dimension int
@@ -613,37 +714,13 @@ func NewQuadraticSurface(p []float64, vp, vn [][]float64, y[] float64, r2 float6
 
   var b []float64 = make([]float64, dim)
   var c [][]float64 = make([][]float64, dim)
-  var pv []float64 = make([]float64, dim)
-  var pvp, py float64 = 0, 0
 
-  //Calculate py and pv. 
-  for i := 0; i < dim; i ++ {
-    for j := 0; j < len(vp); j ++ {
-      pv[j] -= vp[j][i] * p[i]
-    }
-    for j := 0; j < len(vn); j ++ {
-      pv[j + len(vp)] += vn[j][i] * p[i]
-    }
-
-    py += y[i] * p[i]
-  }
-
-  //Calculate pvp and b.
-  for i := 0; i < dim; i ++ {
-    pvp += pv[i] * pv[i]
-
-    b[i] = y[i]
-    for j := 0; j < len(vp); j ++ {
-      b[i] -= 2 * vp[j][i] * pv[j]
-    }
-    for j := 0; j < len(vn); j ++ {
-      b[i] += 2 * vn[j][i] * pv[j + len(vp)]
-    }
-  }
+  //var mp []float64 = make([]float64, dim)
 
   //Calculate c.
   for i := 0; i < dim; i ++ {
     c[i] = make([]float64, i + 1)
+    //mp[i] = -p[i]
     for j := 0; j <= i; j ++ {
       //c[i][j] = 0.0
       for k := 0; k < len(vp); k ++ {
@@ -655,7 +732,16 @@ func NewQuadraticSurface(p []float64, vp, vn [][]float64, y[] float64, r2 float6
     }
   }
 
-  return &quadraticSurface{dim, c, b, r2 + py - pvp}
+  pc := contractSymmetricTensor(c, p)
+  pcp := contractVector(pc, p)
+  bp := contractVector(y, p)
+
+  //Calculate b
+  for i := 0; i < dim; i ++ {
+    b[i] = -y[i] - 2 * pc[i]
+  }
+
+  return &quadraticSurface{dim, c, b, r2 - bp + pcp}
 }
 
 //A general cubic surface from a central point and a list of vectors
@@ -709,52 +795,30 @@ func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r3 float6
   var b []float64 = make([]float64, dim)
   var c [][]float64 = make([][]float64, dim)
   var d [][][]float64 = make([][][]float64, dim)
-  var pv, pvd []float64  = make([]float64, dim), make([]float64, dim)
+  var mp []float64 = make([]float64, dim)
 
-  var pvp, py, pvdp float64 = 0, 0, 0
-  var bv []float64 = make([]float64, dim)
+  cd := make([][]float64, dim)
 
-  //Calculate pv, py, pvd. 
+  //calculate d.
   for i := 0; i < dim; i ++ {
-
-    for j := 0; j < len(vp); j ++ {
-      pv[j] -= vp[j][i] * p[i]
-      bv[i] += vp[j][i]
+    d[i] = make([][]float64, i + 1)
+    mp[i] = -p[i]
+    for j := 0; j <= i; j ++ {
+      d[i][j] = make([]float64, j + 1)
+      for k := 0; k <= j; k ++ {
+        for l := 0; l < len(vd); l ++ {
+          d[i][j][k] -= vd[l][i] * vd[l][j] * vd[l][k]
+        }
+      }
     }
-    for j := 0; j < len(vn); j ++ {
-      pv[j + len(vp)] += vn[j][i] * p[i]
-      bv[i] -= vn[j][i]
-    }
-
-    for j := 0; j < len(vd); j ++ {
-      pvd[j] = vd[j][i] * p[i]
-    }
-
-    py += y[i] * p[i]
-    b[i] = y[i]
   }
 
-  //Calculate pvp and b.
-  for i := 0; i < dim; i ++ {
-    pvp += pv[i] * pv[i]
-    pvdp += pvd[i] * pvd[i] * pvd[i]
-
-    b[i] = y[i]
-    for j := 0; j < len(vp); j ++ {
-      b[i] -= 2 * vp[j][i] * pv[j]
-    }
-    for j := 0; j < len(vn); j ++ {
-      b[i] += 2 * vn[j][i] * pv[j + len(vp)]
-    }
-
-    for j := 0; j < dim; j ++ {
-      b[i] += 3 * vd[j][i] * pvd[j] * pvd[j]
-    }
-  }
+  dp := contractSymmetric3Tensor(d, mp)
 
   //Calculate c.
   for i := 0; i < dim; i ++ {
     c[i] = make([]float64, i + 1)
+    cd[i] = make([]float64, i + 1)
 
     for j := 0; j <= i; j ++ {
       for k := 0; k < len(vp); k ++ {
@@ -763,27 +827,24 @@ func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r3 float6
       for k := 0; k < len(vn); k ++ {
         c[i][j] += vn[k][i] * vn[k][j]
       }
-
-      for k := 0; k < len(vd); k ++ {
-        c[i][j] -= 3 * vd[k][i] * vd[k][j] * pvd[k]
-      }
+      cd[i][j] = c[i][j] + 3 * dp[i][j]
     }
   }
 
-  //calculate d.
+  dpp := contractSymmetricTensor(dp, mp)
+  dppp := contractVector(dpp, mp)
+
+  cp := contractSymmetricTensor(c, mp)
+  cpp := contractVector(cp, mp)
+
+  bp := contractVector(y, mp)
+
+  //Calculate py and pv. 
   for i := 0; i < dim; i ++ {
-    d[i] = make([][]float64, i + 1)
-    for j := 0; j <= i; j ++ {
-      d[i][j] = make([]float64, j + 1)
-      for k := 0; k <= j; k ++ {
-        for l := 0; l < len(vd); l ++ {
-          d[i][j][k] += vd[l][i] * vd[l][j] * vd[l][k]
-        }
-      }
-    }
+    b[i] = -y[i] + 2 * cp[i] + 3 * dpp[i]
   }
 
-  return &cubicSurface{dim, d, c, b, r3 + py - pvp + pvdp}
+  return &cubicSurface{dim, d, cd, b, r3 + bp + cpp + dppp}
 }
 
 //A general cubic surface from a central point and a list of vectors

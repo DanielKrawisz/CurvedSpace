@@ -18,7 +18,7 @@ func setSeed() {
 
 func RandInt(min int, max int) int {
   if !seed_set {setSeed()}
-  return min + rand.Intn(max-min+1)
+  return min + rand.Intn(1 + max - min)
 }
 
 func RandSign() int {

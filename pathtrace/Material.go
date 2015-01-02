@@ -3,34 +3,36 @@ package pathtrace
 import "math/rand"
 import "math"
 import "../distributions"
+import "../vector"
+
+//Functions can be mocked out for testing purposes. 
+var randomUnitSphereSurfacePoint func() *[3]float64 = distributions.RandomUnitSphereSurfacePoint
+
+var randomNormallyDistributedVector func(int, float64, float64) []float64 =
+  distributions.RandomNormallyDistributedVector
 
 /*type Color interface {
 }*/
 
 type RayInteraction interface {
-  Interact(direction, normal []float64)
+  Interact(direction, normal []float64) []float64
 }
 
-type noInteraction struct {
-}
-
-func (m *noInteraction) Interact(direction, normal []float64) {
-}
-
-type lambertianReflectance struct {
+type lambertianReflection struct {
 }
 
 //The Lambertian reflectance algorithm used here works as follows.
 //  1. generate a vector v uniformly distributed on the surface of a unit sphere.
 //  2. Add this vector to the normal vector. 
 //This should generate the correct distribution of vectors. 
-func (m *lambertianReflectance) Interact(direction, normal []float64) {
+func (m *lambertianReflection) Interact(direction, normal []float64) []float64 {
 
+  reflect := make([]float64, len(normal))
   if len(normal) == 3 {
     var dir *[3]float64
-    dir = distributions.RandomUnitSphereSurfacePoint()
+    dir = randomUnitSphereSurfacePoint()
     for i := 0; i < len(dir); i ++ {
-      direction[i] = normal[i] + (*dir)[i]
+      reflect[i] = normal[i] + (*dir)[i]
     }
   } else {
     var dir []float64
@@ -52,42 +54,45 @@ func (m *lambertianReflectance) Interact(direction, normal []float64) {
 
       r2 = math.Sqrt(r2)
       for i := 0; i < len(dir); i ++ {
-        direction[i] = normal[i] + dir[i] / r2
+        reflect[i] = normal[i] + dir[i] / r2
       }
     }
   }
+
+  return reflect
 }
 
-func NewLambertianReflectance() RayInteraction {
-  return &lambertianReflectance{}
+func NewLambertianReflection() RayInteraction {
+  return &lambertianReflection{}
 }
 
-type mirrorReflectance struct {
+type mirrorReflection struct {
 }
 
-func (m *mirrorReflectance) Interact(direction, normal []float64) {
-  var d float64	
+func (m *mirrorReflection) Interact(direction, normal []float64) []float64 {
+  reflect := make([]float64, len(normal))
   //Find the dot product of the normal with the incoming ray.
-  for l := 0; l < len(normal); l ++ {
-    d += normal[l] * direction[l]
-  }
+  d := vector.Dot(normal, direction)
   //Mirror the ray in the direction of the normal. 
   for l := 0; l < len(normal); l ++ {
-    direction[l] = direction[l] - 2 * normal[l] * d
+    reflect[l] = direction[l] - 2 * normal[l] * d
   }
+
+  return reflect
 }
 
-func NewMirrorReflectance() RayInteraction {
-  return &mirrorReflectance{}
+func NewMirrorReflection() RayInteraction {
+  return &mirrorReflection{}
 }
 
 //TODO
-type specularReflectance struct {
+type specularReflection struct {
   scatter float64
 }
 
-func (m *specularReflectance) Interact(direction, normal []float64) {
+func (m *specularReflection) Interact(direction, normal []float64) []float64 {
   var d float64	
+  reflect := make([]float64, len(normal))
   //Find the dot product of the normal with the incoming ray.
   for l := 0; l < len(normal); l ++ {
     d += normal[l] * direction[l]
@@ -95,58 +100,72 @@ func (m *specularReflectance) Interact(direction, normal []float64) {
 
   //Mirror the ray in the direction of the normal. 
   for l := 0; l < len(normal); l ++ {
-    direction[l] = direction[l] - 2 * normal[l] * d
-    d += direction[l] * direction[l]
+    reflect[l] = direction[l] - 2 * normal[l] * d
+    d += reflect[l] * reflect[l]
   }
 
   //Normalize the outgoing ray. 
   d = math.Sqrt(d)
   for l := 0; l < len(normal); l ++ {
-    direction[l] /= d
+    reflect[l] /= d
   }
 
   //Add a random jostling. 
-  spec := distributions.RandomNormallyDistributedVector(len(normal), 0, m.scatter)
+  spec := randomNormallyDistributedVector(len(normal), 0, m.scatter)
   for l := 0; l < len(normal); l ++ {
-    direction[l] += spec[l]
+    reflect[l] += spec[l]
   }
 
   //Test find the dot product of the new vector with the normal.
   d = 0
   for l := 0; l < len(normal); l ++ {
-    d += normal[l] * direction[l]
+    d += normal[l] * reflect[l]
   }
 
   //If the light ray has gone into the surface, mirror it with
   //the normal vector again. 
   if d < 0 {
     for l := 0; l < len(normal); l ++ {
-      direction[l] = direction[l] - 2 * normal[l] * d
+      reflect[l] = reflect[l] - 2 * normal[l] * d
     }
   }
+
+  return reflect
+}
+
+func NewSpecularReflection(scatter float64) RayInteraction {
+  return &specularReflection{scatter}
 }
 
 //This refraction does not take into account the way that refraction
 //changes with color. 
-type basicRefractive struct {
+type basicRefractiveTransmission struct {
   index float64
 }
 
-func (m *basicRefractive) Interact(direction, normal []float64) {
+func (m *basicRefractiveTransmission) Interact(direction, normal []float64) []float64 {
   var d float64	
   //Find the dot product of the normal with the incoming ray.
   for l := 0; l < len(normal); l ++ {
     d += normal[l] * direction[l]
   }
+
   d = (m.index - 1) * d / m.index
   //Mirror the ray in the direction of the normal. 
+  reflect := make([]float64, len(normal))
   for l := 0; l < len(normal); l ++ {
-    direction[l] = direction[l] - normal[l] * d
+    reflect[l] = direction[l] - normal[l] * d
   }
+
+  return reflect
+}
+
+func NewBasicRefractiveTransmission(index float64) RayInteraction {
+  return &specularReflection{index}
 }
 
 //TODO
-type orenNayerReflectance struct {
+type orenNayerReflection struct {
 }
 
 /*type compoundMaterial struct {

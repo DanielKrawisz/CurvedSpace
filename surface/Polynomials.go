@@ -741,7 +741,7 @@ func NewQuadraticSurface(p []float64, vp, vn [][]float64, y[] float64, r2 float6
     b[i] = -y[i] - 2 * pc[i]
   }
 
-  return &quadraticSurface{dim, c, b, r2 - bp + pcp}
+  return &quadraticSurface{dim, c, b, r2 + bp + pcp}
 }
 
 //A general cubic surface from a central point and a list of vectors

@@ -149,9 +149,11 @@ func TestSphereIntersection(t *testing.T) {
     r := test.RandFloat(1, 2)
     sphere := NewSphere(point, r)
 
+    //four random intersection tests.
     for j := 0; j < 4; j ++ {
       var p1, p2 []float64
 
+      //Generate some valid parameters for intersection lines. 
       for {
         p2 = []float64{test.RandFloat(point[0] - r, point[0] + r), test.RandFloat(point[1] - r, point[1] + r)}
 
@@ -168,53 +170,7 @@ func TestSphereIntersection(t *testing.T) {
         }
       }
 
-      v := make([]float64, len(p1))
-      for i := 0; i < len(p1); i ++ {
-        v[i] = p2[i] - p1[i]
-      }
-
-      u := sphere.Intersection(p1, v)
-      u_test := testIntersection(sphere, p1, v, 100)
-
-      if len(u) == 0 {
-        t.Error("No intersection point found for ", sphere.String(), " p1 = ", p1, "; v = ", v)
-        return 
-      } 
-
-      if len(u_test) == 0 {
-        t.Error("No test intersection point found for ", sphere.String(), " p1 = ", p1, "; v = ", v)
-        return
-      }
-
-      intersection_point := make([]float64, 2)
-
-      close_enough_test := false
-      close_enough_F := true
-      f := make([]float64, len(u))
-      for q, uu := range u {
-        for i := 0; i < 2; i++ {
-          intersection_point[i] = p1[i] + uu * v[i]
-        }
-
-        f[q] = sphere.F(intersection_point)
-
-        if !test.CloseEnough(f[q], 0.0, err_bs) {
-          close_enough_F = false
-        }
-
-        if test.CloseEnough(u_test[0], uu, err_bs) {
-          close_enough_test = true
-        }
-      }
-
-      if !close_enough_F {
-        t.Error("sphere intersection error for ", sphere.String(), ", p1 = ",
-          p1, "; v = ", v, "; u = ", u, "; F = ", f)
-      }
-
-      if !close_enough_test {
-        t.Error("test point and intersection point do not agree: u = ", u, "; u_test = ", u_test)
-      }
+      intersectionTester(sphere, p1, p2, t)
     }
   }
 }
@@ -350,6 +306,9 @@ func TestInfiniteHyperboloidF(t *testing.T) {
   //TODO
 }
 
+//Since the boolean objects and the components have been independently tested, 
+//all that needs to be tested here is whether the object has the correct shape
+//and whether the constructor fails and succeeds correctly. 
 func TestNewCylinder(t *testing.T) {
   //TODO
 }

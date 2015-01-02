@@ -1,6 +1,7 @@
 package surface
 
 import "math"
+import "errors"
 
 //A surface is here defined as an equation f(x_i) == 0, although
 //this is slightly different from what a surface normally is
@@ -86,16 +87,17 @@ func testGradient(s Surface, x []float64, e float64) []float64 {
 
 //A function to test intersections by numerical approximation with
 //Newton's method against a surface's given formula. Assumes that
-//the F method is correct. For testing purposes only! 
+//the F method is correct. 
 //x and x + v should be on different sides of the surface. The
 //intersection is assumed to be between these two points. 
-func testIntersection(s Surface, x []float64, v []float64, max_steps int) []float64 {
-  //max_steps = 5
+//TODO improve this function for use in isosurfaces eventually. 
+func testIntersection(s Surface, x []float64, v []float64, max_steps int) (intersections []float64, err error) {
+  err = nil
 
-  var u0, u1, u2 float64 = 0.0, 1.0, 0.0
+  var u0, u1, u float64 = 0.0, 1.0, 0.0
   p0 := make([]float64, len(x))
   p1 := make([]float64, len(x))
-  p2 := make([]float64, len(x)) 
+  p := make([]float64, len(x)) 
   
   for i := 0; i < len(x); i ++ {
     p0[i] = x[i] + v[i] * u0
@@ -104,13 +106,16 @@ func testIntersection(s Surface, x []float64, v []float64, max_steps int) []floa
 
   f0 := s.F(p0)
   f1 := s.F(p1)
-  var f2 float64
+  var f float64
 
   var swap bool = false
 
+  //To make things easier, we ensure that p0 is outside
+  //and p1 is inside. 
   if f0 > 0 {
     if f1 > 0 {
-      return []float64{}
+      intersections = []float64{}
+      return 
     } else {
       pswap := p0
       p0 = p1
@@ -121,32 +126,42 @@ func testIntersection(s Surface, x []float64, v []float64, max_steps int) []floa
       swap = true
     }
   } else if f1 < 0 {
-    return []float64{}
+    intersections = []float64{}
+    return 
   }
 
+  //Use Newton's method to find the intersection. 
   for i := 0; i < max_steps; i ++ {
-    if u0 == u1 {return []float64{u0}}
-
-    u2 = u0 + (u1 - u0) * f0 / (f0 - f1)
-
-    for j := 0; j < len(x); j ++ {
-      p2[j] = p0[j] + u2 * v[j]
+    if u0 == u1 {
+      goto convergence
     }
 
-    f2 = s.F(p2)
+    //New estimated intersection parameter.
+    u = u0 + (u1 - u0) * f0 / (f0 - f1)
 
-    if f2 < 0 {
-      u0 = u2
-      f0 = f2
+    //New estimated intersection point.
+    for j := 0; j < len(x); j ++ {
+      p[j] = p0[j] + u * v[j]
+    }
+
+    f = s.F(p)
+
+    if f < 0 {
+      u0 = u
+      f0 = f
     } else {
-      u1 = u2
-      f1 = f2
+      u1 = u
+      f1 = f
     }
   }
+  err = errors.New("testIntersection: max_steps reached!")
+
+  convergence:
 
   if swap {
-    return []float64{1 - u2}
+    intersections = []float64{1 - u}
   } else {
-    return []float64{u2}
+    intersections = []float64{u}
   }
+  return
 }

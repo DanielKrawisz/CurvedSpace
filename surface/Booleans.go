@@ -183,9 +183,15 @@ func (s *subtraction) Gradient(x []float64) []float64 {
   }
 }
 
+//The intersection boolean can also be used to make a bounding
+//box or bounding sphere because the intersection function
+//returns right away if there are not intersection points 
+//for either subsurface. 
 func (s *subtraction) Intersection(x, v []float64) []float64 {
   inta := s.a.Intersection(x, v)
+  if len(inta) == 0 { return inta }
   intb := s.b.Intersection(x, v)
+  if len(intb) == 0 { return intb }
 
   z := make([]float64, len(inta) + len(intb))
 

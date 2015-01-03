@@ -8,7 +8,7 @@ import "math"
 //Use polynomial surfaces and solid constructive geometry to
 //make some primitive shapes.
 
-//TODO cone, paraboloid, hyperboloid, paralepiped, torus. 
+//TODO cone, paraboloid, hyperboloid
 
 type Sphere interface {
   Surface
@@ -208,16 +208,6 @@ func NewParaboloid(p []float64, vp, vn [][]float64, param []float64) Surface {
 }
 
 func NewHyperboloid(p []float64, vp, vn [][]float64, param []float64) Surface {
-  //TODO
-  return nil
-}
-
-func NewParallelpiped(p []float64, v[][]float64) Surface {
-  //TODO
-  return nil
-}
-
-func NewTorus(p []float64) Surface {
   //TODO
   return nil
 }

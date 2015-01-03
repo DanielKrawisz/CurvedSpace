@@ -1,6 +1,10 @@
 package surface
 
 import "testing"
+import "sort"
+import "../test"
+
+var b_err float64 = .00001
 
 //Test construction of booleans as well as the Dimension,
 // F, Gradient, and Intersection functions.
@@ -160,6 +164,63 @@ func TestBooleans(t *testing.T) {
   if !grad_test {
     t.Error("Grad test error for intersection and test point 2, ", grad_test_points[1])
   }
+}
 
-  //TODO intersection tests
+func TestBooleanRayIntersections(t *testing.T) {
+  p1 := []float64{-2,0}
+  p2 := []float64{2,0}
+  var r float64 = 4
+  s1 := NewSphere(p1, r)
+  s2 := NewSphere(p2, r)
+
+  rays := [][][]float64{
+    [][]float64{[]float64{-3, -5}, []float64{0, 1}},
+    [][]float64{[]float64{-1, -5}, []float64{0, 1}}, 
+    [][]float64{[]float64{1, -5}, []float64{0, 1}},
+    [][]float64{[]float64{3, -5}, []float64{0, 1}}}
+
+  int1 := make([][]float64, 4)
+  int2 := make([][]float64, 4)
+  intAdd := make([][]float64, 4)
+  intSub := make([][]float64, 4)
+  intSec := make([][]float64, 4)
+
+  for i := 0; i < 4; i ++ {
+    int1[i] = s1.Intersection(rays[i][0], rays[i][1])
+    int2[i] = s2.Intersection(rays[i][0], rays[i][1])
+    sort.Float64s(int1[i])
+    sort.Float64s(int2[i])
+  }
+
+  add := NewAddition(s1, s2)
+  sub := NewSubtraction(s1, s2)
+  sec := NewIntersection(s1, s2)
+
+  for i := 0; i < 4; i ++ {
+    intAdd[i] = add.Intersection(rays[i][0], rays[i][1])
+    intSub[i] = sub.Intersection(rays[i][0], rays[i][1])
+    intSec[i] = sec.Intersection(rays[i][0], rays[i][1])
+    sort.Float64s(intAdd[i])
+    sort.Float64s(intSub[i])
+    sort.Float64s(intSec[i])
+  }
+
+  expAdd := [][]float64{int1[0], int1[1], int2[2], int2[3]}
+  expSub := [][]float64{int1[0],
+    []float64{int1[1][0], int1[1][0], int2[1][0], int2[1][0]},
+    []float64{}, []float64{}}
+  expSec := [][]float64{[]float64{}, int2[1], int1[2], []float64{}}
+  sort.Float64s(expSub[0])
+
+  for i := 0; i < 4; i ++ {
+    if !test.VectorCloseEnough(intAdd[i], expAdd[i], b_err) {
+      t.Error("boolean add intersection error; case ", i, "; expected = ", expAdd, "; got = ", intAdd)
+    }
+    if !test.VectorCloseEnough(intSub[i], expSub[i], b_err) {
+      t.Error("boolean sub intersection error; case ", i, "; expected = ", expSub, "; got = ", intSub)
+    }
+    if !test.VectorCloseEnough(intSec[i], expSec[i], b_err) {
+      t.Error("boolean sec intersection error; case ", i, "; expected = ", expSec, "; got = ", intSec)
+    }
+  }
 }

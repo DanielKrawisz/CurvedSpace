@@ -1,6 +1,7 @@
 package vector
 
 import "math"
+import "../combinatorics"
 
 //TODO tests. 
 //TODO There are some places around this program that should be using
@@ -60,4 +61,54 @@ func Orthonormalize(v [][]float64) {
       }
     }
   }
+}
+
+//An iterator for calculating the determinate.
+type detIterator struct {
+  det float64
+  v [][]float64
+}
+
+func (d *detIterator) Iterate(index []int, sig int) {
+  var elem float64 = float64(sig)
+  for i := 0; i < len(index); i ++ {
+    elem *= d.v[i][index[i]]
+  }
+  d.det += elem
+}
+
+//The determinate of a bunch of vectors. 
+//Assumes an n * n matrix has been given.
+func Det(v [][]float64) float64 {
+
+  I := &detIterator{0, v}
+
+  combinatorics.NestedForPermutation(I, len(v))
+
+  return I.det
+}
+
+//An iterator for calculating the generalized cross product.
+type crossIterator struct {
+  cross []float64
+  v [][]float64
+}
+
+func (d *crossIterator) Iterate(index []int, sig int) {
+  dim := len(index)
+  var elem float64 = float64(sig)
+  for i := 0; i < dim - 1; i ++ {
+    elem *= d.v[i][index[i]]
+  }
+  d.cross[index[dim - 1]] += elem
+}
+
+//The cross product of vectors. 
+//Assumes an (n - 1) * n matrix has been given. 
+func Cross(v [][]float64) []float64 {
+  I := &crossIterator{make([]float64, len(v) + 1), v}
+
+  combinatorics.NestedForPermutation(I, len(v) + 1)
+
+  return I.cross
 }

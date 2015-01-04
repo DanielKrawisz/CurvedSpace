@@ -1,9 +1,10 @@
 package surface
 
-import "./polynomials"
 import "strings"
 import "fmt"
 import "sort"
+import "./polynomials"
+import "../vector"
 
 //Polynomial surfaces for degrees 1 to 4.
 //Since the solutions to the polynomials are already given, 
@@ -673,6 +674,27 @@ func NewPlaneByPointAndNormal(point, norm []float64) Surface {
     b[i] = norm[i] / b2
   }
   return &linearSurface{len(norm), b, a}
+}
+
+//May return nil
+func NewPlaneByPoints(p [][]float64) Surface {
+  if p == nil {return nil}
+  dim := len(p)
+  for i := 0; i < dim; i ++ {
+    if p[i] == nil {return nil}
+    if len(p[i]) != dim {return nil}
+  }
+
+  v := make([][]float64, dim - 1)
+  for i := 1; i < dim; i ++ {
+    v[i - 1] = make([]float64, dim)
+    for j := 0; j < dim; j ++ {
+      v[i - 1][j] = p[i][j] - p[0][j]
+    }
+  }
+
+  b := vector.Cross(v)
+  return NewPlaneByPointAndNormal(p[0], b)
 }
 
 //A general quadratic surface from a central point and a list of vectors

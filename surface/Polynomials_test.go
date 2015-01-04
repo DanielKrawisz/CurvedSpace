@@ -94,6 +94,28 @@ func TestNewPlane(t *testing.T) {
   if nil == NewPlaneByPointAndNormal([]float64{1, 0}, []float64{1, 0}) {
     t.Error("New linear surface error 4")
   }
+
+  if nil != NewPlaneByPoints(nil) {
+    t.Error("New linear surface error 5")
+  }
+  if nil != NewPlaneByPoints([][]float64{nil, []float64{0, 1, 0}, []float64{0, 0, 1}}) {
+    t.Error("New linear surface error 6")
+  }
+  if nil != NewPlaneByPoints([][]float64{[]float64{1, 0, 0}, []float64{0, 1}, []float64{0, 0, 1}}) {
+    t.Error("New linear surface error 7")
+  }
+  if nil != NewPlaneByPoints([][]float64{[]float64{1, 0, 0}, []float64{0, 1, 0, 0}, []float64{0, 0, 1}}) {
+    t.Error("New linear surface error 8")
+  }
+  if nil != NewPlaneByPoints([][]float64{[]float64{1, 0, 0}, []float64{1, 0, 0}, []float64{0, 0, 1}}) {
+    t.Error("New linear surface error 9")
+  }
+
+  if nil == NewPlaneByPoints([][]float64{[]float64{1, 0, 0}, []float64{0, 1, 0}, []float64{0, 0, 1}}) {
+    t.Error("New linear surface error 10")
+  }
+
+  //TODO there should be a test to make sure that the result which comes out is correct.
 }
 
 func TestQuadratic(t *testing.T) {

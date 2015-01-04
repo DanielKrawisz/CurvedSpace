@@ -7,9 +7,6 @@ import "math"
 
 var err_bs float64 = 0.00001
 
-//TODO a lot of tests! 
-//TODO intersection tests
-
 func TestNewSphere(t *testing.T) {
   if NewSphere(nil, 1) != nil {
     t.Error("sphere position cannot be nil.")
@@ -45,20 +42,15 @@ func TestNewSphere(t *testing.T) {
 
 func TestSphereF(t *testing.T) {
   for i := 0; i < 10; i++ {
-    p := make([]float64, 2)
-
-    for j := 0; j < 2; j ++ {
-      p[j] = test.RandFloat(-3, 3)
-    }
+    p := test.RandFloatVector(-3, 3, 2)
     r := test.RandFloat(1, 5)
 
     s := NewSphere(p, r)
 
-    test_point := make([]float64, 2)
+    var test_point []float64
     //Test 5 random points.
     for j := 0; j < 5; j++ {
-      test_point[0] = test.RandFloat(-5, 5)
-      test_point[1] = test.RandFloat(-5, 5)
+      test_point = test.RandFloatVector(-5, 5, 2)
 
       f_exp := r*r - (p[0] - test_point[0]) * (p[0] - test_point[0]) - (p[1] - test_point[1]) * (p[1] - test_point[1])
       f := s.F(test_point)
@@ -279,7 +271,45 @@ func TestNewInfiniteCylinder(t *testing.T) {
 }
 
 func TestInfiniteCylinderF(t *testing.T) {
-  //TODO
+  dim := 4
+  var v [][]float64
+  var c []float64
+  //Test with several different numbers of infinite dimensions.
+  for i := 1; i < dim; i ++ {
+    c = test.RandFloatVector(-1, 1, dim)
+
+    v = make([][]float64, i)
+    for j := 0; j < i; j ++ {
+      v[j] = test.RandFloatVector(-4, 4, dim)
+    }
+
+    cylinder := NewInfiniteCylinder(c, v)
+
+    //Five trials per test.
+    for j := 0; j < 5; j ++ {
+      p := test.RandFloatVector(-10, 10, dim) 
+      test_point := make([]float64, dim)
+      for k := 0; k < dim; k ++ {
+        test_point[k] = p[k] - c[k]
+      }
+
+      test_f := cylinder.F(p)
+
+      var exp_f float64 = 1
+      for k := 0; k < i; k ++ {
+        for l := 0; l < dim; l ++ {
+          for m := 0; m < dim; m ++ {
+            exp_f -= test_point[l] * v[k][l] * v[k][m] * test_point[m]
+          }
+        }
+      }
+
+      if !test.CloseEnough(exp_f, test_f, err_bs) {
+        t.Error("error! ", cylinder.String(), "; param(", c, v, "), at point ",
+          p, "; expected ", exp_f, " got ", test_f)
+      }
+    }
+  }
 }
 
 func TestNewInfiniteCone(t *testing.T) {
@@ -313,6 +343,6 @@ func TestNewCylinder(t *testing.T) {
   //TODO
 }
 
-func TestCylinderF(t *testing.T) {
+func TestCylinderInterior(t *testing.T) {
   //TODO
 }

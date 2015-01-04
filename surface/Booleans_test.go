@@ -207,20 +207,20 @@ func TestBooleanRayIntersections(t *testing.T) {
 
   expAdd := [][]float64{int1[0], int1[1], int2[2], int2[3]}
   expSub := [][]float64{int1[0],
-    []float64{int1[1][0], int1[1][0], int2[1][0], int2[1][0]},
+    []float64{int1[1][0], int1[1][1], int2[1][0], int2[1][1]},
     []float64{}, []float64{}}
   expSec := [][]float64{[]float64{}, int2[1], int1[2], []float64{}}
-  sort.Float64s(expSub[0])
+  sort.Float64s(expSub[1])
 
   for i := 0; i < 4; i ++ {
     if !test.VectorCloseEnough(intAdd[i], expAdd[i], b_err) {
-      t.Error("boolean add intersection error; case ", i, "; expected = ", expAdd, "; got = ", intAdd)
+      t.Error("boolean add intersection error; case ", i, "; expected = ", expAdd[i], "; got = ", intAdd[i])
     }
     if !test.VectorCloseEnough(intSub[i], expSub[i], b_err) {
-      t.Error("boolean sub intersection error; case ", i, "; expected = ", expSub, "; got = ", intSub)
+      t.Error("boolean sub intersection error; case ", i, "; expected = ", expSub[i], "; got = ", intSub[i])
     }
     if !test.VectorCloseEnough(intSec[i], expSec[i], b_err) {
-      t.Error("boolean sec intersection error; case ", i, "; expected = ", expSec, "; got = ", intSec)
+      t.Error("boolean sec intersection error; case ", i, "; expected = ", expSec[i], "; got = ", intSec[i])
     }
   }
 }

@@ -34,6 +34,14 @@ func RandFloat(min, max float64) float64 {
   return min + (max - min) * rand.Float64()
 }
 
+func RandFloatVector(min, max float64, length int) []float64 {
+  v := make([]float64, length)
+  for i := 0; i < length; i ++ {
+    v[i] = RandFloat(min, max)
+  }
+  return v
+}
+
 //Test whether two floats are close enough to one another. 
 func CloseEnough(a, b, e float64) bool {
   return math.Abs(a - b) < e

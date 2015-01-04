@@ -113,7 +113,9 @@ func (s *intersection) Gradient(x []float64) []float64 {
 
 func (s *intersection) Intersection(x, v []float64) []float64 {
   inta := s.a.Intersection(x, v)
+  if len(inta) == 0 { return inta }
   intb := s.b.Intersection(x, v)
+  if len(intb) == 0 { return intb }
 
   z := make([]float64, len(inta) + len(intb))
 
@@ -191,7 +193,6 @@ func (s *subtraction) Intersection(x, v []float64) []float64 {
   inta := s.a.Intersection(x, v)
   if len(inta) == 0 { return inta }
   intb := s.b.Intersection(x, v)
-  if len(intb) == 0 { return intb }
 
   z := make([]float64, len(inta) + len(intb))
 

@@ -2,16 +2,23 @@ package main
 
 //This will be a program to do ray-tracing over curved spaces. 
 //It doesn't do curved spaces yet though. Right now there is
-//a numerical differential equation solver, quadratic surfaces
-//and some demos.
+//a numerical differential equation solver, quadratic surfaces,
+//solid constructive geometry, and some demos.
 
 //Short-term goals. 
+//TODO: test vector functions.
+//TODO: figure out how to get the intersection tester working better. 
+//TODO: complete iteration loops for symmetric and asymmetric permutations
+//TODO:   update the symmetric tensor contraction functions to use the symmetric permutation loop. 
 //TODO: complete tests for basic surfaces. 
-//TODO: complete intersection tests for booleans and higher polynomials.
-//TODO: create materials.
+//TODO:   infinite cylinder in particular.
+//TODO:     test simplex and parallelpiped
+//TODO: complete intersection tests for higher polynomials.
+//TODO:   make torus surface.
+//TODO: work on materials--not sure about design yet.
+//TODO:   need to make scene object first.
 //TODO: allow for a refractive index that varies over space and color. 
 //TODO: create polyhedra.
-//TODO: create spacially bounded objects for faster intersection computations.
 
 import (
   "fmt"

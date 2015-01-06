@@ -2,6 +2,8 @@ package surface
 
 import "math"
 import "errors"
+//import "fmt"
+import "../vector"
 
 //A surface is here defined as an equation f(x_i) == 0, although
 //this is slightly different from what a surface normally is
@@ -91,77 +93,59 @@ func testGradient(s Surface, x []float64, e float64) []float64 {
 //x and x + v should be on different sides of the surface. The
 //intersection is assumed to be between these two points. 
 //TODO improve this function for use in isosurfaces eventually. 
-func testIntersection(s Surface, x []float64, v []float64, max_steps int) (intersections []float64, err error) {
-  err = nil
+//There should be a way to make this work more like the original
+//version and I bet it would be quicker. 
+func testIntersection(s Surface, x []float64, v []float64, tolerance float64, max_steps int) ([]float64, error) {
+  var err error = nil
 
-  var u0, u1, u float64 = 0.0, 1.0, 0.0
+//  fmt.Println("Running intersection test for ", s.String(), " with (p, v) = ", x, v)
+
+  var u float64 = 0.0
   p0 := make([]float64, len(x))
   p1 := make([]float64, len(x))
   p := make([]float64, len(x)) 
   
   for i := 0; i < len(x); i ++ {
-    p0[i] = x[i] + v[i] * u0
-    p1[i] = x[i] + v[i] * u1
+    p0[i] = x[i]
+    p1[i] = x[i] + v[i]
   }
 
   f0 := s.F(p0)
   f1 := s.F(p1)
-  var f float64
+  var f, f_last float64
 
-  var swap bool = false
-
-  //To make things easier, we ensure that p0 is outside
-  //and p1 is inside. 
-  if f0 > 0 {
-    if f1 > 0 {
-      intersections = []float64{}
-      return 
-    } else {
-      pswap := p0
-      p0 = p1
-      p1 = pswap
-      fswap := f0
-      f0 = f1
-      f1 = fswap
-      swap = true
-    }
-  } else if f1 < 0 {
-    intersections = []float64{}
-    return 
-  }
+  u = f0 / (f0 - f1) //Estimate a good initial value for u.
+  f_last = math.Inf(1)
 
   //Use Newton's method to find the intersection. 
   for i := 0; i < max_steps; i ++ {
-    if u0 == u1 {
-      goto convergence
-    }
-
-    //New estimated intersection parameter.
-    u = u0 + (u1 - u0) * f0 / (f0 - f1)
 
     //New estimated intersection point.
     for j := 0; j < len(x); j ++ {
-      p[j] = p0[j] + u * v[j]
+      p[j] = x[j] + u * v[j]
     }
 
+    f_last = f
     f = s.F(p)
 
-    if f < 0 {
-      u0 = u
-      f0 = f
-    } else {
-      u1 = u
-      f1 = f
+//    fmt.Println("step ", i, "; u = ", u, "; p = ", p, "; f = ", f)
+
+    if f == f_last {
+      goto convergence
     }
+
+//    fmt.Println("step ", i, "; grad = ", s.Gradient(p),
+//      "; g.v = ", vector.Dot(s.Gradient(p), v), "; -f / g.v = ", -f / vector.Dot(s.Gradient(p), v))
+
+    //new u calculated with Lie derivative wrt to v at p.
+    u -= f / vector.Dot(s.Gradient(p), v)
   }
-  err = errors.New("testIntersection: max_steps reached!")
+
+  if math.Abs(f_last - f) > tolerance {
+    err = errors.New("testIntersection: max_steps reached!")
+  }
 
   convergence:
 
-  if swap {
-    intersections = []float64{1 - u}
-  } else {
-    intersections = []float64{u}
-  }
-  return
+  return []float64{u}, err
 }

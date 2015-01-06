@@ -5,11 +5,13 @@ package test
 import "math"
 import "math/rand"
 import "time"
+import "fmt"
 
 var seed_set bool = false
 
 func SetSeed(x int64) {
   rand.Seed(x)
+  fmt.Println("seed set")
   seed_set = true
 }
 
@@ -74,4 +76,22 @@ func MemberCloseEnough(a float64, list []float64, e float64) (bool, int) {
     }
   }
   return false, -1
+}
+
+//Tests whether two lists are close enough to one another.
+func MatrixCloseEnough(a, b [][]float64, e float64) bool {
+  if a == nil || b == nil {
+    return false
+  }
+  if len(a) != len(b) {
+    return false
+  }
+
+  for i := 0; i < len(a); i ++ {
+    if !VectorCloseEnough(a[i], b[i], e) {
+      return false
+    }
+  }
+
+  return true
 }

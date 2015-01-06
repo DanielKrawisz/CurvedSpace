@@ -40,7 +40,6 @@ func NestedFor(i IterationLoop, limit []int) {
 type permutationIterationLoop struct {
   i IterationLoop 
   permutation []int
-  signature int
 }
 
 func (al *permutationIterationLoop) Iterate(index []int, x int) {
@@ -51,15 +50,17 @@ func (al *permutationIterationLoop) Iterate(index []int, x int) {
     al.permutation[i] = i
   }
 
+  var signature int = 1
   for i, j := range index {
+    if index[i] != 0 {
+      signature *= -1
+    }
     swap = al.permutation[i]
     al.permutation[i] = al.permutation[j + i]
     al.permutation[j + i] = swap
   }
 
-  al.signature = -1 * al.signature
-
-  al.i.Iterate(al.permutation, al.signature)
+  al.i.Iterate(al.permutation, signature)
 }
 
 func NestedForPermutation(i IterationLoop, dim int) {
@@ -69,7 +70,7 @@ func NestedForPermutation(i IterationLoop, dim int) {
     limit[i] = dim - i
   }
 
-  il := &permutationIterationLoop{i, make([]int, dim), -1}
+  il := &permutationIterationLoop{i, make([]int, dim)}
 
   NestedFor(il, limit) 
 }

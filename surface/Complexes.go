@@ -1,7 +1,5 @@
 package surface
 
-import "../vector"
-
 //A simplex given as a list of points. This should
 //be an n * (n + 1) matrix. 
 func NewSimplex(p [][]float64) Surface {
@@ -15,6 +13,7 @@ func NewSimplex(p [][]float64) Surface {
   for i := 0; i < dim; i ++ {
     q := 0
     for j := 0; j < dim; j ++ {
+      //TODO This step may not get all points in the correct order.
       if j != i {
         p_sub[q] = p[j]
         q ++ 
@@ -37,32 +36,40 @@ func NewSimplex(p [][]float64) Surface {
 
 //A parallelpiped is given here by a corner point and 
 //an n * n matrix. 
-func NewParallelPipedByCenterAndEdges(p []float64, v [][]float64) Surface {
-  if p == nil || v == nil {
+func NewParallelpipedByCornerAndEdges(P []float64, V [][]float64) Surface {
+  if P == nil || V == nil {
     return nil
   }
-  dim := len(p)
-  if len(v) != dim {
+  dim := len(P)
+  if len(V) != dim {
     return nil
   }
   for i := 0; i < dim; i ++ {
-    if v[i] == nil { return nil }
-    if len(v[i]) != dim { return nil }
+    if V[i] == nil { return nil }
+    if len(V[i]) != dim { return nil }
+  }
+
+  p := make([]float64, dim)
+  v := make([][]float64, dim)
+  //halve the vectors. 
+  for i := 0; i < dim; i ++ {
+    v[i] = make([]float64, dim) 
+    for j := 0; j < dim; j ++ {
+      v[i][j] = V[i][j] / 2
+    }
+  }
+  //Move the position to the center of the object.
+  for i := 0; i < dim; i ++ {
+    for j := 0; j < dim; j ++ {
+      p[i] += v[j][i]
+    }
   }
 
   var s, g Surface = nil, nil
 
-  v_sub := make([][]float64, dim - 1)
   for i := 0; i < dim; i ++ {
-    q := 0
-    for j := 0; j < dim; j ++ {
-      if j != i {
-        v_sub[q] = v[j]
-        q ++ 
-      }
-    }
 
-    g = NewInfiniteCylinder(p, [][]float64{vector.Cross(v_sub)})
+    g = NewInfiniteCylinder(p, [][]float64{v[i]})
     if g == nil {
       return nil
     }
@@ -75,3 +82,5 @@ func NewParallelPipedByCenterAndEdges(p []float64, v [][]float64) Surface {
 
   return s
 }
+
+

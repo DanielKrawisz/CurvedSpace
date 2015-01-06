@@ -89,7 +89,7 @@ func intersectionTester(s Surface, p1, p2 []float64, t *testing.T) {
   }
 
   u := s.Intersection(p1, v)
-  u_test, err := testIntersection(s, p1, v, 100)
+  u_test, err := testIntersection(s, p1, v, .0001, 100)
   if err != nil {
     //TODO Need to check on how rapidly the intersections are converging.
     //We reach the maximum number of steps a lot and sometimes the

@@ -54,7 +54,7 @@ func TestSphereF(t *testing.T) {
 
       f_exp := r*r - (p[0] - test_point[0]) * (p[0] - test_point[0]) - (p[1] - test_point[1]) * (p[1] - test_point[1])
       f := s.F(test_point)
-      grad_exp := []float64{-2 * (p[0] - test_point[0]), -2 * (p[1] - test_point[1])}
+      grad_exp := []float64{2 * (p[0] - test_point[0]), 2 * (p[1] - test_point[1])}
       grad := s.Gradient(test_point)
 
       if !test.CloseEnough(f_exp, f, err_bs) {

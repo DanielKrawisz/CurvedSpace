@@ -30,6 +30,7 @@ func Plus(A, B []float64) (C []float64) {
 }
 
 func Minus(A, B []float64) (C []float64) {
+  C = make([]float64, len(A))
   for i := 0; i < len(A); i ++ {
     C[i] = A[i] - B[i]
   }
@@ -111,4 +112,96 @@ func Cross(v [][]float64) []float64 {
   combinatorics.NestedForPermutation(I, len(v) + 1)
 
   return I.cross
+}
+
+func Transpose(m [][]float64) [][]float64 {
+  var swap float64
+  for i := 0; i < len(m); i ++ {
+    for j := 0; j < i; j ++ {
+      swap = m[i][j]
+      m[i][j] = m[j][i]
+      m[j][i] = swap
+    }
+  }
+
+  return m
+}
+
+func elementaryRowOperationPlus(m [][]float64, a, b int, d float64) {
+  for i := 0; i < len(m); i ++ {
+    m[b][i] = m[b][i] + d * m[a][i]
+  }
+}
+
+func elementaryRowOperationTimes(m [][]float64, a int, d float64) {
+  for i := 0; i < len(m); i ++ {
+    m[a][i] *= d
+  }
+}
+
+func elementaryRowOperationSwap(m [][]float64, a, b int) {
+  var swap []float64
+  swap = m[a]
+  m[a] = m[b]
+  m[b] = swap
+}
+
+//Invert the matrix m
+//May return nil! 
+func Inverse(m [][]float64) [][]float64 {
+  det := Det(m)
+  if det == 0 { return nil }
+  dim := len(m)
+
+  v := make([][]float64, dim)
+  M := make([][]float64, dim)
+  for i := 0; i < dim; i ++ {
+    M[i] = make([]float64, dim)
+    v[i] = make([]float64, dim)
+    for j := 0; j < dim; j ++ {
+      M[i][j] = m[i][j]
+      if i == j {
+        v[i][j] = 1
+      } else {
+        v[i][j] = 0
+      }
+    }
+  }
+
+  var x float64
+  for i := 0; i < dim; i ++ {
+    if M[i][i] == 0 {
+      for k := i + 1; k < dim; k ++ {
+        if M[k][i] != 0 {
+          elementaryRowOperationSwap(M, i, k)
+          elementaryRowOperationSwap(v, i, k)
+          break
+        }
+      }
+    }
+    for j := 0; j < dim; j ++ {
+      if i == j {
+        x = 1 / M[i][i]
+        elementaryRowOperationTimes(M, i, x)
+        elementaryRowOperationTimes(v, i, x)
+      } else {
+        x = - M[j][i] / M[i][i]
+        elementaryRowOperationPlus(M, i, j, x)
+        elementaryRowOperationPlus(v, i, j, x)
+      }
+    }
+  }
+
+  return v
+}
+
+func MatrixMultiply(m [][]float64, v []float64) []float64 {
+  dim := len(m)
+  z := make([]float64, dim)
+
+  for i := 0; i < dim; i ++ {
+    z[i] = Dot(m[i], v)
+  }
+
+  return z
 }

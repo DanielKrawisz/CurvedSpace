@@ -4,17 +4,18 @@ import "testing"
 import "math"
 //import "fmt"
 import "../test"
+import "../vector"
 
 //The strategy for testing here is to create inefficient functions to 
 //perform the tensor algebra that can be used to check all the 
 //complicated formulas in main file. 
 
-//TODO test intersections. 
+//TODO finish test intersections. 
 
 //TODO Need to adjust error allowance to take propagation of error into account
 //or use a more accurate numerical grad tester with 128-bit floats. 
 //The error parameter. 
-var err_poly float64 = .001
+var err_poly float64 = .0001
 var h_d float64 = .000001
 
 //Four dimensions is enough to handle all possibilites
@@ -38,7 +39,7 @@ func TestLinear(t *testing.T) {
       point[2] = test.RandFloat(-100, 100)
       point[3] = test.RandFloat(-100, 100)
 
-      expect := contractVector(b, point) + a
+      expect := vector.Dot(b, point) + a
       val := surface.F(point)
 
       if ! test.CloseEnough(val, expect, err_poly) {
@@ -149,7 +150,7 @@ func TestQuadratic(t *testing.T) {
         point[i] = test.RandFloat(-100, 100)
       }
 
-      expect := contractVector(contractSymmetricTensor(c, point), point)
+      expect := vector.Dot(vector.ContractSymmetricTensor(c, point), point)
       val := surface.F(point)
 
       if ! test.CloseEnough(val, expect, err_poly) {
@@ -200,7 +201,8 @@ func TestQuadratic(t *testing.T) {
         point[i] = test.RandFloat(-25, 25)
       }
 
-      expect := contractVector(contractSymmetricTensor(c, point), point) + contractVector(b, point) + a
+      expect := vector.Dot(
+        vector.ContractSymmetricTensor(c, point), point) + vector.Dot(b, point) + a
       val := surface.F(point)
 
       if ! test.CloseEnough(val, expect, err_poly) {
@@ -296,8 +298,7 @@ func TestNewQuadraticSurface(t *testing.T) {
     t.Error("New quadratic surface error 18")
   }
 
-  dim := 1; //Should be 4, but may be temporarily lowered to make debugging easier. 
-  test.SetSeed(40498)
+  dim := 4; //Should be 4, but may be temporarily lowered to make debugging easier. 
   for i := 0; i < 20; i ++ {
     point := make([]float64, dim)
     basis := make([][]float64, dim)
@@ -437,8 +438,10 @@ func TestCubic(t *testing.T) {
         point[i] = test.RandFloat(-25, 25)
       }
 
-      expect := contractVector(contractSymmetricTensor(contractSymmetric3Tensor(d, point), point), point) + 
-        contractVector(contractSymmetricTensor(c, point), point) + contractVector(b, point) + a
+      expect := vector.Dot(
+        vector.ContractSymmetricTensor(vector.ContractSymmetric3Tensor(d, point), point), point) + 
+        vector.Dot(
+          vector.ContractSymmetricTensor(c, point), point) + vector.Dot(b, point) + a
       val := surface.F(point)
 
       if ! test.CloseEnough(val, expect, err_poly) {
@@ -534,8 +537,11 @@ func TestQuartic(t *testing.T) {
         point[i] = test.RandFloat(-25, 25)
       }
 
-      expect := contractVector(contractSymmetricTensor(contractSymmetric3Tensor(contractSymmetric4Tensor(e,
-          point), point), point), point) 
+      expect := vector.Dot(
+                  vector.ContractSymmetricTensor(
+                    vector.ContractSymmetric3Tensor(
+                      vector.ContractSymmetric4Tensor(e,
+                        point), point), point), point) 
       val := surface.F(point)
 
       if ! test.CloseEnough(val, expect, err_poly) {
@@ -591,10 +597,17 @@ func TestQuartic(t *testing.T) {
         point[i] = test.RandFloat(-25, 25)
       }
 
-      expect := contractVector(contractSymmetricTensor(contractSymmetric3Tensor(contractSymmetric4Tensor(e,
-          point), point), point), point) +
-        contractVector(contractSymmetricTensor(contractSymmetric3Tensor(d, point), point), point) + 
-        contractVector(contractSymmetricTensor(c, point), point) + contractVector(b, point) + a
+      expect := vector.Dot(
+                  vector.ContractSymmetricTensor(
+                    vector.ContractSymmetric3Tensor(
+                      vector.ContractSymmetric4Tensor(e,
+                        point), point), point), point) +
+        vector.Dot(
+          vector.ContractSymmetricTensor(
+            vector.ContractSymmetric3Tensor(d, point), point), point) + 
+        vector.Dot(
+          vector.ContractSymmetricTensor(c, point), point) +
+        vector.Dot(b, point) + a
       val := surface.F(point)
 
       if ! test.CloseEnough(val, expect, err_poly) {

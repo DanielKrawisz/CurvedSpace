@@ -1,7 +1,11 @@
 package surface
 
+import "../vector"
+
 //A simplex given as a list of points. This should
 //be an n * (n + 1) matrix. 
+//Note: the simplex will be inside-out if the points
+//are not given in the right order. 
 func NewSimplex(p [][]float64) Surface {
   if p == nil {return nil}
   dim := len(p) - 1
@@ -14,6 +18,7 @@ func NewSimplex(p [][]float64) Surface {
     q := 0
     for j := 0; j < dim; j ++ {
       //TODO This step may not get all points in the correct order.
+      //Needs to be tested to make sure. 
       if j != i {
         p_sub[q] = p[j]
         q ++ 
@@ -51,25 +56,39 @@ func NewParallelpipedByCornerAndEdges(P []float64, V [][]float64) Surface {
 
   p := make([]float64, dim)
   v := make([][]float64, dim)
-  //halve the vectors. 
+  //halve the vectors and move the center to the correct place.
   for i := 0; i < dim; i ++ {
     v[i] = make([]float64, dim) 
+    p[i] = P[i]
     for j := 0; j < dim; j ++ {
       v[i][j] = V[i][j] / 2
+      p[i] += v[i][j]
     }
   }
-  //Move the position to the center of the object.
-  for i := 0; i < dim; i ++ {
-    for j := 0; j < dim; j ++ {
-      p[i] += v[j][i]
-    }
-  }
+
+  m := vector.Inverse(vector.Transpose(v))
 
   var s, g Surface = nil, nil
 
   for i := 0; i < dim; i ++ {
+    c := make([][]float64, dim)
+    b := make([]float64, dim)
+    for j := 0; j < dim; j ++ {
+      c[j] = make([]float64, j + 1)
+      for k := 0; k <= j; k ++ {
+        if j == k && j != i {
+          c[j][k] = -1
+        } else {
+          c[j][k] = 0
+        }
+      }
+    }
 
-    g = NewInfiniteCylinder(p, [][]float64{v[i]})
+    q := &quadraticSurface{dim, c, b, 1}
+    coordinateShiftQuadratic(q, m)
+    translateQuadratic(q, p)
+    g = q
+
     if g == nil {
       return nil
     }

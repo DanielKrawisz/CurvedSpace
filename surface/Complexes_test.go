@@ -11,8 +11,6 @@ func TestNewSimplex(t *testing.T) {
 }
 
 func TestNewParallelpiped(t *testing.T) {
-  test.SetSeed(89999)
-
   var dim int = 2
   for i := 0; i < 5; i ++ {
     //p := test.RandFloatVector(-1, 1, dim)
@@ -27,7 +25,7 @@ func TestNewParallelpiped(t *testing.T) {
 
     pp := NewParallelpipedByCornerAndEdges(p, v)
 
-    m := vector.Inverse(vector.Transpose(v))
+    m := vector.Inverse(v)
 
     //5 test points. 
     for j := 0; j < 5; j ++ {

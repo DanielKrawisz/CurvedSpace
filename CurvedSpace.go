@@ -1,15 +1,16 @@
 package main
 
 //This will be a program to do ray-tracing over curved spaces. 
-//It doesn't do curved spaces yet though. Right now there is
+//It doesn't do curved spaces yet though. Right now there are
 //a numerical differential equation solver, quadratic surfaces,
-//solid constructive geometry, and some demos.
+//solid constructive geometry, and some demos. There are also
+//some ways that light rays can interact with a surface. 
 
 //Short-term goals. 
-//TODO: complete iteration loops for symmetric and asymmetric permutations
-//TODO:   update the symmetric tensor contraction functions to use the symmetric permutation loop. 
+//TODO: update the symmetric tensor contraction functions to use the symmetric permutation loop. 
+//TODO: functions to change the coordinates of polynomial objects and to translate polynomial objects.
 //TODO: complete tests for basic surfaces. 
-//TODO:   test simplex and parallelpiped
+//TODO:   test simplex
 //TODO: complete intersection tests for higher polynomials.
 //TODO:   make torus surface.
 //TODO: work on materials. Materials should have glow, transmissive, and reflective components.
@@ -48,7 +49,7 @@ func main() {
   pathtrace_activity_01()
   pathtrace_activity_02()
   pathtrace_activity_03()
-  //pathtrace_activity_04()
+  pathtrace_activity_04()
 }
 
 func createOutputDirectory() {
@@ -593,18 +594,17 @@ func pathtrace_activity_04() {
           []float64{0, room_width - 1.8, 0},
           []float64{0, 0, 2}}))
 
-  //TODO some indirect lighting would be nice. 
   shapes := []surface.Surface{light, room}
 
   lambertian := pathtrace.NewLambertianReflection()
 
   background := []float64{0, 0, 0}
-  var light_intensity float64 = 2
+  var light_intensity float64 = 4
 
   cam_pos   := []float64{2, 2, 6}
   cam_look  := []float64{room_width, room_width, room_height}
   cam_dir   := vector.Minus(cam_look, cam_pos)
-  cam_up    := []float64{0, 1., 0}
+  cam_up    := []float64{0, 0, 1}
   cam_right := []float64{1, 0, 0}
   cam_mtrx := [][]float64{cam_dir, cam_up, cam_right}
   vector.Orthonormalize(cam_mtrx)

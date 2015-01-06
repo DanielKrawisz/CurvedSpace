@@ -37,6 +37,14 @@ func Minus(A, B []float64) (C []float64) {
   return
 }
 
+func Negative(v []float64) []float64 {
+  p := make([]float64, len(v))
+  for i := 0; i < len(v); i ++ {
+    p[i] = -v[i]
+  }
+  return p
+}
+
 //Gram Schmidt process on a bunch of vectors. 
 func Orthonormalize(v [][]float64) {
   var d float64
@@ -70,7 +78,7 @@ type detIterator struct {
   v [][]float64
 }
 
-func (d *detIterator) Iterate(index []int, sig int) {
+func (d *detIterator) Iterate(index []uint, sig int) {
   var elem float64 = float64(sig)
   for i := 0; i < len(index); i ++ {
     elem *= d.v[i][index[i]]
@@ -84,7 +92,7 @@ func Det(v [][]float64) float64 {
 
   I := &detIterator{0, v}
 
-  combinatorics.NestedForPermutation(I, len(v))
+  combinatorics.NestedForPermutation(I, uint(len(v)))
 
   return I.det
 }
@@ -95,7 +103,7 @@ type crossIterator struct {
   v [][]float64
 }
 
-func (d *crossIterator) Iterate(index []int, sig int) {
+func (d *crossIterator) Iterate(index []uint, sig int) {
   dim := len(index)
   var elem float64 = float64(sig)
   for i := 0; i < dim - 1; i ++ {
@@ -109,7 +117,7 @@ func (d *crossIterator) Iterate(index []int, sig int) {
 func Cross(v [][]float64) []float64 {
   I := &crossIterator{make([]float64, len(v) + 1), v}
 
-  combinatorics.NestedForPermutation(I, len(v) + 1)
+  combinatorics.NestedForPermutation(I, uint(len(v) + 1))
 
   return I.cross
 }

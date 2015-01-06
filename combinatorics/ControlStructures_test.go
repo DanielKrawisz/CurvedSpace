@@ -5,48 +5,89 @@ import "../test"
 
 //The mock test iterator just counts the right number of iterations have taken place.
 type mockTestIterator struct {
-  n int
+  n uint64
+  m uint64
 }
 
-func (i *mockTestIterator) Iterate(index []int, x int) {
+func (i *mockTestIterator) Iterate(index []uint, x int) {
   i.n ++
+  i.m += uint64(x)
 }
 
 func TestNestedFor(t *testing.T) {
   var l int = 3
-  limit := make([]int, l)
+  limit := make([]uint, l)
 
   for a := 0; a < 4; a ++ {
     for i := 0; i < l; i ++ {
-      limit[i] = test.RandInt(3, 6)
+      limit[i] = uint(test.RandInt(3, 6))
     }
 
-    var exp int = 1
+    var exp uint = 1
     for i := 0; i < l; i ++ {
       exp *= limit[i]
     }
 
-    I := &mockTestIterator{0}
+    I := &mockTestIterator{0, 0}
 
     NestedFor(I, limit)
 
-    if I.n != exp {
+    if I.n != uint64(exp) {
       t.Error("Nested for error. Limit = ", limit, "; exp = ", exp, "; n = ", I.n)
     }
   }
 }
 
-//TODO this test does not ensure that all permutations fed to
-//the iteration loop are correct.
+//TODO these next three tests do not ensure that all permutations
+//fed to the iteration loop are correct.
 func TestNestedForPermutations(t *testing.T) {
-  I := &mockTestIterator{0}
+  I := &mockTestIterator{0, 0}
 
-  for n := 3; n < 10; n ++ {
+  for n := uint(3); n < 8; n ++ {
     I.n = 0
     NestedForPermutation(I, n)
 
     if I.n != factorial[n] {
       t.Error("Nested permutation for error: limit ", n, ", count ", I.n)
+    }
+  }
+}
+
+//This tests to make sure that the control structure 
+//iterates the correct number of times. 
+func TestNestedForAsymmetric(t *testing.T) {
+  for rank := uint(1); rank < 6; rank ++ {
+    for dim := uint(1); dim < 6; dim ++ {
+      I := &mockTestIterator{0, 0}
+      NestedForAsymmetric(I, rank, dim)
+
+      exp := Binomial(dim, rank)
+
+      if I.n != exp {
+        t.Error("Nested asymmetric permutation for error: rank ", 
+          rank, ", dim ", dim, ", expected ", exp, " count ", I.n)
+      }
+    }
+  }
+}
+
+func TestNestedForSymmetric(t *testing.T) {
+  for rank := uint(1); rank < 6; rank ++ {
+    for dim := uint(1); dim < 4; dim ++ {
+      I := &mockTestIterator{0, 0}
+      NestedForSymmetric(I, rank, dim)
+
+      exp_m := Power(int(dim), rank)
+      exp_n := Figurate(rank, dim)
+
+      if I.m != uint64(exp_m) {
+        t.Error("Nested symmetric permutation for error type 1: rank ",
+          rank, ", dim ", dim, ", expected ", exp_m, " count ", I.m)
+      }
+      if I.n != uint64(exp_n) {
+        t.Error("Nested symmetric permutation for error type 2: rank ",
+          rank, ", dim ", dim, ", expected ", exp_n, " count ", I.n)
+      }
     }
   }
 }

@@ -2,19 +2,16 @@ package combinatorics
 
 //Functions for running nested loops. 
 
-//The first 20 factorials. 
-var factorial []int = []int{
-  1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800, 
-  479001600, 6227020800, 87178291200, 1307674368000, 20922789888000, 
-  355687428096000, 6402373705728000, 121645100408832000, 2432902008176640000}
-
+//An inner loop to a nested for control structure.
 type IterationLoop interface {
-  Iterate([]int, int)
+  Iterate([]uint, int)
 }
 
-func NestedFor(i IterationLoop, limit []int) {
+//The nested for iterates over any number of indices with the given limits.
+//The set of indices is fed to the iterate object with each iteration. 
+func NestedFor(i IterationLoop, limit []uint) {
   dim := len(limit)
-  index := make([]int, dim)
+  index := make([]uint, dim)
 
   var in int
 
@@ -37,67 +34,123 @@ func NestedFor(i IterationLoop, limit []int) {
   }
 }
 
+//The permutation loop helps iterate over permutations of numbers. 
 type permutationIterationLoop struct {
   i IterationLoop 
-  permutation []int
+  permutation []uint
 }
 
-func (al *permutationIterationLoop) Iterate(index []int, x int) {
-  var swap int
-  dim := len(index) + 1
+func (al *permutationIterationLoop) Iterate(index []uint, x int) {
+  var swap uint
+  var dim uint = uint(len(index)) + 1
 
-  for i := 0; i < dim; i ++ {
+  var i uint
+  //Construct the identity permutation.
+  for i = 0; i < dim; i ++ {
     al.permutation[i] = i
   }
 
-  var signature int = 1
-  for i, j := range index {
-    if index[i] != 0 {
-      signature *= -1
+  var signature int = 0
+  //This loop constructs the permutation from the
+  //list of indices. 
+  for k, j := range index {
+    if index[k] != 0 {
+      signature ++
     }
-    swap = al.permutation[i]
-    al.permutation[i] = al.permutation[j + i]
-    al.permutation[j + i] = swap
+
+    swap = al.permutation[k]
+    al.permutation[k] = al.permutation[j + uint(k)]
+    al.permutation[j + uint(k)] = swap
   }
 
-  al.i.Iterate(al.permutation, signature)
+  al.i.Iterate(al.permutation, -2 * (signature & 1) + 1)
 }
 
-func NestedForPermutation(i IterationLoop, dim int) {
-  limit := make([]int, dim - 1) 
+//Iterates over the permutations in the numbers from 0 to dim - 1.
+func NestedForPermutation(i IterationLoop, dim uint) {
+  if dim == 0 { return }
 
-  for i := dim - 2; i >= 0; i -- {
+  //limit is one shorter than dim so that we can skip
+  //iterating over a loop that only goes up to 1. It's
+  //automatically included. 
+  limit := make([]uint, dim - 1) 
+
+  for i := uint(0); i < dim - 1; i ++ {
     limit[i] = dim - i
   }
 
-  il := &permutationIterationLoop{i, make([]int, dim)}
+  il := &permutationIterationLoop{i, make([]uint, dim)}
 
   NestedFor(il, limit) 
 }
 
-//TODO permute over asymmetric permutations and symmetric ones. 
+//Iterates over all ordered lists of length rank that contain
+//the numbers 0 - dim with no repetition. Obviously, if
+//rank > dim, then there is no iteration. 
+func NestedForAsymmetric(il IterationLoop, rank, dim uint) {
+  if rank > dim { return }
 
-/*func NestedForSymmetric(IterationLoop(), dim int) {
-  index := make([]float64, dim)
-  index := make([]float64, dim)
+  index := make([]uint, rank)
+  limit := make([]uint, rank)
 
-  var in int
+  var i, in uint
+
+  for i = 0; i < rank; i ++ {
+    limit[i] = i + 1 + dim - rank
+    index[i] = i
+  }
 
   for {
-    Iterate(index, 0)
+    il.Iterate(index, 0)
 
-    in = 0
+    in = rank - 1
     for {
       index[in] ++
-      if index[in] == limit[in] {
-        index[in] = 0
-      } else {
+      if index[in] < limit[in] {
+        for in ++; in < rank; in ++ {
+          index[in] = index[in - 1] + 1
+        }
         break
-      }
-      in ++
-      if in == len(limit) {
-        return
+      } else {
+        if in == 0 {
+          return
+        }
+        in --
       }
     }
   }
-}*/
+}
+
+//Iterates over all ordered lists of length rank that contain
+//the numbers 0 - dim with repetition. 
+func NestedForSymmetric(il IterationLoop, rank, dim uint) {
+  index := make([]uint, rank)
+
+  var i uint
+  for i = 0; i < rank; i ++ {
+    index[i] = 0
+  }
+
+  var in uint
+
+  for {
+    il.Iterate(index, int(Permutations(index)))
+
+    //This adjusts the indices.
+    in = rank - 1
+    for {
+      index[in] ++
+      if index[in] < dim {
+        for in ++; in < rank; in ++ {
+          index[in] = index[in - 1]
+        }
+        break
+      } else {
+        if in == 0 {
+          return
+        }
+        in --
+      }
+    }
+  }
+}

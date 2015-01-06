@@ -2,7 +2,6 @@ package surface
 
 import "strings"
 import "fmt"
-import "sort"
 import "./polynomials"
 import "../vector"
 
@@ -17,106 +16,6 @@ import "../vector"
 //other words, c[1][2] is not defined and will probably give
 //an out of bounds exception, whereas c[2][1] or c[2][2] is
 //fine.
-
-//Functions for contracting tensors. These functions are inefficient and should
-//not be used in the main loop of a program.
-
-func contractSymmetric4Tensor(t [][][][]float64, x []float64 ) [][][]float64 {
-  z := make([][][]float64, len(x))
-  index := make([]int, 4)
-  symind := make([]int, 4)
-  conind := make([]int, 3)
-
-  for i := 0; i < len(x); i ++ {
-    z[i] = make([][]float64, i + 1)
-    for j := 0; j <= i; j ++ {
-      z[i][j] = make([]float64, j + 1)
-    }
-  }
-
-  for index[3] = 0; index[3] < len(x); index[3] ++ {
-    for index[2] = 0; index[2] < len(x); index[2] ++ {
-      for index[1] = 0; index[1] < len(x); index[1] ++ {
-        for index[0] = 0; index[0] < len(x); index[0] ++ {
-          for d := 0; d < 4; d ++ {
-            symind[d] = index[d]
-          }
-          for d := 1; d < 4; d++ {
-            conind[d - 1] = index[d]
-          }
-          if sort.IntsAreSorted(conind) {
-            sort.Ints(symind)
-
-            z[conind[2]][conind[1]][conind[0]] += t[symind[3]][symind[2]][symind[1]][symind[0]] * x[index[0]]
-          }
-        }
-      }
-    }
-  }
-
-  return z
-}
-
-func contractSymmetric3Tensor(t [][][]float64, x []float64 ) [][]float64 {
-  z := make([][]float64, len(x))
-  index := make([]int, 3)
-  symind := make([]int, 3)
-  conind := make([]int, 2)
-
-  for i := 0; i < len(x); i ++ {
-    z[i] = make([]float64, i + 1)
-  }
-
-  for index[2] = 0; index[2] < len(x); index[2] ++ {
-    for index[1] = 0; index[1] < len(x); index[1] ++ {
-      for index[0] = 0; index[0] < len(x); index[0] ++ {
-        for d := 0; d < 3; d ++ {
-          symind[d] = index[d]
-        }
-        for d := 1; d < 3; d++ {
-          conind[d - 1] = index[d]
-        }
-        if sort.IntsAreSorted(conind) {
-          sort.Ints(symind)
-
-          z[conind[1]][conind[0]] += t[symind[2]][symind[1]][symind[0]] * x[index[0]]
-        }
-      }
-    }
-  }
-
-  return z
-}
-
-// t is a symmetric 2-tensor. 
-func contractSymmetricTensor(t [][]float64, x []float64 ) []float64 {
-  z := make([]float64, len(x))
-  index := make([]int, 2)
-  symind := make([]int, 2)
-
-  for index[1] = 0; index[1] < len(x); index[1] ++ {
-    for index[0] = 0; index[0] < len(x); index[0] ++ {
-      for d := 0; d < 2; d ++ {
-        symind[d] = index[d]
-      }
-      sort.Ints(symind)
-
-      z[index[0]] += t[symind[1]][symind[0]] * x[index[1]]
-    }
-  }
-
-  return z
-}
-
-func contractVector(t []float64, x []float64 ) float64 {
-  var z float64 = 0.0
-
-  for i := 0; i < len(x); i ++ {
-    z += t[i] * x[i]
-  }
-
-  return z
-}
 
 type linearSurface struct {
   dimension int
@@ -697,6 +596,58 @@ func NewPlaneByPoints(p [][]float64) Surface {
   return NewPlaneByPointAndNormal(p[0], b)
 }
 
+func translateLinear(s *linearSurface, v []float64) {
+  p := vector.Negative(v)
+  s.a += vector.Dot(s.b, p)
+}
+
+func translateQuadratic(s *quadraticSurface, v []float64) {
+  p := vector.Negative(v)
+  bp := vector.ContractSymmetricTensor(s.c, p)
+  s.a += vector.Dot(s.b, p) + vector.Dot(bp, p)
+  s.b = vector.Plus(s.b, vector.Times(2, bp))
+}
+
+//TODO These next two functions are definitely incorrect.
+func translateCubic(s *cubicSurface, v []float64) {
+  p := vector.Negative(v)
+  s.a += vector.Dot(s.b, p)
+  s.b = vector.Plus(s.b, vector.ContractSymmetricTensor(s.c, p))
+  vector.AddToSymmetricTensor(s.c, vector.ContractSymmetric3Tensor(s.d, p))
+}
+
+func translateQuartic(s *quarticSurface, v[]float64) {
+  p := vector.Negative(v)
+  s.a += vector.Dot(s.b, p)
+  s.b = vector.Plus(s.b, vector.ContractSymmetricTensor(s.c, p))
+  vector.AddToSymmetricTensor(s.c, vector.ContractSymmetric3Tensor(s.d, p))
+  vector.AddToSymmetric3Tensor(s.d, vector.ContractSymmetric4Tensor(s.e, p))
+}
+
+//The next four functions change the coordinates of a polynomial object.
+func coordinateShiftLinear(s *linearSurface, A [][]float64) {
+  s.b = vector.MatrixMultiply(A, s.b)
+}
+
+func coordinateShiftQuadratic(s *quadraticSurface, A [][]float64) {
+  s.b = vector.MatrixMultiply(A, s.b)
+  s.c = vector.MatrixMultiplySymmetricTensor(A, s.c)
+}
+
+//These next four functions are done, but not all the functions they call are done! 
+func coordinateShiftCubic(s *cubicSurface, A [][]float64) {
+  s.b = vector.MatrixMultiply(A, s.b)
+  s.c = vector.MatrixMultiplySymmetricTensor(A, s.c)
+  s.d = vector.MatrixMultiplySymmetric3Tensor(A, s.d)
+}
+
+func coordinateShiftQuartic(s *quarticSurface, A [][]float64) {
+  s.b = vector.MatrixMultiply(A, s.b)
+  s.c = vector.MatrixMultiplySymmetricTensor(A, s.c)
+  s.d = vector.MatrixMultiplySymmetric3Tensor(A, s.d)
+  s.e = vector.MatrixMultiplySymmetric4Tensor(A, s.e)
+}
+
 //A general quadratic surface from a central point and a list of vectors
 //defining a quadratic form on the coordinates. The vectors do not need
 //to satisfy any particular properties, but a set which is all normal
@@ -754,9 +705,9 @@ func NewQuadraticSurface(p []float64, vp, vn [][]float64, y[] float64, r2 float6
     }
   }
 
-  pc := contractSymmetricTensor(c, p)
-  pcp := contractVector(pc, p)
-  bp := contractVector(y, p)
+  pc := vector.ContractSymmetricTensor(c, p)
+  pcp := vector.Dot(pc, p)
+  bp := vector.Dot(y, p)
 
   //Calculate b
   for i := 0; i < dim; i ++ {
@@ -835,7 +786,7 @@ func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r3 float6
     }
   }
 
-  dp := contractSymmetric3Tensor(d, mp)
+  dp := vector.ContractSymmetric3Tensor(d, mp)
 
   //Calculate c.
   for i := 0; i < dim; i ++ {
@@ -853,13 +804,13 @@ func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r3 float6
     }
   }
 
-  dpp := contractSymmetricTensor(dp, mp)
-  dppp := contractVector(dpp, mp)
+  dpp := vector.ContractSymmetricTensor(dp, mp)
+  dppp := vector.Dot(dpp, mp)
 
-  cp := contractSymmetricTensor(c, mp)
-  cpp := contractVector(cp, mp)
+  cp := vector.ContractSymmetricTensor(c, mp)
+  cpp := vector.Dot(cp, mp)
 
-  bp := contractVector(y, mp)
+  bp := vector.Dot(y, mp)
 
   //Calculate py and pv. 
   for i := 0; i < dim; i ++ {

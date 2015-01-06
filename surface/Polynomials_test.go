@@ -298,7 +298,7 @@ func TestNewQuadraticSurface(t *testing.T) {
     t.Error("New quadratic surface error 18")
   }
 
-  dim := 4; //Should be 4, but may be temporarily lowered to make debugging easier. 
+  dim := 4; 
   for i := 0; i < 20; i ++ {
     point := make([]float64, dim)
     basis := make([][]float64, dim)

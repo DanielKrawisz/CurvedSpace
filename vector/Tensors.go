@@ -135,6 +135,7 @@ func MatrixMultiplySymmetric4Tensor(m [][]float64, v [][][][]float64) [][][][]fl
   return nil // TODO
 }
 
+//Add one tensor to another. 
 func AddToSymmetricTensor(v, b [][]float64) {
   dim := len(b)
   for i := 0; i < dim; i ++ {
@@ -168,6 +169,7 @@ func AddToSymmetric4Tensor(v, b [][][][]float64) {
   }
 }
 
+//Some functions to multiply a tensor by a scalar. 
 func SymmetricTensorTimes(a float64, v [][]float64) [][]float64 {
   dim := len(v)
   for i := 0; i < dim; i ++ {

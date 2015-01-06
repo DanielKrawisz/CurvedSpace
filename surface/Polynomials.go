@@ -575,6 +575,8 @@ func NewPlaneByPointAndNormal(point, norm []float64) Surface {
   return &linearSurface{len(norm), b, a}
 }
 
+//Takes n points and returns the n-1 dimensional
+//flat surface that has those n points on it. 
 //May return nil
 func NewPlaneByPoints(p [][]float64) Surface {
   if p == nil {return nil}
@@ -596,6 +598,7 @@ func NewPlaneByPoints(p [][]float64) Surface {
   return NewPlaneByPointAndNormal(p[0], b)
 }
 
+//Functions that translate a polynomial object along a given vector.
 func translateLinear(s *linearSurface, v []float64) {
   p := vector.Negative(v)
   s.a += vector.Dot(s.b, p)

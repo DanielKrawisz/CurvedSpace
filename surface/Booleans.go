@@ -1,5 +1,8 @@
 package surface
 
+//Booleans allow several different objects to be merged
+//into a single object in various ways. 
+
 import "math"
 import "strings"
 
@@ -9,6 +12,7 @@ type Boolean interface {
   SurfaceB() Surface
 }
 
+//Addition objects include the points from both surfaces. 
 type addition struct {
   a, b Surface 
 }
@@ -77,6 +81,8 @@ func (s *addition) Intersection(x, v []float64) []float64 {
   return z[0:zi]
 }
 
+//Intersection objects include only the points that are
+//common to both surfaces. 
 type intersection struct {
   a, b Surface 
 }
@@ -111,10 +117,8 @@ func (s *intersection) Gradient(x []float64) []float64 {
   }
 }
 
-func (s *intersection) Intersection(x, v []float64) []float64 {
-  inta := s.a.Intersection(x, v)
-  intb := s.b.Intersection(x, v)
-
+//This is set off in its own function so that the bounding object can use it.
+func (s *intersection) findCommonIntersectionPoints(x, v, inta, intb []float64) []float64 {
   z := make([]float64, len(inta) + len(intb))
 
   var zi int = 0
@@ -145,6 +149,40 @@ func (s *intersection) Intersection(x, v []float64) []float64 {
   return z[0:zi]
 }
 
+func (s *intersection) Intersection(x, v []float64) []float64 {
+  inta := s.a.Intersection(x, v)
+  intb := s.b.Intersection(x, v)
+
+  return s.findCommonIntersectionPoints(x, v, inta, intb)
+}
+
+//Bounding objects are the same as intersection objects 
+//EXCEPT that it is assumed that if there are no intersection
+//points for object a, then it does not bother checking
+//object b. This allows a to be a bounding box or bounding
+//sphere. Something simple that defines the limits of a more
+//complicated object. 
+type bounding struct {
+  intersection
+}
+
+func (s *bounding) Intersection(x, v []float64) []float64 {
+  inta := s.a.Intersection(x, v)
+
+  //The only difference between intersection and bounding right here.
+  //This allows for object a to be a very simple bounding object that
+  //entirely surrounds the real object and prevents excepssive 
+  //computation when testing for intersections. 
+  if len(inta) == 0 {
+    return inta
+  }
+
+  intb := s.b.Intersection(x, v)
+
+  return s.intersection.findCommonIntersectionPoints(x, v, inta, intb)
+}
+
+//Subtraction objects allow one object to be cut out of another.
 type subtraction struct {
   a, b Surface 
 }
@@ -239,6 +277,14 @@ func NewSubtraction(a, b Surface) Surface {
 
 //Can return nil
 func NewIntersection(a, b Surface) Surface {
+  if a == nil || b == nil {return nil}
+  if a.Dimension() != b.Dimension() {return nil}
+
+  return &intersection{a, b}
+}
+
+//Can return nil
+func NewBounding(a, b Surface) Surface {
   if a == nil || b == nil {return nil}
   if a.Dimension() != b.Dimension() {return nil}
 

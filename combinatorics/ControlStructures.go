@@ -10,7 +10,9 @@ type IterationLoop interface {
 //The nested for iterates over any number of indices with the given limits.
 //The set of indices is fed to the iterate object with each iteration. 
 func NestedFor(i IterationLoop, limit []uint) {
+  if limit == nil { return }
   dim := len(limit)
+  if dim == 0 { return }
   index := make([]uint, dim)
 
   var in int
@@ -69,10 +71,17 @@ func (al *permutationIterationLoop) Iterate(index []uint, x int) {
 //Iterates over the permutations in the numbers from 0 to dim - 1.
 func NestedForPermutation(i IterationLoop, dim uint) {
   if dim == 0 { return }
+  //Special degenerate case. 
+  if dim == 1 {
+    i.Iterate([]uint{0}, 1)
+    return
+  }
 
   //limit is one shorter than dim so that we can skip
   //iterating over a loop that only goes up to 1. It's
-  //automatically included. 
+  //automatically included. However, that excludes the 
+  //degenerate case in which dim == 1, so we handle that
+  //separately. 
   limit := make([]uint, dim - 1) 
 
   for i := uint(0); i < dim - 1; i ++ {
@@ -89,6 +98,12 @@ func NestedForPermutation(i IterationLoop, dim uint) {
 //rank > dim, then there is no iteration. 
 func NestedForAsymmetric(il IterationLoop, rank, dim uint) {
   if rank > dim { return }
+  if dim == 0 { return }
+  //Special degenerate case. 
+  if rank == 0 {
+    il.Iterate([]uint{}, 0)
+    return
+  }
 
   index := make([]uint, rank)
   limit := make([]uint, rank)
@@ -124,6 +139,12 @@ func NestedForAsymmetric(il IterationLoop, rank, dim uint) {
 //Iterates over all ordered lists of length rank that contain
 //the numbers 0 - dim with repetition. 
 func NestedForSymmetric(il IterationLoop, rank, dim uint) {
+  if dim == 0 { return }
+  //Special degenerate case. 
+  if rank == 0 {
+    il.Iterate([]uint{}, 1)
+    return
+  }
   index := make([]uint, rank)
 
   var i uint

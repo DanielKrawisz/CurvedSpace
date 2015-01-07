@@ -559,31 +559,20 @@ func NewPlaneByPointAndNormal(point, norm []float64) Surface {
   if point == nil || norm == nil {return nil}
   if len(point) != len(norm) {return nil}
 
-  var b2, a float64 = 0, 0
-  for i := 0; i < len(norm); i++ {
-    b2 += norm[i] * norm[i]
-    a += norm[i] * point[i]
-  }
-
-  //Ensure that norm is actually a normalizable vector. 
-  if b2 == 0.0 {return nil}
-  a /= b2
-  b := make([]float64, len(norm))
-  for i := 0; i < len(point); i++ {
-    b[i] = norm[i] / b2
-  }
-  return &linearSurface{len(norm), b, a}
+  if vector.Dot(norm, norm) == 0 {return nil}
+  return &linearSurface{len(norm), norm, -vector.Dot(norm, point)}
 }
 
 //Takes n points and returns the n-1 dimensional
 //flat surface that has those n points on it. 
 //May return nil
-func NewPlaneByPoints(p [][]float64) Surface {
-  if p == nil {return nil}
+func NewPlaneByPointsAndSignature(p [][]float64, sig int) Surface {
+  if p == nil { return nil }
   dim := len(p)
+  if dim <= 0 { return nil }
   for i := 0; i < dim; i ++ {
-    if p[i] == nil {return nil}
-    if len(p[i]) != dim {return nil}
+    if p[i] == nil { return nil }
+    if len(p[i]) != dim { return nil }
   }
 
   v := make([][]float64, dim - 1)
@@ -595,36 +584,40 @@ func NewPlaneByPoints(p [][]float64) Surface {
   }
 
   b := vector.Cross(v)
-  return NewPlaneByPointAndNormal(p[0], b)
+  return NewPlaneByPointAndNormal(p[0], vector.Times(float64(sig), b))
 }
 
 //Functions that translate a polynomial object along a given vector.
-func translateLinear(s *linearSurface, v []float64) {
+func translateLinear(s *linearSurface, v []float64) Surface {
   p := vector.Negative(v)
   s.a += vector.Dot(s.b, p)
+  return s
 }
 
-func translateQuadratic(s *quadraticSurface, v []float64) {
+func translateQuadratic(s *quadraticSurface, v []float64) Surface {
   p := vector.Negative(v)
   bp := vector.ContractSymmetricTensor(s.c, p)
   s.a += vector.Dot(s.b, p) + vector.Dot(bp, p)
   s.b = vector.Plus(s.b, vector.Times(2, bp))
+  return s
 }
 
 //TODO These next two functions are definitely incorrect.
-func translateCubic(s *cubicSurface, v []float64) {
+func translateCubic(s *cubicSurface, v []float64) Surface {
   p := vector.Negative(v)
   s.a += vector.Dot(s.b, p)
   s.b = vector.Plus(s.b, vector.ContractSymmetricTensor(s.c, p))
   vector.AddToSymmetricTensor(s.c, vector.ContractSymmetric3Tensor(s.d, p))
+  return s
 }
 
-func translateQuartic(s *quarticSurface, v[]float64) {
+func translateQuartic(s *quarticSurface, v[]float64) Surface {
   p := vector.Negative(v)
   s.a += vector.Dot(s.b, p)
   s.b = vector.Plus(s.b, vector.ContractSymmetricTensor(s.c, p))
   vector.AddToSymmetricTensor(s.c, vector.ContractSymmetric3Tensor(s.d, p))
   vector.AddToSymmetric3Tensor(s.d, vector.ContractSymmetric4Tensor(s.e, p))
+  return s
 }
 
 //The next four functions change the coordinates of a polynomial object.
@@ -637,7 +630,7 @@ func coordinateShiftQuadratic(s *quadraticSurface, A [][]float64) {
   s.c = vector.MatrixMultiplySymmetricTensor(A, s.c)
 }
 
-//These next four functions are done, but not all the functions they call are done! 
+//These next two functions are done, but not all the functions they call are done! 
 func coordinateShiftCubic(s *cubicSurface, A [][]float64) {
   s.b = vector.MatrixMultiply(A, s.b)
   s.c = vector.MatrixMultiplySymmetricTensor(A, s.c)
@@ -688,17 +681,12 @@ func NewQuadraticSurface(p []float64, vp, vn [][]float64, y[] float64, r2 float6
     }
   }
 
-  var b []float64 = make([]float64, dim)
   var c [][]float64 = make([][]float64, dim)
-
-  //var mp []float64 = make([]float64, dim)
 
   //Calculate c.
   for i := 0; i < dim; i ++ {
     c[i] = make([]float64, i + 1)
-    //mp[i] = -p[i]
     for j := 0; j <= i; j ++ {
-      //c[i][j] = 0.0
       for k := 0; k < len(vp); k ++ {
         c[i][j] -= vp[k][i] * vp[k][j]
       }
@@ -708,16 +696,7 @@ func NewQuadraticSurface(p []float64, vp, vn [][]float64, y[] float64, r2 float6
     }
   }
 
-  pc := vector.ContractSymmetricTensor(c, p)
-  pcp := vector.Dot(pc, p)
-  bp := vector.Dot(y, p)
-
-  //Calculate b
-  for i := 0; i < dim; i ++ {
-    b[i] = -y[i] - 2 * pc[i]
-  }
-
-  return &quadraticSurface{dim, c, b, r2 + bp + pcp}
+  return translateQuadratic(&quadraticSurface{dim, c, vector.Negative(y), r2}, p)
 }
 
 //A general cubic surface from a central point and a list of vectors
@@ -768,17 +747,13 @@ func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r3 float6
     }
   }
 
-  var b []float64 = make([]float64, dim)
   var c [][]float64 = make([][]float64, dim)
   var d [][][]float64 = make([][][]float64, dim)
-  var mp []float64 = make([]float64, dim)
 
-  cd := make([][]float64, dim)
-
-  //calculate d.
+  //calculate c and d.
   for i := 0; i < dim; i ++ {
     d[i] = make([][]float64, i + 1)
-    mp[i] = -p[i]
+    c[i] = make([]float64, i + 1)
     for j := 0; j <= i; j ++ {
       d[i][j] = make([]float64, j + 1)
       for k := 0; k <= j; k ++ {
@@ -786,41 +761,16 @@ func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r3 float6
           d[i][j][k] -= vd[l][i] * vd[l][j] * vd[l][k]
         }
       }
-    }
-  }
-
-  dp := vector.ContractSymmetric3Tensor(d, mp)
-
-  //Calculate c.
-  for i := 0; i < dim; i ++ {
-    c[i] = make([]float64, i + 1)
-    cd[i] = make([]float64, i + 1)
-
-    for j := 0; j <= i; j ++ {
       for k := 0; k < len(vp); k ++ {
         c[i][j] -= vp[k][i] * vp[k][j]
       }
       for k := 0; k < len(vn); k ++ {
         c[i][j] += vn[k][i] * vn[k][j]
       }
-      cd[i][j] = c[i][j] + 3 * dp[i][j]
     }
   }
 
-  dpp := vector.ContractSymmetricTensor(dp, mp)
-  dppp := vector.Dot(dpp, mp)
-
-  cp := vector.ContractSymmetricTensor(c, mp)
-  cpp := vector.Dot(cp, mp)
-
-  bp := vector.Dot(y, mp)
-
-  //Calculate py and pv. 
-  for i := 0; i < dim; i ++ {
-    b[i] = -y[i] + 2 * cp[i] + 3 * dpp[i]
-  }
-
-  return &cubicSurface{dim, d, cd, b, r3 + bp + cpp + dppp}
+  return translateCubic(&cubicSurface{dim, d, c, vector.Negative(y), r3}, p)
 }
 
 //A general cubic surface from a central point and a list of vectors
@@ -837,7 +787,7 @@ func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r3 float6
 //   y   - the linear component of the curve before the curve is translated by p.
 //   r2  - a linear component that is also independent if the effects of p. 
 //
-// (using some mixed notation here, but it works.)
+// (mixed notation again.)
 //  (u_i u_i u_i u_i) (x - p) (x - p) (x - p) (x - p) + (w_i w_i w_i) (x - p) (x - p) (x - p)
 //    + (v_i v_i) (x - p) (x - p) + y (x - p) + r4 == 0
 //  (u_i.x)^4 - 4 (u_i.p) (u_i.x)^3 + 6 (u_i.p)^2 (u_i.x)^2 + 4 (u_i.p)^3 (u_i.x) + (u_i.p)^4 
@@ -885,98 +835,26 @@ func NewQuarticSurface(p []float64, vqp, vqn, vd, vp, vn [][]float64, y[] float6
     }
   }
 
-  var b []float64 = make([]float64, dim)
   var c [][]float64 = make([][]float64, dim)
   var d [][][]float64 = make([][][]float64, dim)
   var e [][][][]float64 = make([][][][]float64, dim)
 
-  var pv, py, pvd, pvq float64 = 0, 0, 0, 0
-  var bv, bvd, bvq []float64 = make([]float64, dim), make([]float64, dim), make([]float64, dim)
-
-  //Calculate pv, py, pvd. 
-  for i := 0; i < dim; i ++ {
-
-    for j := 0; j < len(vp); j ++ {
-      pv += vp[j][i] * p[i]
-      bv[i] += vp[j][i]
-    }
-    for j := 0; j < len(vn); j ++ {
-      pv -= vn[j][i] * p[i]
-      bv[i] -= vn[j][i]
-    }
-    for j := 0; j < len(vd); j ++ {
-      pvd += vd[j][i] * p[i]
-      bvd[i] += vd[j][i]
-    }
-    for j := 0; j < len(vqp); j ++ {
-      pvq += vqp[j][i] * p[i]
-      bvq[i] += vqp[j][i]
-    }
-    for j := 0; j < len(vqn); j ++ {
-      pvq -= vqn[j][i] * p[i]
-      bvq[i] -= vqn[j][i]
-    }
-
-    py += y[i] * p[i]
-    b[i] = y[i]
-  }
-
-  //Calculate b.
-  for i := 0; i < dim; i ++ {
-    b[i] += (-2*pv*bv[i] + 3*bvd[i]*pvd*pvd - 4*bvq[i]*pvq*pvq*pvq)
-  }
-
-  //Calculate c.
-  for i := 0; i < dim; i ++ {
-    c[i] = make([]float64, i + 1)
-
-    for j := 0; j <= i; j ++ {
-      //c[i][j] = 0.0
-      for k := 0; k < len(vp); k ++ {
-        c[i][j] -= vp[k][i] * vp[k][j]
-      }
-      for k := 0; k < len(vn); k ++ {
-        c[i][j] += vn[k][i] * vn[k][j]
-      }
-      for k := 0; k < len(vd); k ++ {
-        c[i][j] -= 3 * vd[k][i] * vd[k][j] * pvd
-      }
-      for k := 0; k < len(vqp); k ++ {
-        c[i][j] += 6 * vqp[k][i] * vqp[k][j] * pvq * pvq
-      }
-      for k := 0; k < len(vqn); k ++ {
-        c[i][j] -= 6 * vqn[k][i] * vqn[k][j] * pvq * pvq
-      }
-    }
-  }
-
-  //calculate d.
+  //calculate c, d, and e.
   for i := 0; i < dim; i ++ {
     d[i] = make([][]float64, i + 1)
+    c[i] = make([]float64, i + 1)
+    e[i] = make([][][]float64, i + 1)
+
     for j := 0; j <= i; j ++ {
       d[i][j] = make([]float64, j + 1)
-      for k := 0; k <= j; k ++ {
-        for l := 0; l < len(vd); l ++ {
-          d[i][j][k] += vd[l][i] * vd[l][j] * vd[l][k]
-        }
-        for l := 0; l < len(vqp); l ++ {
-          d[i][j][k] -= 4 * vqp[l][i] * vqp[l][j] * vqp[l][k] * pvq
-        }
-        for l := 0; l < len(vqn); l ++ {
-          d[i][j][k] += 4 * vqn[l][i] * vqn[l][j] * vqn[l][k] * pvq
-        }
-      }
-    }
-  }
-
-  //calculate e.
-  for i := 0; i < dim; i ++ {
-    e[i] = make([][][]float64, i + 1)
-    for j := 0; j <= i; j ++ {
       e[i][j] = make([][]float64, j + 1)
+
       for k := 0; k <= j; k ++ {
         e[i][j][k] = make([]float64, k + 1)
-        for l := 0; l <= k; l ++ {
+
+        for l := 0; l < len(vd); l ++ {
+          d[i][j][k] -= vd[l][i] * vd[l][j] * vd[l][k]
+
           for m := 0; m < len(vqp); m ++ {
             e[i][j][k][l] += vqp[m][i] * vqp[m][j] * vqp[m][k] * vqp[m][l]
           }
@@ -985,8 +863,15 @@ func NewQuarticSurface(p []float64, vqp, vqn, vd, vp, vn [][]float64, y[] float6
           }
         }
       }
+
+      for k := 0; k < len(vp); k ++ {
+        c[i][j] -= vp[k][i] * vp[k][j]
+      }
+      for k := 0; k < len(vn); k ++ {
+        c[i][j] += vn[k][i] * vn[k][j]
+      }
     }
   }
 
-  return &quarticSurface{dim, e, d, c, b, r4 + py + pv * pv - pvd * pvd * pvd + pvq * pvq * pvq * pvq}
+  return translateQuartic(&quarticSurface{dim, e, d, c, vector.Negative(y), r4}, p)
 }

@@ -7,26 +7,30 @@ import "../vector"
 //Note: the simplex will be inside-out if the points
 //are not given in the right order. 
 func NewSimplex(p [][]float64) Surface {
-  if p == nil {return nil}
-  dim := len(p) - 1
-  if dim < 1 {return nil}
+  if p == nil { return nil }
+  l := len(p)
+  dim := l - 1
+  if dim < 1 { return nil }
 
   var s, g Surface = nil, nil
 
-  p_sub := make([][]float64, dim - 1)
-  for i := 0; i < dim; i ++ {
+  p_sub := make([][]float64, dim)
+  var sig int = 1
+  for i := 0; i < l; i ++ {
     q := 0
-    for j := 0; j < dim; j ++ {
+    for j := (i + 1) % l; j != i; j = (j + 1) % l {
       //TODO This step may not get all points in the correct order.
       //Needs to be tested to make sure. 
-      if j != i {
-        p_sub[q] = p[j]
-        q ++ 
-      }
+      p_sub[q] = p[j]
+      q ++ 
     }
 
-    g = NewPlaneByPoints(p_sub)
+    g = NewPlaneByPointsAndSignature(p_sub, 2 * ((sig + dim) % 2) - 1)
+    sig += dim
     if g == nil {
+      return nil
+    }
+    if g.Dimension() != dim {
       return nil
     }
     if s == nil {

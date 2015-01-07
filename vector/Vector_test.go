@@ -8,11 +8,54 @@ func TestVectorOperations(t *testing.T) {
 }
 
 func TestOrthonormalize(t *testing.T) {
-  //TODO
+  
+
+  //five trials. 
+  dim := 4
+  for i := 0; i < 5; i ++ {
+    o := test.RandFloatMatrix(-5, 5, dim, dim)
+
+    Orthonormalize(o)
+
+    for j := 0; j < dim; j ++ {
+      for k := 0; k < j ; k ++ {
+        if !test.CloseEnough(Dot(o[j], o[k]), 0, .000001) {
+          t.Error("Orthonormalization error: ", o)
+        }
+      }
+
+      if !test.CloseEnough(Dot(o[j], o[j]), 1, .000001) {
+        t.Error("Orthonormalization error.")
+      }
+    }
+  }
+}
+
+func TestDot(t *testing.T) {
+  cases := [][][]float64{
+    [][]float64{[]float64{}, []float64{}},
+    [][]float64{[]float64{1}, []float64{1}},
+    [][]float64{[]float64{1}, []float64{2}},
+    [][]float64{[]float64{3}, []float64{2}},
+    [][]float64{[]float64{1, 1}, []float64{1, -1}},
+    [][]float64{[]float64{2, 6}, []float64{4, 3}}}
+
+  expected := []float64{0, 1, 2, 6, 0, 26}
+
+  for i := 0; i < len(cases); i ++ {
+    test_dot := Dot(cases[i][0], cases[i][1])
+
+    if !test.CloseEnough(test_dot, expected[i], .00001) {
+      t.Error("Dot error! test case ", cases[i], "; expected ", expected[i], "; got ", test_dot)
+    }
+  }
 }
 
 func TestDet(t *testing.T) {
   cases := [][][]float64{
+      [][]float64{},
+      [][]float64{
+          []float64{8}},
       [][]float64{
           []float64{2, 0, 0}, 
           []float64{0, 0, 1},
@@ -46,7 +89,7 @@ func TestDet(t *testing.T) {
           []float64{-0.43875143013729945, 0.7177204175693372, -0.4183506835575348}, 
           []float64{-0.9423920649659894, 0.08840190638381973, 0.9782291177529912}}}
 
-  det_exp := []float64{-2, 1, 0, 0, -1, 0.262221, 0.262221, 0.658136}
+  det_exp := []float64{0, 8, -2, 1, 0, 0, -1, 0.262221, 0.262221, 0.658136}
 
   for i := 0; i < len(cases); i ++ {
     det_test := Det(cases[i])
@@ -58,6 +101,8 @@ func TestDet(t *testing.T) {
 
 func TestCross(t *testing.T) {
   cases := [][][]float64{
+      [][]float64{
+          []float64{1}}, 
       [][]float64{
           []float64{1, 0},
           []float64{0, 1}}, 
@@ -72,7 +117,7 @@ func TestCross(t *testing.T) {
           []float64{0, 0, 0, 1}}}
 
   for i := 0; i < len(cases); i ++ {
-    cross := Cross(cases[i][:len(cases[i]) -1])
+    cross := Cross(cases[i][:len(cases[i]) - 1])
     if !test.VectorCloseEnough(cross, cases[i][len(cases[i]) - 1], .00001) {
       t.Error("Cross error: test case ", cases[i], ", got ", cross)
     }

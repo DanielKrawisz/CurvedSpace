@@ -44,6 +44,56 @@ func RandFloatVector(min, max float64, length int) []float64 {
   return v
 }
 
+func RandFloatMatrix(min, max float64, length, width int) [][]float64 {
+  v := make([][]float64, length)
+  for i := 0; i < length; i ++ {
+    v[i] = RandFloatVector(min, max, width)
+  }
+  return v
+}
+
+func RandFloatSymmetricTensor(min, max float64, n int) [][]float64 {
+  v := make([][]float64, n)
+  for i := 0; i < n; i ++ {
+    v[i] = make([]float64, i + 1)
+    for j := 0; j <= i; j ++ {
+      v[i][j] = RandFloat(min, max)
+    }
+  }
+  return v
+}
+
+func RandFloatSymmetric3Tensor(min, max float64, n int) [][][]float64 {
+  v := make([][][]float64, n)
+  for i := 0; i < n; i ++ {
+    v[i] = make([][]float64, i + 1)
+    for j := 0; j <= i; j ++ {
+      v[i][j] = make([]float64, j + 1)
+      for k := 0; k <= j; k ++ {
+        v[i][j][k] = RandFloat(min, max)
+      }
+    }
+  }
+  return v
+}
+
+func RandFloatSymmetric4Tensor(min, max float64, n int) [][][][]float64 {
+  v := make([][][][]float64, n)
+  for i := 0; i < n; i ++ {
+    v[i] = make([][][]float64, i + 1)
+    for j := 0; j <= i; j ++ {
+      v[i][j] = make([][]float64, j + 1)
+      for k := 0; k <= j; k ++ {
+        v[i][j][k] = make([]float64, k + 1)
+        for l := 0; l <= k; l ++ {
+          v[i][j][k][l] = RandFloat(min, max)
+        }
+      }
+    }
+  }
+  return v
+}
+
 //Test whether two floats are close enough to one another. 
 func CloseEnough(a, b, e float64) bool {
   return math.Abs(a - b) < e

@@ -51,7 +51,6 @@ func Binomial(d, n uint) uint64 {
 }
 
 func Figurate(r, n uint) uint64 {
-  if r == 0 || n == 0 { return 0 }
   return Binomial(n + r - 1, r)
 }
 

@@ -33,11 +33,7 @@ func TestLinear(t *testing.T) {
 
     //Test 3 random points. 
     for p := 0; p < 3; p ++ {
-      point := make([]float64, dim)
-      point[0] = test.RandFloat(-100, 100)
-      point[1] = test.RandFloat(-100, 100)
-      point[2] = test.RandFloat(-100, 100)
-      point[3] = test.RandFloat(-100, 100)
+      point := test.RandFloatVector(-100, 100, dim)
 
       expect := vector.Dot(b, point) + a
       val := surface.F(point)
@@ -49,14 +45,7 @@ func TestLinear(t *testing.T) {
       grad := surface.Gradient(point)
       grad_exp := testGradient(surface, point, err_poly)
 
-      var grad_match bool = true
-
-      for i := 0; i < dim; i++ {
-        //TODO using less error than usual here. 
-        grad_match = grad_match && test.CloseEnough(grad[i], grad_exp[i], .0001)
-      }
-
-      if !grad_match {
+      if !test.VectorCloseEnough(grad, grad_exp, 00001) {
         t.Error("linear surface defined by b = ", b, "grad error. Expected ", grad_exp, ", got ", grad)
       }
     }
@@ -96,27 +85,87 @@ func TestNewPlane(t *testing.T) {
     t.Error("New linear surface error 4")
   }
 
-  if nil != NewPlaneByPoints(nil) {
+  if nil != NewPlaneByPointsAndSignature(nil, 1) {
     t.Error("New linear surface error 5")
   }
-  if nil != NewPlaneByPoints([][]float64{nil, []float64{0, 1, 0}, []float64{0, 0, 1}}) {
+  if nil != NewPlaneByPointsAndSignature([][]float64{nil, []float64{0, 1, 0}, []float64{0, 0, 1}}, 1) {
     t.Error("New linear surface error 6")
   }
-  if nil != NewPlaneByPoints([][]float64{[]float64{1, 0, 0}, []float64{0, 1}, []float64{0, 0, 1}}) {
+  if nil != NewPlaneByPointsAndSignature([][]float64{
+      []float64{1, 0, 0}, []float64{0, 1}, []float64{0, 0, 1}}, 1) {
     t.Error("New linear surface error 7")
   }
-  if nil != NewPlaneByPoints([][]float64{[]float64{1, 0, 0}, []float64{0, 1, 0, 0}, []float64{0, 0, 1}}) {
+  if nil != NewPlaneByPointsAndSignature([][]float64{
+      []float64{1, 0, 0}, []float64{0, 1, 0, 0}, []float64{0, 0, 1}}, 1) {
     t.Error("New linear surface error 8")
   }
-  if nil != NewPlaneByPoints([][]float64{[]float64{1, 0, 0}, []float64{1, 0, 0}, []float64{0, 0, 1}}) {
+  if nil != NewPlaneByPointsAndSignature([][]float64{
+      []float64{1, 0, 0}, []float64{1, 0, 0}, []float64{0, 0, 1}}, 1) {
     t.Error("New linear surface error 9")
   }
 
-  if nil == NewPlaneByPoints([][]float64{[]float64{1, 0, 0}, []float64{0, 1, 0}, []float64{0, 0, 1}}) {
+  if nil == NewPlaneByPointsAndSignature([][]float64{
+      []float64{1, 0, 0}, []float64{0, 1, 0}, []float64{0, 0, 1}}, 1) {
     t.Error("New linear surface error 10")
   }
 
-  //TODO there should be a test to make sure that the result which comes out is correct.
+  for i := 0; i < 4; i ++ {
+    dim := 4
+
+    point := test.RandFloatVector(-10, 10, dim)
+    normal := test.RandFloatVector(-4, 4, dim)
+
+    plane := NewPlaneByPointAndNormal(point, normal)
+
+    for j := 0; j < dim; j ++ {
+      test_point := test.RandFloatVector(-10, 10, dim)
+
+      test_f := plane.F(test_point)
+
+      exp := vector.Dot(vector.Minus(test_point, point), normal)
+
+      if !test.CloseEnough(test_f, exp, err_poly) {
+        t.Error("plane error: point ", point[j], "; expected ", exp, " got ", test_f)
+      }
+    }
+  }
+
+  //testing that the plane comes out correctly when given n - 1 points. 
+  for i := 0; i < 4; i ++ {
+    dim := 3 + i % 2
+
+    point := make([][]float64, dim)
+    for j := 0; j < dim; j ++ {
+      point[j] = test.RandFloatVector(-10, 10, dim)
+    }
+
+    plane := NewPlaneByPointsAndSignature(point, 1)
+
+    for j := 0; j < dim; j ++ {
+      test_f := plane.F(point[j])
+      if !test.CloseEnough(test_f, 0, err_poly) {
+        t.Error("plane error: point ", point[j], " should be on the plane; got ", test_f)
+      }
+    }
+  }
+
+  for i := 0; i < 4; i ++ {
+    dim := 3 + i % 2
+
+    point := test.RandFloatVector(-10, 10, dim)
+    normal := test.RandFloatVector(-5, 5, dim)
+
+    plane := NewPlaneByPointAndNormal(point, normal)
+
+    for j := 0; j < dim; j ++ {
+      test_p := test.RandFloatVector(-5, 5, dim)
+      test_f := plane.F(test_p)
+      exp_p := vector.Dot(vector.Minus(test_p, point), normal)
+      if !test.CloseEnough(test_f, exp_p, err_poly) {
+        t.Error("plane error: point ", point[j], " should be on the plane; got ", test_f)
+      }
+    }
+  }
 }
 
 func TestQuadratic(t *testing.T) {
@@ -298,6 +347,7 @@ func TestNewQuadraticSurface(t *testing.T) {
     t.Error("New quadratic surface error 18")
   }
 
+  //Test whether the surface actually comes out as expected. 
   dim := 4; 
   for i := 0; i < 20; i ++ {
     point := make([]float64, dim)
@@ -467,7 +517,90 @@ func TestCubic(t *testing.T) {
 }
 
 func TestNewCubic(t *testing.T) {
-  //TODO
+  dv3 := [][]float64{[]float64{1, 0, 0}, []float64{0, 1, 0}}
+  dv2 := [][]float64{[]float64{1, 0}, []float64{0, 1}}
+
+  if nil != NewCubicSurface([]float64{0,0}, nil, [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New cubic surface error 1")
+  }
+  if nil != NewCubicSurface([]float64{0,0}, dv3, [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New cubic surface error 1")
+  }
+  if nil != NewCubicSurface(nil, dv2, [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New cubic surface error 1")
+  }
+  if nil != NewCubicSurface([]float64{0,0,0}, dv2, [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New cubic surface error 2")
+  }
+  if nil != NewCubicSurface([]float64{0}, dv2, [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New cubic surface error 3")
+  }
+  if nil != NewCubicSurface([]float64{0,0}, dv2, nil, [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New cubic surface error 4")
+  }
+  if nil != NewCubicSurface([]float64{0,0}, dv2, [][]float64{}, nil, []float64{0,0}, 1) {
+    t.Error("New cubic surface error 5")
+  }
+  if nil != NewCubicSurface([]float64{0,0}, dv2, [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{[]float64{0, 1}}, []float64{0, 0}, 1) {
+    t.Error("New cubic surface error 6")
+  }
+  if nil != NewCubicSurface([]float64{0,0}, dv2, [][]float64{nil, []float64{0, 1}},
+      [][]float64{}, []float64{0, 0}, 1) {
+    t.Error("New cubic surface error 7")
+  }
+  if nil != NewCubicSurface([]float64{0,0}, dv2, [][]float64{[]float64{1,0}},
+      [][]float64{nil}, []float64{0, 0}, 1) {
+    t.Error("New cubic surface error 8")
+  }
+  if nil != NewCubicSurface([]float64{0,0}, dv2, [][]float64{[]float64{1, 0, 0}},
+      [][]float64{[]float64{1, 0}}, []float64{0, 0}, 1) {
+    t.Error("New cubic surface error 9")
+  }
+  if nil != NewCubicSurface([]float64{0,0}, dv2, [][]float64{[]float64{1, 0}},
+      [][]float64{[]float64{1, 0, 0}}, []float64{0, 0}, 1) {
+    t.Error("New cubic surface error 10")
+  }
+  if nil != NewCubicSurface([]float64{0,0}, dv2, [][]float64{[]float64{1}},
+      [][]float64{[]float64{1, 0}}, []float64{0, 0}, 1) {
+    t.Error("New cubic surface error 11")
+  }
+  if nil != NewCubicSurface([]float64{0,0}, dv2, [][]float64{[]float64{1, 0}},
+      [][]float64{[]float64{1}}, []float64{0, 0}, 1) {
+    t.Error("New cubic surface error 12")
+  }
+  if nil != NewCubicSurface([]float64{0,0}, dv2, [][]float64{[]float64{1, 0}},
+      [][]float64{[]float64{1, 0}}, nil, 1) {
+    t.Error("New cubic surface error 13")
+  }
+  if nil != NewCubicSurface([]float64{0,0}, dv2, [][]float64{[]float64{1, 0}},
+      [][]float64{[]float64{1, 0}}, []float64{0, 0, 0}, 1) {
+    t.Error("New cubic surface error 14")
+  }
+  if nil != NewCubicSurface([]float64{0,0}, dv2, [][]float64{[]float64{1, 0}},
+      [][]float64{[]float64{1, 0}}, []float64{0}, 1) {
+    t.Error("New cubic surface error 15")
+  }
+
+  if nil == NewCubicSurface([]float64{0,0}, dv2, [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New cubic surface error 16")
+  }
+  if nil == NewCubicSurface([]float64{0,0}, dv2, [][]float64{[]float64{1,0}},
+      [][]float64{[]float64{0, 1}}, []float64{0,0}, 1) {
+    t.Error("New cubic surface error 17")
+  }
+  if nil == NewCubicSurface([]float64{0,0}, dv2, [][]float64{[]float64{1,0}},
+      [][]float64{}, []float64{0, 0}, 1) {
+    t.Error("New cubic surface error 18")
+  }
+
+  //TODO test whether the surface comes out as expected. 
 }
 
 //The strategy of this test is to ensure that one point of the segment

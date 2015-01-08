@@ -85,7 +85,7 @@ func NewMirrorReflection() RayInteraction {
   return &mirrorReflection{}
 }
 
-//TODO
+//TODO Try this with my other idea for doing specular reflection.
 type specularReflection struct {
   scatter float64
 }

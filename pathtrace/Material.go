@@ -40,22 +40,20 @@ func (m *lambertianReflection) Interact(direction, normal []float64) []float64 {
     dir = make([]float64, len(normal))
 
     for {
-      for {
-        r2 = 0
-        for i := 0; i < len(dir); i ++ {
-          dir[i] = 2 * rand.Float64() - 1
-          r2 += dir[i] * dir[i]
-        }
-
-        if r2 >= 0 {
-          break
-        }
-      }
-
-      r2 = math.Sqrt(r2)
+      r2 = 0
       for i := 0; i < len(dir); i ++ {
-        reflect[i] = normal[i] + dir[i] / r2
+        dir[i] = 2 * rand.Float64() - 1
+        r2 += dir[i] * dir[i]
       }
+
+      if r2 >= 0 {
+        break
+      }
+    }
+
+    r2 = math.Sqrt(r2)
+    for i := 0; i < len(dir); i ++ {
+      reflect[i] = normal[i] + dir[i] / r2
     }
   }
 

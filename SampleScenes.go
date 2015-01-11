@@ -11,7 +11,6 @@ import (
   "./surface"
   "./pathtrace"
   "./distributions"
-  "./vector"
 )
 
 //Some prototype objects which will be programmed for real later.
@@ -93,6 +92,7 @@ func (sc *scene) TracePath(pos, dir []float64, max_depth int, receptor_tolerance
 
 type traceFunc func(r *ray, norm []float64) *ray
 
+//This function makes an object glow. 
 func Glow(c []float64) traceFunc {
   return func(r *ray, norm []float64) *ray {
       r.adj_den = 0
@@ -101,6 +101,7 @@ func Glow(c []float64) traceFunc {
   }
 }
 
+//This makes an object glow AND do something else. 
 func GlowAverage(c []float64, absorb, transmit float64,
   ref pathtrace.RayInteraction, surf surface.Surface) traceFunc {
   return func(r *ray, norm []float64) *ray {
@@ -159,6 +160,79 @@ func Transparent(refraction, shiney, p, q float64, surf surface.Surface) traceFu
   }
 }
 
+//Snap a photo! 
+func Snap(sc *scene, cam_func pathtrace.RayFunc, size_u, size_v,
+  depth, minp, maxp int, maxMeanVariance float64) *image.NRGBA {
+  img := image.NewNRGBA(image.Rect(0, 0, size_u, size_v))
+  var ray_pos, ray_dir []float64
+
+  pix_sum := make([]float64, 3)
+  pix := make([]float64, 3)
+
+  var n int = 0
+  for i := 0; i < size_u; i ++ {
+    for j := 0; j < size_v; j ++ {
+      //TODO put some heuristic thing here to report on how complete the image is.
+
+      for k := 0; k < 3; k ++ {
+        pix_sum[k] = 0
+      }
+
+      var p int = 0
+      var variance_check bool
+
+      //Set up the variance monitor.
+      var monitor []*distributions.SampleStatistics = []*distributions.SampleStatistics{
+        distributions.NewSampleStatistics(), 
+        distributions.NewSampleStatistics(), 
+        distributions.NewSampleStatistics()}
+
+      for {
+        //Set up the ray.
+        ray_pos, ray_dir = cam_func(i, j)
+
+        p ++
+
+        //Trace the path.
+        c := sc.TracePath(ray_pos, ray_dir, depth, 1./256.)
+
+        for l := 0; l < 3; l ++ {
+          pix_sum[l] += c[l]
+          monitor[l].AddVariable(c[l])
+        }
+
+        if p > maxp {
+          break
+        }
+
+        //Check variance
+        if p > minp {
+          variance_check = true
+          for l := 0; l < 3; l ++ {
+            if monitor[l].MeanVariance() > maxMeanVariance {
+              variance_check = false
+            }
+          }
+          if variance_check {
+            break
+          }
+        }
+      }
+
+      //Generate the pixel. 
+      for l := 0; l < 3; l ++ {
+        pix[l] = math.Min(255 * pix_sum[l] / float64(p), 255)
+      }
+
+      img.Set(i, j, &color.NRGBA{uint8(pix[0]), uint8(pix[1]), uint8(pix[2]), 255})
+
+      n++
+    }
+  }
+
+  return img
+}
+
 //A simple demo of the most basic form of path-tracing. There are four spheres, 
 //each with a different color, and they only emit light, but do not reflect it.
 func pathtrace_activity_01() {
@@ -171,8 +245,6 @@ func pathtrace_activity_01() {
   }
 
   var size_u, size_v int = 640, 480
-
-  img := image.NewNRGBA(image.Rect(0, 0, size_u, size_v))
 
   //Four spheres in a tetrahedron. 
   spheres := []surface.Surface{
@@ -192,37 +264,15 @@ func pathtrace_activity_01() {
   }
   scene_1 := &scene{objects, background}
 
-  //Set up the camera. 
-  cam_pos := []float64{0,0,3}
-  cam_dir := []float64{0,0,-1}
-  cam_up  := []float64{0,1,0}
-  cam_right := []float64{1.333,0,0}
+  //get camera function
+  cam_pos   := []float64{0,0,3}
+  cam_look  := []float64{0,0,0}
+  cam_up    := []float64{0,1,0}
+  cam_right := []float64{1,0,0}
+  cam_func := pathtrace.FlatCamera(cam_pos,
+    pathtrace.CameraMatrix(cam_pos, cam_look, cam_up, cam_right), size_u, size_v, 1.33333, 1.)
 
-  var ray_pos, ray_dir []float64 = make([]float64, 3), make([]float64, 3)
-
-  for i := 0; i < size_u; i ++ {
-    for j := 0; j < size_v; j ++ {
-
-      //Set up the ray. 
-      var ou float64 = 2*float64(i - size_u/2)/float64(size_u)
-      var ov float64 = 2*float64(j - size_v/2)/float64(size_v)
-
-      for k := 0; k < 3; k ++ {
-        ray_pos[k] = cam_pos[k]
-        ray_dir[k] = cam_dir[k] + ov * cam_up[k] + ou * cam_right[k]
-      }
-
-      //Trace the ray. 
-      c := scene_1.TracePath(ray_pos, ray_dir, 10, 1./256.)
-
-      //Generate the pixel. 
-      for l := 0; l < 3; l ++ {
-        c[l] = math.Min(255 * c[l], 255)
-      }
-
-      img.Set(i, j, &color.NRGBA{uint8(c[0]), uint8(c[1]), uint8(c[2]), 255})
-    }
-  }
+  img := Snap(scene_1, cam_func, size_u, size_v, 1, 1, 1, 1)
 
   png.Encode(file, img)
 }
@@ -239,9 +289,6 @@ func pathtrace_activity_02(smooth_reflection bool) {
   }
 
   var size_u, size_v int = 1600, 1200
-  var total_pixels = size_u * size_v
-
-  img := image.NewNRGBA(image.Rect(0, 0, size_u, size_v))
 
   //Set up the scene. Four spheres again, each with a different color.
   spheres := []surface.Surface{
@@ -287,85 +334,19 @@ func pathtrace_activity_02(smooth_reflection bool) {
   scene_2 := &scene{objects, background}
 
   //Set up the camera. 
-  cam_pos := []float64{0, 0, 2.6}
-  cam_dir := []float64{0, 0, -1}
-  cam_up  := []float64{0, 1./2., 0}
-  cam_right := []float64{1.333/2., 0, 0}
-
-  var ray_pos, ray_dir []float64 = make([]float64, 3), make([]float64, 3)
+  cam_pos   := []float64{0, 0, 2.6}
+  cam_look  := []float64{0, 0, 0}
+  cam_up    := []float64{0, 1, 0}
+  cam_right := []float64{1, 0, 0}
+  cam_func := pathtrace.FlatCamera(cam_pos,
+    pathtrace.CameraMatrix(cam_pos, cam_look, cam_up, cam_right), size_u, size_v, 1.33333/2., 1./2.)
 
   //Four hundred bounces, 16 rays per pixel. 
-  var depth, minp int = 400, 16
+  var depth, minp, maxp int = 400, 16, 1000
   //Using the new awy of calculating pixels, there should be almost no variance with each ray.
   var maxMeanVariance float64 = .00001
 
-  pix_sum := make([]float64, 3)
-  pix := make([]float64, 3)
-
-  var n int = 0
-  for i := 0; i < size_u; i ++ {
-    for j := 0; j < size_v; j ++ {
-      if n % 24000 == 0 {
-        fmt.Println("  ", float64(n)/float64(total_pixels), " complete.")
-      }
-
-      //Set up the color for this pixel.
-      for k := 0; k < 3; k ++ {
-        pix_sum[k] = 0
-      }
-
-      var p int = 0
-      var variance_check bool
-
-      //Set up the variance monitor.
-      var monitor []*distributions.SampleStatistics = []*distributions.SampleStatistics{
-        distributions.NewSampleStatistics(), 
-        distributions.NewSampleStatistics(), 
-        distributions.NewSampleStatistics()}
-
-      for {
-        //Set up the ray.
-        var ou float64 = 2*(float64(i - size_u/2) + rand.Float64() - .5) / float64(size_u)
-        var ov float64 = 2*(float64(j - size_v/2) + rand.Float64() - .5) / float64(size_v)
-        for k := 0; k < 3; k ++ {
-          ray_pos[k] = cam_pos[k]
-          ray_dir[k] = cam_dir[k] + ov * cam_up[k] + ou * cam_right[k]
-        }
-
-        p ++
-
-        //Trace the path.
-        c := scene_2.TracePath(ray_pos, ray_dir, depth, 1./256.)
-
-        for l := 0; l < 3; l ++ {
-          pix_sum[l] += c[l]
-          monitor[l].AddVariable(c[l])
-        }
-
-        //Check the variance of the pixel to see if it is low enough.
-        if p > minp {
-          variance_check = true
-          for l := 0; l < 3; l ++ {
-            if monitor[l].MeanVariance() > maxMeanVariance {
-              variance_check = false
-            }
-          }
-        }
-        if variance_check {
-          break
-        }
-      }
-
-      //Generate the pixel. 
-      for l := 0; l < 3; l ++ {
-        pix[l] = math.Min(255 * pix_sum[l] / float64(p), 255)
-      }
-
-      img.Set(i, j, &color.NRGBA{uint8(pix[0]), uint8(pix[1]), uint8(pix[2]), 255})
-
-      n++
-    }
-  }
+  img := Snap(scene_2, cam_func, size_u, size_v, depth, minp, maxp, maxMeanVariance)
 
   png.Encode(file, img)
 }
@@ -382,9 +363,6 @@ func pathtrace_activity_03() {
   }
 
   var size_u, size_v int = 800, 600
-  var total_pixels = size_u * size_v
-
-  img := image.NewNRGBA(image.Rect(0, 0, size_u, size_v))
 
   shapes := []surface.Surface{
     surface.NewSphere([]float64{0, 0, 26}, 14),
@@ -408,114 +386,34 @@ func pathtrace_activity_03() {
 
   objects := make([]object, len(shapes))
   for i := 0; i < len(shapes); i ++ {
-    surf := shapes[i]
-    objects[i].surf = surf
-
-    if i == 0 { //This object is just a light. 
-      objects[i].redirect = Glow(light)
-    } else if i == 1 { //Glows and also reflects. 
-      objects[i].redirect = GlowAverage(pink, .3, 1, mirror, surf)
-    } else if i == 2 {
-      objects[i].redirect = Shiney(blue, .4, .5, surf)
-    } else if i == 3 {
-      objects[i].redirect = Lambertian(green, surf)
-    } else if i == 4 {
-      objects[i].redirect = Transparent(1.6, .1, .5, 1, surf)
-    } else if i == 5 {
-      objects[i].redirect = Lambertian(orange, surf)
-    } else if i == 6 {
-      objects[i].redirect = Lambertian(white, surf)
-    } else if i == 7 {
-      objects[i].redirect = Lambertian(pink, surf)
-    } else if i == 8 {
-      objects[i].redirect = Lambertian(white, surf)
-    }
+    objects[i].surf = shapes[i]
   }
+
+  //This object is just a light. 
+  objects[0].redirect = Glow(light)
+  //Glows and also reflects. 
+  objects[1].redirect = GlowAverage(pink, .3, 1, mirror, shapes[1])
+  objects[2].redirect = Shiney(blue, .2, .1, shapes[2])
+  objects[3].redirect = Lambertian(green, shapes[3])
+  objects[4].redirect = Transparent(1.6, .1, .5, 1, shapes[4])
+  objects[5].redirect = Lambertian(orange, shapes[5])
+  objects[6].redirect = Lambertian(white, shapes[6])
+  objects[7].redirect = Lambertian(pink, shapes[7])
+  objects[8].redirect = Lambertian(white, shapes[8])
 
   scene_3 := &scene{objects, background}
 
   cam_pos   := []float64{0, -3, 4}
   cam_look  := []float64{0, 0, 0}
-  cam_dir   := vector.Minus(cam_look, cam_pos)
   cam_up    := []float64{0, 1., 0}
   cam_right := []float64{1, 0, 0}
-  cam_mtrx := [][]float64{cam_dir, cam_up, cam_right}
-  vector.Orthonormalize(cam_mtrx)
-
-  var fov_u, fov_v float64 = 1.3333, 1
-
-  var ray_pos, ray_dir, pix, pix_sum []float64 =
-    make([]float64, 3), make([]float64, 3), make([]float64, 3), make([]float64, 3)
+  cam_func := pathtrace.FlatCamera(cam_pos,
+    pathtrace.CameraMatrix(cam_pos, cam_look, cam_up, cam_right), size_u, size_v, 1.33333, 1)
 
   var depth, minp, maxp int = 40, 100, 5000
-  var maxMeanVariance float64 = .001
+  var maxMeanVariance float64 = .0001
 
-  var n int = 0
-  for i := 0; i < size_u; i ++ {
-    for j := 0; j < size_v; j ++ {
-      if n % 2400 == 0 {
-        fmt.Println("  ", float64(n)/float64(total_pixels), " complete.")
-      }
-
-      for k := 0; k < 3; k ++ {
-        pix_sum[k] = 0
-      }
-
-      var p int = 0
-      var variance_check bool
-
-      //Set up the variance monitor.
-      var monitor []*distributions.SampleStatistics = []*distributions.SampleStatistics{
-        distributions.NewSampleStatistics(), 
-        distributions.NewSampleStatistics(), 
-        distributions.NewSampleStatistics()}
-
-      for {
-        //Set up the ray.
-        var ou float64 = fov_u * 2*(float64(i - size_u/2) + rand.Float64() - .5)/float64(size_u)
-        var ov float64 = fov_v * 2*(float64(j - size_v/2) + rand.Float64() - .5)/float64(size_v)
-        for k := 0; k < 3; k ++ {
-          ray_pos[k] = cam_pos[k]
-          ray_dir[k] = cam_dir[k] - ov * cam_up[k] + ou * cam_right[k]
-        }
-
-        p ++
-
-        //Trace the path.
-        c := scene_3.TracePath(ray_pos, ray_dir, depth, 1./256.)
-
-        for l := 0; l < 3; l ++ {
-          pix_sum[l] += c[l]
-          monitor[l].AddVariable(c[l])
-        }
-
-        if p > maxp {
-          break
-        }
-        //Check variance
-        if p > minp {
-          variance_check = true
-          for l := 0; l < 3; l ++ {
-            if monitor[l].MeanVariance() > maxMeanVariance {
-              variance_check = false
-            }
-          }
-          if variance_check {
-            break
-          }
-        }
-      }
-
-      //Generate the pixel. 
-      for l := 0; l < 3; l ++ {
-        pix[l] = math.Min(255 * pix_sum[l] / float64(p), 255)
-      }
-
-      img.Set(i, j, &color.NRGBA{uint8(pix[0]), uint8(pix[1]), uint8(pix[2]), 255})
-
-      n++
-    }
-  }
+  img := Snap(scene_3, cam_func, size_u, size_v, depth, minp, maxp, maxMeanVariance)
 
   png.Encode(file, img)
 }
@@ -583,13 +481,10 @@ func pathtrace_activity_04() {
 
   cam_pos   := []float64{2, 2, 6}
   cam_look  := []float64{room_width, room_width, room_height}
-  cam_dir   := vector.Minus(cam_look, cam_pos)
   cam_up    := []float64{0, 0, 1}
   cam_right := []float64{1, 0, 0}
-  cam_mtrx := [][]float64{cam_dir, cam_up, cam_right}
-  vector.Orthonormalize(cam_mtrx)
-
-  var fov_u, fov_v float64 = 2.37, 1
+  cam_func := pathtrace.CylindricalCamera(cam_pos,
+    pathtrace.CameraMatrix(cam_pos, cam_look, cam_up, cam_right), size_u, size_v, 2.37, 1)
 
   var ray_pos, ray_dir, pix, pix_sum []float64 =
     make([]float64, 3), make([]float64, 3), make([]float64, 3), make([]float64, 3)
@@ -619,12 +514,9 @@ func pathtrace_activity_04() {
 
       for {
         //Set up the ray.
-        var ou float64 = fov_u * 2*(float64(i - size_u/2) + rand.Float64() - .5)/float64(size_u)
-        var ov float64 = fov_v * 2*(float64(j - size_v/2) + rand.Float64() - .5)/float64(size_v)
-        for k := 0; k < 3; k ++ {
-          ray_pos[k] = cam_pos[k]
-          ray_dir[k] = math.Cos(ou) * cam_dir[k] - ov * cam_up[k] + math.Sin(ou) * cam_right[k]
-        }
+        //Set up the ray.
+        ray_pos, ray_dir = cam_func(i, j)
+
         receptor := []float64{1, 1, 1} 
 
         p ++

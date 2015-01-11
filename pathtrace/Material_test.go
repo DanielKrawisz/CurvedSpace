@@ -1,6 +1,7 @@
 package pathtrace
 
 import "testing"
+import "math"
 import "../test"
 import "../distributions"
 import "../vector"
@@ -31,11 +32,40 @@ func getRandomIncoming(norm []float64) (incoming []float64) {
   return
 }
 
+//This only tests dimension 3 right now. 
 func TestLambertianReflection(t *testing.T) {
   //Change function used to select random vector so that it can be mocked out. 
   randomUnitSphereSurfacePoint = mockRandomSphereSurfacePoint
 
-  //TODO
+  dim := 3
+  l := NewLambertianReflection()
+
+  normal := make([]float64, dim)
+  normal[0] = .5
+    
+  //Should be an odd number to avoid the case
+  var pts int = 17
+
+  for i := 0; i < pts; i ++ {
+    theta := 2 * math.Pi * float64(i) / float64(pts)
+
+    sphereSurfacePoint[0] = math.Cos(theta)/2.
+    sphereSurfacePoint[1] = math.Sin(theta)/2.
+    sphereSurfacePoint[2] = 0
+
+    expected := make([]float64, 3)
+    for j := 0; j < 3; j ++ {
+      expected[j] = normal[j] + sphereSurfacePoint[j]
+    }
+
+    vector.Normalize(expected)
+
+    output := vector.Normalize(l.Interact([]float64{1,0,0}, normal))
+    if !test.VectorCloseEnough(expected, output, .000001) {
+      t.Error("Lambertian error: sphere surface point ",
+        sphereSurfacePoint, ", expected ", expected, " output ", output)
+    }
+  }
 
   //Chage function back to how it was. 
   randomUnitSphereSurfacePoint = distributions.RandomUnitSphereSurfacePoint

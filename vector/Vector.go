@@ -45,8 +45,17 @@ func Negative(v []float64) []float64 {
   return p
 }
 
+func Normalize(v []float64) []float64 {
+  d := Dot(v, v)
+  d = math.Sqrt(d)
+  for j := 0; j < len(v); j ++ {
+    v[j] /= d
+  }
+  return v
+}
+
 //Gram Schmidt process on a bunch of vectors. 
-func Orthonormalize(v [][]float64) {
+func Orthonormalize(v [][]float64) [][]float64 {
   var d float64
   for i := 0; i < len(v); i ++ {
     for j := 0; j < i; j ++ {
@@ -70,6 +79,8 @@ func Orthonormalize(v [][]float64) {
       }
     }
   }
+
+  return v
 }
 
 //An iterator for calculating the determinate.

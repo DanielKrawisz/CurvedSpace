@@ -89,24 +89,17 @@ type specularReflection struct {
 }
 
 func (m *specularReflection) Interact(direction, normal []float64) []float64 {
-  var d float64	
   reflect := make([]float64, len(normal))
   //Find the dot product of the normal with the incoming ray.
-  for l := 0; l < len(normal); l ++ {
-    d += normal[l] * direction[l]
-  }
+  d := vector.Dot(normal, direction)
 
   //Mirror the ray in the direction of the normal. 
   for l := 0; l < len(normal); l ++ {
     reflect[l] = direction[l] - 2 * normal[l] * d
-    d += reflect[l] * reflect[l]
   }
 
   //Normalize the outgoing ray. 
-  d = math.Sqrt(d)
-  for l := 0; l < len(normal); l ++ {
-    reflect[l] /= d
-  }
+  vector.Normalize(reflect)
 
   //Add a random jostling. 
   spec := randomNormallyDistributedVector(len(normal), 0, m.scatter)
@@ -115,10 +108,7 @@ func (m *specularReflection) Interact(direction, normal []float64) []float64 {
   }
 
   //Test find the dot product of the new vector with the normal.
-  d = 0
-  for l := 0; l < len(normal); l ++ {
-    d += normal[l] * reflect[l]
-  }
+  d = vector.Dot(normal, reflect)
 
   //If the light ray has gone into the surface, mirror it with
   //the normal vector again. 
@@ -142,11 +132,8 @@ type basicRefractiveTransmission struct {
 }
 
 func (m *basicRefractiveTransmission) Interact(direction, normal []float64) []float64 {
-  var d float64	
   //Find the dot product of the normal with the incoming ray.
-  for l := 0; l < len(normal); l ++ {
-    d += normal[l] * direction[l]
-  }
+  d := vector.Dot(normal, direction)
 
   d = (m.index - 1) * d / m.index
   //Mirror the ray in the direction of the normal. 

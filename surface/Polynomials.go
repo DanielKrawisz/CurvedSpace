@@ -665,7 +665,7 @@ func NewQuadraticSurface(p []float64, vp, vn [][]float64, y[] float64, r2 float6
     return nil
   }
 
-  if len(p) < len(vp) + len(vn) || len(p) != len(y) {
+  if len(p) != len(y) {
     return nil
   }
 
@@ -726,7 +726,7 @@ func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r3 float6
     return nil
   }
 
-  if len(p) < len(vp) + len(vn) || len(p) < len(vd) || len(p) != len(y) {
+  if len(p) != len(y) {
     return nil
   }
 
@@ -804,7 +804,7 @@ func NewQuarticSurface(p []float64, vqp, vqn, vd, vp, vn [][]float64, y[] float6
     return nil
   }
 
-  if len(p) < len(vp) + len(vn) || len(p) < len(vp) + len(vn) || len(p) < len(vd) || len(p) != len(y) {
+  if len(p) != len(y) {
     return nil
   }
 
@@ -854,7 +854,9 @@ func NewQuarticSurface(p []float64, vqp, vqn, vd, vp, vn [][]float64, y[] float6
 
         for l := 0; l < len(vd); l ++ {
           d[i][j][k] -= vd[l][i] * vd[l][j] * vd[l][k]
+        }
 
+        for l := 0; l <= k; l ++ {
           for m := 0; m < len(vqp); m ++ {
             e[i][j][k][l] += vqp[m][i] * vqp[m][j] * vqp[m][k] * vqp[m][l]
           }

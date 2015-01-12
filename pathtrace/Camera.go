@@ -21,7 +21,7 @@ func FlatCamera(pos []float64, mtrx [][]float64, pix_u, pix_v int, fov_u, fov_v 
     var ou, ov float64 = camCoordinates(i, j, pix_u, pix_v, fov_u, fov_v)
     for k := 0; k < 3; k ++ {
       ray_pos[k] = pos[k]
-      ray_dir[k] = mtrx[0][k] + ov * mtrx[1][k] + ou * mtrx[2][k]
+      ray_dir[k] = mtrx[0][k] - ov * mtrx[1][k] + ou * mtrx[2][k]
     }
     return ray_pos, ray_dir
   }
@@ -33,7 +33,7 @@ func CylindricalCamera(pos []float64, mtrx [][]float64, pix_u, pix_v int, fov_u,
     var ou, ov float64 = camCoordinates(i, j, pix_u, pix_v, fov_u, fov_v)
     for k := 0; k < 3; k ++ {
       ray_pos[k] = pos[k]
-      ray_dir[k] = math.Cos(ou) * mtrx[0][k] + ov * mtrx[1][k] + math.Sin(ou) * mtrx[2][k]
+      ray_dir[k] = math.Cos(ou) * mtrx[0][k] - ov * mtrx[1][k] + math.Sin(ou) * mtrx[2][k]
     }
     return ray_pos, ray_dir
   }
@@ -46,7 +46,7 @@ func PolarSphericalCamera(pos []float64, mtrx [][]float64, pix_u, pix_v int, fov
     for k := 0; k < 3; k ++ {
       ray_pos[k] = pos[k]
       c := math.Cos(ov)
-      ray_dir[k] = math.Cos(ou) * c * mtrx[0][k] +
+      ray_dir[k] = math.Cos(ou) * c * mtrx[0][k] -
         math.Sin(ou) * c * mtrx[1][k] + math.Sin(ou) * mtrx[2][k]
     }
     return ray_pos, ray_dir
@@ -68,7 +68,7 @@ func SphericalCamera(pos []float64, mtrx [][]float64, pix_u, pix_v int, fov_u, f
       sv2 := sv * sv
       su2 := su * su
       d := math.Sqrt(cu2 * cv2 + cv2 * su2* + cu2 * sv2)
-      ray_dir[k] = (cu * cv * mtrx[0][k] + cu * sv * mtrx[1][k] + cv * su * mtrx[2][k]) / d
+      ray_dir[k] = (cu * cv * mtrx[0][k] - cu * sv * mtrx[1][k] + cv * su * mtrx[2][k]) / d
     }
     return ray_pos, ray_dir
   }

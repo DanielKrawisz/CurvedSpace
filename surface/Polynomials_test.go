@@ -293,7 +293,7 @@ func TestNewQuadraticSurface(t *testing.T) {
   if nil != NewQuadraticSurface([]float64{0,0}, [][]float64{}, nil, []float64{0,0}, 1) {
     t.Error("New quadratic surface error 5")
   }
-  if nil != NewQuadraticSurface([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}},
+  if nil == NewQuadraticSurface([]float64{0,0}, [][]float64{[]float64{1,0}, []float64{0, 1}},
       [][]float64{[]float64{0, 1}}, []float64{0, 0}, 1) {
     t.Error("New quadratic surface error 6")
   }
@@ -546,7 +546,7 @@ func TestNewCubic(t *testing.T) {
   if nil != NewCubicSurface([]float64{0,0}, dv2, [][]float64{}, nil, []float64{0,0}, 1) {
     t.Error("New cubic surface error 5")
   }
-  if nil != NewCubicSurface([]float64{0,0}, dv2, [][]float64{[]float64{1,0}, []float64{0, 1}},
+  if nil == NewCubicSurface([]float64{0,0}, dv2, [][]float64{[]float64{1,0}, []float64{0, 1}},
       [][]float64{[]float64{0, 1}}, []float64{0, 0}, 1) {
     t.Error("New cubic surface error 6")
   }
@@ -764,7 +764,114 @@ func TestQuartic(t *testing.T) {
 }
 
 func TestNewQuartic(t *testing.T) {
-  //TODO
+  dv3 := [][]float64{[]float64{1, 0, 0}, []float64{0, 1, 0}}
+  dv2 := [][]float64{[]float64{1, 0}, []float64{0, 1}}
+
+  if nil != NewQuarticSurface([]float64{0,0}, dv2, [][]float64{}, nil,
+      [][]float64{[]float64{1,0}, []float64{0, 1}}, [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New quartic surface error 1")
+  }
+  if nil != NewQuarticSurface([]float64{0,0}, dv3, [][]float64{}, dv3,
+      [][]float64{[]float64{1,0}, []float64{0, 1}}, [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New quartic surface error 1")
+  }
+  if nil != NewQuarticSurface(nil, dv2, [][]float64{}, dv2, [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New quartic surface error 1")
+  }
+  if nil != NewQuarticSurface([]float64{0,0,0}, dv2, [][]float64{}, dv2,
+      [][]float64{[]float64{1,0}, []float64{0, 1}}, [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New quartic surface error 2")
+  }
+  if nil != NewQuarticSurface([]float64{0}, dv2, [][]float64{}, dv2,
+      [][]float64{[]float64{1,0}, []float64{0, 1}}, [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New quartic surface error 3")
+  }
+  if nil != NewQuarticSurface([]float64{0,0}, dv2, [][]float64{}, dv2, nil,
+    [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New quartic surface error 4")
+  }
+  if nil != NewQuarticSurface([]float64{0,0}, dv2, [][]float64{}, dv2,
+    [][]float64{}, nil, []float64{0,0}, 1) {
+    t.Error("New quartic surface error 5")
+  }
+  if nil == NewQuarticSurface([]float64{0,0}, dv2, [][]float64{}, dv2,
+      [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{[]float64{0, 1}}, []float64{0, 0}, 1) {
+    t.Error("New quartic surface error 6")
+  }
+  if nil != NewQuarticSurface([]float64{0,0}, dv2, [][]float64{}, dv2, [][]float64{nil, []float64{0, 1}},
+      [][]float64{}, []float64{0, 0}, 1) {
+    t.Error("New quartic surface error 7")
+  }
+  if nil != NewQuarticSurface([]float64{0,0}, dv2, [][]float64{}, dv2, [][]float64{[]float64{1,0}},
+      [][]float64{nil}, []float64{0, 0}, 1) {
+    t.Error("New quartic surface error 8")
+  }
+  if nil != NewQuarticSurface([]float64{0,0}, dv2, [][]float64{}, dv2, [][]float64{[]float64{1, 0, 0}},
+      [][]float64{[]float64{1, 0}}, []float64{0, 0}, 1) {
+    t.Error("New quartic surface error 9")
+  }
+  if nil != NewQuarticSurface([]float64{0,0}, dv2, [][]float64{}, dv2, [][]float64{[]float64{1, 0}},
+      [][]float64{[]float64{1, 0, 0}}, []float64{0, 0}, 1) {
+    t.Error("New quartic surface error 10")
+  }
+  if nil != NewQuarticSurface([]float64{0,0}, dv2, [][]float64{}, dv2, [][]float64{[]float64{1}},
+      [][]float64{[]float64{1, 0}}, []float64{0, 0}, 1) {
+    t.Error("New quartic surface error 11")
+  }
+  if nil != NewQuarticSurface([]float64{0,0}, dv2, [][]float64{}, dv2, [][]float64{[]float64{1, 0}},
+      [][]float64{[]float64{1}}, []float64{0, 0}, 1) {
+    t.Error("New quartic surface error 12")
+  }
+  if nil != NewQuarticSurface([]float64{0,0}, dv2, [][]float64{}, dv2, [][]float64{[]float64{1, 0}},
+      [][]float64{[]float64{1, 0}}, nil, 1) {
+    t.Error("New quartic surface error 13")
+  }
+  if nil != NewQuarticSurface([]float64{0,0}, dv2, [][]float64{}, dv2, [][]float64{[]float64{1, 0}},
+      [][]float64{[]float64{1, 0}}, []float64{0, 0, 0}, 1) {
+    t.Error("New quartic surface error 14")
+  }
+  if nil != NewQuarticSurface([]float64{0,0}, dv2, [][]float64{}, dv2, [][]float64{[]float64{1, 0}},
+      [][]float64{[]float64{1, 0}}, []float64{0}, 1) {
+    t.Error("New quartic surface error 15")
+  }
+  if nil != NewQuarticSurface([]float64{0,0}, nil, [][]float64{}, dv2,
+      [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New quartic surface error 16")
+  }
+  if nil != NewQuarticSurface([]float64{0,0}, dv2, nil, dv2,
+      [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New quartic surface error 17")
+  }
+  if nil != NewQuarticSurface([]float64{0,0}, dv3, [][]float64{}, dv2,
+      [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New quartic surface error 18")
+  }
+  if nil != NewQuarticSurface([]float64{0,0}, [][]float64{}, dv3, dv2,
+      [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New quartic surface error 19")
+  }
+
+  if nil == NewQuarticSurface([]float64{0,0}, dv2, [][]float64{}, dv2,
+      [][]float64{[]float64{1,0}, []float64{0, 1}},
+      [][]float64{}, []float64{0,0}, 1) {
+    t.Error("New quartic surface error 16")
+  }
+  if nil == NewQuarticSurface([]float64{0,0}, dv2, [][]float64{}, dv2, [][]float64{[]float64{1,0}},
+      [][]float64{[]float64{0, 1}}, []float64{0,0}, 1) {
+    t.Error("New quartic surface error 17")
+  }
+  if nil == NewQuarticSurface([]float64{0,0}, dv2, [][]float64{}, dv2, [][]float64{[]float64{1,0}},
+      [][]float64{}, []float64{0, 0}, 1) {
+    t.Error("New quartic surface error 18")
+  }
+
+  //TODO test whether the surface comes out as expected. 
 }
 
 //The strategy of this test is to ensure that one point of the segment

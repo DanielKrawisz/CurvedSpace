@@ -105,5 +105,3 @@ func NewParallelpipedByCornerAndEdges(P []float64, V [][]float64) Surface {
 
   return s
 }
-
-

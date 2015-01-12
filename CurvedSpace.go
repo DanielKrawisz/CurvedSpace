@@ -44,7 +44,7 @@ func main() {
   pathtrace_activity_01()
   pathtrace_activity_02(true)
   pathtrace_activity_03()
-  //pathtrace_activity_04()
+  pathtrace_activity_04()
   //pathtrace_test_01(false)
 }
 

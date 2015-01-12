@@ -33,7 +33,7 @@ func (obj *object) Interact(r *ray) *ray {
 }
 
 type scene struct {
-  obj []object
+  obj []*object
   background []float64
 }
 
@@ -56,7 +56,7 @@ func (sc *scene) TracePath(pos, dir []float64, max_depth int, receptor_tolerance
         for m := 0; m < len(intersection); m ++ {
           if intersection[m] < u && intersection[m] > 0 {
             u = intersection[m]
-            s = &sc.obj[l]
+            s = sc.obj[l]
             selected = l
           }
         }
@@ -162,14 +162,24 @@ func Transparent(refraction, shiney, p, q float64, surf surface.Surface) traceFu
 
 //Snap a photo! 
 func Snap(sc *scene, cam_func pathtrace.RayFunc, size_u, size_v,
-  depth, minp, maxp int, maxMeanVariance float64) *image.NRGBA {
+  depth, minp, maxp int, maxMeanVariance float64,
+  minPercentNotification float64, minIterationNotification int) *image.NRGBA {
   img := image.NewNRGBA(image.Rect(0, 0, size_u, size_v))
   var ray_pos, ray_dir []float64
 
   pix_sum := make([]float64, 3)
   pix := make([]float64, 3)
 
-  var n int = 0
+  var pixels, iterations, iteration_count, total_pixels int = 0, 0, 0, size_u * size_v
+  var percent, percent_monitor float64 = 0, 0
+
+  notify := func() {
+    fmt.Println(percent, " complete. ", pixels, " pixels ", iterations, "iterations",
+      float64(iterations) / float64(pixels), "iterations per pixel.")
+    iteration_count = 0
+    percent_monitor = 0
+  }
+
   for i := 0; i < size_u; i ++ {
     for j := 0; j < size_v; j ++ {
       //TODO put some heuristic thing here to report on how complete the image is.
@@ -191,10 +201,14 @@ func Snap(sc *scene, cam_func pathtrace.RayFunc, size_u, size_v,
         //Set up the ray.
         ray_pos, ray_dir = cam_func(i, j)
 
-        p ++
-
         //Trace the path.
         c := sc.TracePath(ray_pos, ray_dir, depth, 1./256.)
+
+        p ++
+        iterations ++
+        iteration_count ++
+
+        if iteration_count == minIterationNotification {notify()}
 
         for l := 0; l < 3; l ++ {
           pix_sum[l] += c[l]
@@ -226,7 +240,10 @@ func Snap(sc *scene, cam_func pathtrace.RayFunc, size_u, size_v,
 
       img.Set(i, j, &color.NRGBA{uint8(pix[0]), uint8(pix[1]), uint8(pix[2]), 255})
 
-      n++
+      pixels ++
+      percent = float64(pixels)/float64(total_pixels)
+      percent_monitor += .1/float64(total_pixels)
+      if percent_monitor > minPercentNotification {notify()}
     }
   }
 
@@ -256,8 +273,9 @@ func pathtrace_activity_01() {
   background := []float64{0,0,0}
 
   //Create the objects and scene. 
-  objects := make([]object, len(spheres))
+  objects := make([]*object, len(spheres))
   for i := 0; i < len(spheres); i ++ {
+    objects[i] = &object{nil, nil}
     objects[i].surf = spheres[i]
     c := colors[i]
     objects[i].redirect = Glow(c)
@@ -272,7 +290,7 @@ func pathtrace_activity_01() {
   cam_func := pathtrace.FlatCamera(cam_pos,
     pathtrace.CameraMatrix(cam_pos, cam_look, cam_up, cam_right), size_u, size_v, 1.33333, 1.)
 
-  img := Snap(scene_1, cam_func, size_u, size_v, 1, 1, 1, 1)
+  img := Snap(scene_1, cam_func, size_u, size_v, 1, 1, 1, 1, 1, 100000)
 
   png.Encode(file, img)
 }
@@ -304,8 +322,9 @@ func pathtrace_activity_02(smooth_reflection bool) {
   reflection := pathtrace.NewMirrorReflection()
 
   //Set up the scene object. 
-  objects := make([]object, len(spheres))
+  objects := make([]*object, len(spheres))
   for i := 0; i < len(spheres); i ++ {
+    objects[i] = &object{nil, nil}
     surf := spheres[i]
     objects[i].surf = surf
     c := colors[i]
@@ -346,7 +365,7 @@ func pathtrace_activity_02(smooth_reflection bool) {
   //Using the new awy of calculating pixels, there should be almost no variance with each ray.
   var maxMeanVariance float64 = .00001
 
-  img := Snap(scene_2, cam_func, size_u, size_v, depth, minp, maxp, maxMeanVariance)
+  img := Snap(scene_2, cam_func, size_u, size_v, depth, minp, maxp, maxMeanVariance, .01, 1000000)
 
   png.Encode(file, img)
 }
@@ -384,8 +403,9 @@ func pathtrace_activity_03() {
 
   background := []float64{0, 0, 0}
 
-  objects := make([]object, len(shapes))
+  objects := make([]*object, len(shapes))
   for i := 0; i < len(shapes); i ++ {
+    objects[i] = &object{nil, nil}
     objects[i].surf = shapes[i]
   }
 
@@ -413,7 +433,7 @@ func pathtrace_activity_03() {
   var depth, minp, maxp int = 40, 100, 5000
   var maxMeanVariance float64 = .0001
 
-  img := Snap(scene_3, cam_func, size_u, size_v, depth, minp, maxp, maxMeanVariance)
+  img := Snap(scene_3, cam_func, size_u, size_v, depth, minp, maxp, maxMeanVariance, .01, 1000000)
 
   png.Encode(file, img)
 }
@@ -431,9 +451,6 @@ func pathtrace_activity_04() {
 
   //Aspect ratio is (4/3)^3
   var size_u, size_v int = 1536, 648
-  var total_pixels = size_u * size_v
-
-  img := image.NewNRGBA(image.Rect(0, 0, size_u, size_v))
 
   var outer_dim float64   = 30
   var room_width float64  = 18
@@ -472,131 +489,28 @@ func pathtrace_activity_04() {
           []float64{0, room_width - 1.8, 0},
           []float64{0, 0, 2}}))
 
-  shapes := []surface.Surface{light, room}
+  background  := []float64{0, 0, 0}
+  white_light := []float64{4, 4, 4}
+  white       := []float64{1, 1, 1}
 
-  lambertian := pathtrace.NewLambertianReflection()
+  //shapes := []surface.Surface{light, room}
+  scene_4 := &scene{
+    []*object{
+      &object{light, Glow(white_light)},
+      &object{room, Lambertian(white, room)}},
+    background}
 
-  background := []float64{0, 0, 0}
-  var light_intensity float64 = 4
-
-  cam_pos   := []float64{2, 2, 6}
+  cam_pos   := []float64{4, 4, 6}
   cam_look  := []float64{room_width, room_width, room_height}
   cam_up    := []float64{0, 0, 1}
   cam_right := []float64{1, 0, 0}
   cam_func := pathtrace.CylindricalCamera(cam_pos,
     pathtrace.CameraMatrix(cam_pos, cam_look, cam_up, cam_right), size_u, size_v, 2.37, 1)
 
-  var ray_pos, ray_dir, pix, pix_sum []float64 =
-    make([]float64, 3), make([]float64, 3), make([]float64, 3), make([]float64, 3)
-
   var depth, minp, maxp int = 40, 100, 5000
   var maxMeanVariance float64 = .001
 
-  var n int = 0
-  for i := 0; i < size_u; i ++ {
-    for j := 0; j < size_v; j ++ {
-      if n % 2700 == 0 {
-        fmt.Println("  ", float64(n)/float64(total_pixels), " complete.")
-      }
-
-      for k := 0; k < 3; k ++ {
-        pix_sum[k] = 0
-      }
-
-      var p int = 0
-      var variance_check bool
-
-      //Set up the variance monitor.
-      var monitor []*distributions.SampleStatistics = []*distributions.SampleStatistics{
-        distributions.NewSampleStatistics(), 
-        distributions.NewSampleStatistics(), 
-        distributions.NewSampleStatistics()}
-
-      for {
-        //Set up the ray.
-        //Set up the ray.
-        ray_pos, ray_dir = cam_func(i, j)
-
-        receptor := []float64{1, 1, 1} 
-
-        p ++
-        var last int = -1
-
-        //Follow the ray for k bounces. 
-        for k := 0; k < depth; k ++ {
-          var u float64 = math.Inf(1)
-          var s surface.Surface = nil
-          var selected int
-
-          //check every shape for intersection. 
-          for l := 0; l < len(shapes); l ++ {
-            if l != last {
-            intersection := shapes[l].Intersection(ray_pos, ray_dir)
-              for m := 0; m < len(intersection); m ++ {
-                if intersection[m] < u && intersection[m] > 0 {
-                  u = intersection[m]
-                  s = shapes[l]
-                  selected = l
-                }
-              }
-            }
-          }
-
-          if s == nil { //The ray has diverged to infinity. 
-            for l := 0; l < 3; l ++ {
-              pix[l] = receptor[l] * background[l]
-              pix_sum[l] += pix[l]
-              monitor[l].AddVariable(pix[l])
-            }
-            break
-          } else { //The ray has interacted with something.
-            last = selected
-            //Generate the new ray position and surface normal for the interaction.
-            for l := 0; l < 3; l ++ {
-              ray_pos[l] = ray_pos[l] + u * ray_dir[l]
-            }
-            normal := surface.SurfaceNormal(s, ray_pos)
-
-            if selected == 0 { //This object is just a light. 
-              for l := 0; l < 3; l ++ {
-                pix[l] = receptor[l] * light_intensity
-                pix_sum[l] += pix[l]
-                monitor[l].AddVariable(pix[l])
-              }
-              break
-            } else if selected == 1 {  
-              ray_dir = lambertian.Interact(ray_dir, normal)
-            } 
-          }
-        }
-
-        if p > maxp {
-          break
-        }
-        //Check variance
-        if p > minp {
-          variance_check = true
-          for l := 0; l < 3; l ++ {
-            if monitor[l].MeanVariance() > maxMeanVariance {
-              variance_check = false
-            }
-          }
-          if variance_check {
-            break
-          }
-        }
-      }
-
-      //Generate the pixel. 
-      for l := 0; l < 3; l ++ {
-        pix[l] = math.Min(255 * pix_sum[l] / float64(p), 255)
-      }
-
-      img.Set(i, j, &color.NRGBA{uint8(pix[0]), uint8(pix[1]), uint8(pix[2]), 255})
-
-      n++
-    }
-  }
+  img := Snap(scene_4, cam_func, size_u, size_v, depth, minp, maxp, maxMeanVariance, .01, 1000000)
 
   png.Encode(file, img)
 }

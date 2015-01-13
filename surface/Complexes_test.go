@@ -1,13 +1,14 @@
 package surface
 
 import "testing"
+import "math"
 import "../test"
 import "../vector"
 
 //For both these next two, I only have to test that
 //a given point is interior or exterior to the complex.
 func TestNewSimplex(t *testing.T) {
-  /*if NewSimplex(nil) != nil {
+  if NewSimplex(nil) != nil {
     t.Error("simplex error 1")
   }
   if NewSimplex([][]float64{}) != nil {
@@ -27,7 +28,7 @@ func TestNewSimplex(t *testing.T) {
   }
   if NewSimplex([][]float64{[]float64{0, 0}, []float64{1, 0}, []float64{0, 1, 0}}) != nil {
     t.Error("simplex error 7")
-  }*/
+  }
 
   //Test whether the interior of the simplex is correct.
   //Go from dimension zero to dimension 5. 
@@ -117,6 +118,43 @@ func TestNewParallelpiped(t *testing.T) {
         t.Error("Parallelpiped error! ", pp.String(), " corner = ", p, ", v = ",
           v, ", point = ", point, ", inverse = ", m, " inverse vec = ", inverse, ", inside = ", test_inside, ", expected = ", inside)
       }
+    }
+  }
+}
+
+//This function does not test the parallelpiped generally.
+//It only does a few special cases. Theoretically gradient
+//and intersection should work if some more fundamental tests
+//on boolean and polynomials pass. 
+func TestParallelpipedGradientAndIntersectionSpecialCases(t *testing.T) {
+  pp := NewParallelpipedByCornerAndEdges([]float64{0,0,0},
+    [][]float64{[]float64{2,0,0}, []float64{0,2,0}, []float64{0,0,2}})
+
+  test_points := [][]float64{[]float64{1, 1, 0}, []float64{1, 0, 1},
+    []float64{0, 1, 1}, []float64{1, 1, 2}, []float64{0, 0, 0}}
+
+  for _, test_point := range test_points {
+    f := pp.F(test_point)
+    if !test.CloseEnough(f, 0, .000001) {
+      t.Error("Parallelpiped error! Got ", f, " at point ", test_point, " expected 0")
+    }
+  }
+
+  test_rays := [][]float64{[]float64{1, 0, 1}, []float64{0, 1, 1}, []float64{1, 1, 2}, []float64{0, 0, 1}}
+
+  for _, test_ray := range test_rays {
+    p := []float64{-2, -2, 4}
+    v := vector.Minus(test_ray, p)
+    intersections := pp.Intersection(p, v)
+    //Check that the lowest number returned is equal to 1.
+    u := math.Inf(1)
+    for _, intersection := range intersections {
+      if intersection < u {
+        u = intersection
+      }
+    }
+    if !test.CloseEnough(u, 1, .000001) {
+      t.Error("Parallelpiped error! Got ", intersections, " from ray ", test_ray, " expected 1")
     }
   }
 }

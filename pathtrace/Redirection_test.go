@@ -38,7 +38,7 @@ func TestLambertianReflection(t *testing.T) {
   randomUnitSphereSurfacePoint = mockRandomSphereSurfacePoint
 
   dim := 3
-  l := NewLambertianReflection()
+  l := LambertianReflection
 
   normal := make([]float64, dim)
   normal[0] = .5
@@ -60,7 +60,7 @@ func TestLambertianReflection(t *testing.T) {
 
     vector.Normalize(expected)
 
-    output := vector.Normalize(l.Interact([]float64{1,0,0}, normal))
+    output := vector.Normalize(l([]float64{1,0,0}, normal))
     if !test.VectorCloseEnough(expected, output, .000001) {
       t.Error("Lambertian error: sphere surface point ",
         sphereSurfacePoint, ", expected ", expected, " output ", output)
@@ -75,7 +75,7 @@ func TestMirrorReflection(t *testing.T) {
   var norm []float64 = distributions.RandomUnitSphereSurfacePoint()[:]
   incoming := getRandomIncoming(norm)
 
-  rf := NewMirrorReflection() 
+  rf := MirrorReflection
   outgoing := rf.Interact(incoming, norm)
   d := vector.Dot(incoming, norm)
   test_vector := make([]float64, len(norm))

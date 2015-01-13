@@ -122,7 +122,7 @@ func TestNewPlane(t *testing.T) {
 
       test_f := plane.F(test_point)
 
-      exp := vector.Dot(vector.Minus(test_point, point), normal)
+      exp := -vector.Dot(vector.Minus(test_point, point), normal)
 
       if !test.CloseEnough(test_f, exp, err_poly) {
         t.Error("plane error: point ", point[j], "; expected ", exp, " got ", test_f)
@@ -160,7 +160,7 @@ func TestNewPlane(t *testing.T) {
     for j := 0; j < dim; j ++ {
       test_p := test.RandFloatVector(-5, 5, dim)
       test_f := plane.F(test_p)
-      exp_p := vector.Dot(vector.Minus(test_p, point), normal)
+      exp_p := -vector.Dot(vector.Minus(test_p, point), normal)
       if !test.CloseEnough(test_f, exp_p, err_poly) {
         t.Error("plane error: point ", point[j], " should be on the plane; got ", test_f)
       }

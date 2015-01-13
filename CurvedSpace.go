@@ -8,10 +8,8 @@ package main
 
 //Short-term goals. 
 //TODO: update the symmetric tensor contraction functions to use the symmetric permutation loop. 
-//TODO: functions to change the coordinates of polynomial objects and to translate polynomial objects.
 //TODO: complete tests for basic surfaces. 
 //TODO:   complete intersection tests for higher polynomials.
-//TODO: make torus surface.
 //TODO: work on materials. Materials should have glow, transmissive, and reflective components.
 //      Ultimately, each should be able to send out its own light rays. 
 //TODO:   need to make scene object first.
@@ -41,11 +39,11 @@ import (
 )
 
 func main() {
-  pathtrace_activity_01()
-  pathtrace_activity_02(true)
+  //pathtrace_activity_01()
+  //pathtrace_activity_02(true)
+  //test_scene_01()
   pathtrace_activity_03()
-  pathtrace_activity_04()
-  //pathtrace_test_01(false)
+  //pathtrace_activity_04()
 }
 
 func createOutputDirectory() {

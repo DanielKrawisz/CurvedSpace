@@ -100,10 +100,6 @@ func (s *quadraticSurface) Gradient(x []float64) []float64 {
   for i := 0; i < s.dimension; i++ { 
     z[i] += s.b[i]
 
-    /*for j := 0; j < s.dimension; j ++ {
-      if
-    }*/
-
     for j := 0; j <= i; j++ {
       z[i] += 2 * s.c[i][j] * x[j]
     }
@@ -560,7 +556,7 @@ func NewPlaneByPointAndNormal(point, norm []float64) Surface {
   if len(point) != len(norm) {return nil}
 
   if vector.Dot(norm, norm) == 0 {return nil}
-  return &linearSurface{len(norm), norm, -vector.Dot(norm, point)}
+  return &linearSurface{len(norm), vector.Negative(norm), vector.Dot(norm, point)}
 }
 
 //Takes n points and returns the n-1 dimensional
@@ -584,7 +580,7 @@ func NewPlaneByPointsAndSignature(p [][]float64, sig int) Surface {
   }
 
   b := vector.Cross(v)
-  return NewPlaneByPointAndNormal(p[0], vector.Times(float64(sig), b))
+  return NewPlaneByPointAndNormal(p[0], vector.Times(-float64(sig), b))
 }
 
 //Functions that translate a polynomial object along a given vector.

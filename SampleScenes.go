@@ -42,12 +42,15 @@ func (sc *scene) TracePath(pos, dir []float64, max_depth int, receptor_tolerance
 
   r := &ray{pos, dir, []float64{1, 1, 1}, []float64{0, 0, 0}, 1}
 
+  var u float64
+  var s *object
+  var selected int
+
   //Follow the ray for max_depth bounces. 
   //TODO make each bounce a separate function call.
   for k := 0; k < max_depth; k ++ {
-    var u float64 = math.Inf(1)
-    var s *object = nil
-    var selected int
+    u = math.Inf(1)
+    selected = -1
 
     //check every shape for intersection. 
     for l := 0; l < len(sc.obj); l ++ {
@@ -56,21 +59,22 @@ func (sc *scene) TracePath(pos, dir []float64, max_depth int, receptor_tolerance
         for m := 0; m < len(intersection); m ++ {
           if intersection[m] < u && intersection[m] > 0 {
             u = intersection[m]
-            s = sc.obj[l]
             selected = l
           }
         }
       }
     }
 
-    if s == nil { //The ray has diverged to infinity.
+    if selected == -1 { //The ray has diverged to infinity.
+      last = -1
       for i := 0; i < 3; i ++ {
-        r.receptor[i] = sc.background[i]
+        r.receptor[i] *= sc.background[i]
       }
       break
     }
 
     //The ray has interacted with something.
+    s = sc.obj[selected]
     last = selected
     //Generate the new ray position and surface normal for the interaction.
     for l := 0; l < 3; l ++ {
@@ -95,55 +99,57 @@ type traceFunc func(r *ray, norm []float64) *ray
 //This function makes an object glow. 
 func Glow(c []float64) traceFunc {
   return func(r *ray, norm []float64) *ray {
-      r.adj_den = 0
-      r.adj_num = c
-      return r
+    for i := 0; i < 3; i ++ {
+      r.adj_num[i] = r.receptor[i] * c[i] * r.adj_den + r.adj_num[i]
+    }
+    r.adj_den = 0
+    return r
   }
 }
 
 //This makes an object glow AND do something else. 
 func GlowAverage(c []float64, absorb, transmit float64,
-  ref pathtrace.RayInteraction, surf surface.Surface) traceFunc {
+  ref pathtrace.Redirection, surf surface.Surface) traceFunc {
   return func(r *ray, norm []float64) *ray {
     for i := 0; i < 3; i ++ {
       r.adj_num[i] += r.adj_den * absorb * c[i]
     }
     r.adj_den *= transmit
-    r.dir = ref.Interact(r.dir, surface.SurfaceNormal(surf, r.pos))
+    r.dir = ref(r.dir, surface.SurfaceNormal(surf, r.pos))
     return r
   }
 }
 
-var lambertian pathtrace.RayInteraction = pathtrace.NewLambertianReflection()
-var mirror pathtrace.RayInteraction = pathtrace.NewMirrorReflection()
+var lambertian pathtrace.Redirection = pathtrace.LambertianReflection
+var mirror pathtrace.Redirection = pathtrace.MirrorReflection
 
 func Lambertian(c []float64, surf surface.Surface) traceFunc {
   return func(r *ray, norm []float64) *ray {
     for l := 0; l < 3; l ++ {
       r.receptor[l] *= c[l]
     }
-    r.dir = lambertian.Interact(r.dir, surface.SurfaceNormal(surf, r.pos))
+    r.dir = lambertian(r.dir, surface.SurfaceNormal(surf, r.pos))
     return r
   }
 }
 
 //TODO These next two really should just send out two rays.
 func Shiney(c []float64, shiney float64, p float64, surf surface.Surface) traceFunc {
-  reflect := pathtrace.NewSpecularReflection(shiney)
+  reflect := pathtrace.SpecularReflection(shiney)
 
   return func(r *ray, norm []float64) *ray {
     if rand.Float64() > p {
-      r.dir = reflect.Interact(r.dir, surface.SurfaceNormal(surf, r.pos))
+      r.dir = reflect(r.dir, surface.SurfaceNormal(surf, r.pos))
     } else {
-      r.dir = lambertian.Interact(r.dir, surface.SurfaceNormal(surf, r.pos))
+      r.dir = lambertian(r.dir, surface.SurfaceNormal(surf, r.pos))
     }
     return r
   }
 }
 
 func Transparent(refraction, shiney, p, q float64, surf surface.Surface) traceFunc {
-  refract := pathtrace.NewBasicRefractiveTransmission(refraction)
-  reflect := pathtrace.NewSpecularReflection(shiney)
+  refract := pathtrace.BasicRefraction(refraction)
+  reflect := pathtrace.SpecularReflection(shiney)
   pq := p + q
   a := p / pq
 
@@ -152,9 +158,9 @@ func Transparent(refraction, shiney, p, q float64, surf surface.Surface) traceFu
       r.receptor[i] *= pq
     }
     if rand.Float64() > a {
-      r.dir = refract.Interact(r.dir, surface.SurfaceNormal(surf, r.pos))
+      r.dir = refract(r.dir, surface.SurfaceNormal(surf, r.pos))
     } else {
-      r.dir = reflect.Interact(r.dir, surface.SurfaceNormal(surf, r.pos))
+      r.dir = reflect(r.dir, surface.SurfaceNormal(surf, r.pos))
     }
     return r
   }
@@ -319,7 +325,7 @@ func pathtrace_activity_02(smooth_reflection bool) {
   background := []float64{0,0,0}
 
   //These spheres are all perfectly reflective. 
-  reflection := pathtrace.NewMirrorReflection()
+  reflection := pathtrace.MirrorReflection
 
   //Set up the scene object. 
   objects := make([]*object, len(spheres))
@@ -337,7 +343,7 @@ func pathtrace_activity_02(smooth_reflection bool) {
       //This mimmics my original way of calculating colors, just to show for comparison.
       objects[i].redirect = func(r *ray, norm []float64) * ray {
         if rand.Float64() > absorb {
-          r.dir = reflection.Interact(r.dir, surface.SurfaceNormal(surf, r.pos))
+          r.dir = reflection(r.dir, surface.SurfaceNormal(surf, r.pos))
           return r
         } else {
           for i := 0; i < 3; i ++ {
@@ -397,7 +403,7 @@ func pathtrace_activity_03() {
   pink := []float64{1, .4, 1}
   blue := []float64{.3, .7, 1}
   green := []float64{.2, .8, .3}
-  orange := []float64{.6, 1, .1}
+  orange := []float64{1, .6, .1}
   white := []float64{1, 1, 1}
   light := []float64{1.6, 1.6, 1.6}
 
@@ -419,19 +425,19 @@ func pathtrace_activity_03() {
   objects[5].redirect = Lambertian(orange, shapes[5])
   objects[6].redirect = Lambertian(white, shapes[6])
   objects[7].redirect = Lambertian(pink, shapes[7])
-  objects[8].redirect = Lambertian(white, shapes[8])
+  objects[8].redirect = Shiney(white, .5, .5, shapes[8])
 
   scene_3 := &scene{objects, background}
 
-  cam_pos   := []float64{0, -3, 4}
+  cam_pos   := []float64{0, 3, 4}
   cam_look  := []float64{0, 0, 0}
   cam_up    := []float64{0, 1., 0}
-  cam_right := []float64{1, 0, 0}
+  cam_right := []float64{-1, 0, 0}
   cam_func := pathtrace.FlatCamera(cam_pos,
     pathtrace.CameraMatrix(cam_pos, cam_look, cam_up, cam_right), size_u, size_v, 1.33333, 1)
 
-  var depth, minp, maxp int = 40, 100, 5000
-  var maxMeanVariance float64 = .0001
+  var depth, minp, maxp int = 40, 60, 5000
+  var maxMeanVariance float64 = .075
 
   img := Snap(scene_3, cam_func, size_u, size_v, depth, minp, maxp, maxMeanVariance, .01, 1000000)
 
@@ -500,7 +506,7 @@ func pathtrace_activity_04() {
       &object{room, Lambertian(white, room)}},
     background}
 
-  cam_pos   := []float64{4, 4, 6}
+  cam_pos   := []float64{2, 2, 6}
   cam_look  := []float64{room_width, room_width, room_height}
   cam_up    := []float64{0, 0, 1}
   cam_right := []float64{1, 0, 0}
@@ -508,7 +514,7 @@ func pathtrace_activity_04() {
     pathtrace.CameraMatrix(cam_pos, cam_look, cam_up, cam_right), size_u, size_v, 2.37, 1)
 
   var depth, minp, maxp int = 40, 100, 5000
-  var maxMeanVariance float64 = .001
+  var maxMeanVariance float64 = .08
 
   img := Snap(scene_4, cam_func, size_u, size_v, depth, minp, maxp, maxMeanVariance, .01, 1000000)
 

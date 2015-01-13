@@ -51,7 +51,7 @@ func SurfaceNormal(s Surface, x []float64) []float64 {
   } else {
     norm = math.Sqrt(norm)
     for i := 0; i < len(x); i ++ {
-      grad[i] /= norm
+      grad[i] = -grad[i] / norm
     }
   }
 

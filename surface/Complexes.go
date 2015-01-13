@@ -80,7 +80,7 @@ func NewParallelpipedByCornerAndEdges(P []float64, V [][]float64) Surface {
     for j := 0; j < dim; j ++ {
       c[j] = make([]float64, j + 1)
       for k := 0; k <= j; k ++ {
-        if j == k && j != i {
+        if j == k && j == i {
           c[j][k] = -1
         } else {
           c[j][k] = 0

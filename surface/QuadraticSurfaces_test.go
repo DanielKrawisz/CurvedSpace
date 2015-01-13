@@ -147,7 +147,8 @@ func TestSphereIntersection(t *testing.T) {
 
       //Generate some valid parameters for intersection lines. 
       for {
-        p2 = []float64{test.RandFloat(point[0] - r, point[0] + r), test.RandFloat(point[1] - r, point[1] + r)}
+        p2 = []float64{test.RandFloat(point[0] - r, point[0] + r),
+                 test.RandFloat(point[1] - r, point[1] + r)}
 
         if (p2[0] - point[0])*(p2[0] - point[0]) + (p2[1] - point[1])*(p2[1] - point[1]) < r*r {
           break;

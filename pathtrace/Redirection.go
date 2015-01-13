@@ -5,13 +5,15 @@ import "math"
 import "../distributions"
 import "../vector"
 
+//TODO turn these back into objects so that they can trace multiple rays.
+
 //Functions can be mocked out for testing purposes. 
 var randomUnitSphereSurfacePoint func() *[3]float64 = distributions.RandomUnitSphereSurfacePoint
 
 var randomNormallyDistributedVector func(int, float64, float64) []float64 =
   distributions.RandomNormallyDistributedVector
 
-//An object that redirects a ray
+//An function that redirects a ray
 type Redirection func([]float64, []float64) []float64 
 
 //The Lambertian reflectance algorithm used here works as follows.
@@ -107,7 +109,8 @@ func BasicRefraction(index float64) Redirection {
     //Find the dot product of the normal with the incoming ray.
     d := vector.Dot(normal, direction)
 
-    d = (index - 1) * d / index
+    //d = (index - 1) * d / index
+    d *= index / (index - 1)
     //Mirror the ray in the direction of the normal. 
     reflect := make([]float64, len(normal))
     for l := 0; l < len(normal); l ++ {

@@ -13,9 +13,10 @@ func camCoordinates(i, j, pix_u, pix_v int, fov_u, fov_v float64) (float64, floa
     2 * fov_v * (float64(j - pix_v/2) + rand.Float64() - .5) / float64(pix_v)
 }
 
-type RayFunc func(int, int) ([]float64, []float64)
+type GenerateRay func(int, int) ([]float64, []float64)
 
-func FlatCamera(pos []float64, mtrx [][]float64, pix_u, pix_v int, fov_u, fov_v float64) RayFunc {
+func FlatCamera(pos []float64, mtrx [][]float64, pix_u, pix_v int, fov_u, fov_v float64) GenerateRay {
+  if pos == nil || mtrx == nil { return nil }
   return func(i, j int) ([]float64, []float64) {
     ray_pos, ray_dir := make([]float64, len(pos)), make([]float64, len(pos))
     var ou, ov float64 = camCoordinates(i, j, pix_u, pix_v, fov_u, fov_v)
@@ -27,7 +28,9 @@ func FlatCamera(pos []float64, mtrx [][]float64, pix_u, pix_v int, fov_u, fov_v 
   }
 }
 
-func CylindricalCamera(pos []float64, mtrx [][]float64, pix_u, pix_v int, fov_u, fov_v float64) RayFunc {
+func CylindricalCamera(pos []float64, mtrx [][]float64,
+  pix_u, pix_v int, fov_u, fov_v float64) GenerateRay {
+  if pos == nil || mtrx == nil { return nil }
   return func(i, j int) ([]float64, []float64) {
     ray_pos, ray_dir := make([]float64, len(pos)), make([]float64, len(pos))
     var ou, ov float64 = camCoordinates(i, j, pix_u, pix_v, fov_u, fov_v)
@@ -39,7 +42,9 @@ func CylindricalCamera(pos []float64, mtrx [][]float64, pix_u, pix_v int, fov_u,
   }
 }
 
-func PolarSphericalCamera(pos []float64, mtrx [][]float64, pix_u, pix_v int, fov_u, fov_v float64) RayFunc {
+func PolarSphericalCamera(pos []float64, mtrx [][]float64,
+  pix_u, pix_v int, fov_u, fov_v float64) GenerateRay {
+  if pos == nil || mtrx == nil { return nil }
   return func(i, j int) ([]float64, []float64) {
     ray_pos, ray_dir := make([]float64, len(pos)), make([]float64, len(pos))
     var ou, ov float64 = camCoordinates(i, j, pix_u, pix_v, fov_u, fov_v)
@@ -53,7 +58,9 @@ func PolarSphericalCamera(pos []float64, mtrx [][]float64, pix_u, pix_v int, fov
   }
 }
 
-func SphericalCamera(pos []float64, mtrx [][]float64, pix_u, pix_v int, fov_u, fov_v float64) RayFunc {
+func SphericalCamera(pos []float64, mtrx [][]float64, 
+  pix_u, pix_v int, fov_u, fov_v float64) GenerateRay {
+  if pos == nil || mtrx == nil { return nil }
   return func(i, j int) ([]float64, []float64) {
     ray_pos, ray_dir := make([]float64, len(pos)), make([]float64, len(pos))
     var ou, ov float64 = camCoordinates(i, j, pix_u, pix_v, fov_u, fov_v)

@@ -1,13 +1,11 @@
 package main
 
-import "os"
 import "fmt"
 import "image/png"
 import "./surface"
 import "./pathtrace"
 
 func test_scene_01() {
-  createOutputDirectory()
 
   ground := surface.NewPlaneByPointAndNormal([]float64{0, 0, 0}, []float64{0, 0, 1})
   small_sphere := surface.NewSphere([]float64{0, 0, 2}, 2)
@@ -23,23 +21,31 @@ func test_scene_01() {
   blue := []float64{0, .5, .8}
   //pink := []float64{1, .8, .6}
 
-  scenes := []*scene{
-    &scene{[]*object{
-      &object{ground, Lambertian(white, ground)}, 
-      &object{small_sphere, Glow(light)},
-      &object{big_sphere, Lambertian(blue, big_sphere)}}, background}, 
-    &scene{[]*object{
-      &object{ground, Lambertian(white, ground)}, 
-      &object{small_sphere, Glow(light)},
-      &object{big_box, Lambertian(blue, big_box)}}, background}, 
-    &scene{[]*object{
-      &object{ground, Lambertian(white, ground)}, 
-      &object{small_box, Glow(light)},
-      &object{big_sphere, Lambertian(blue, big_sphere)}}, background}, 
-    &scene{[]*object{
-      &object{ground, Lambertian(white, ground)}, 
-      &object{small_box, Glow(light)},
-      &object{big_box, Lambertian(blue, big_box)}}, background}}
+  scenes := []*pathtrace.Scene{
+    pathtrace.NewScene([]*pathtrace.ExtendedObject{
+      pathtrace.NewExtendedObject(ground,
+        pathtrace.NewLambertianReflector(ground, pathtrace.Absorb(white))), 
+      pathtrace.NewExtendedObject(small_sphere, pathtrace.NewGlowingObject(light)),
+      pathtrace.NewExtendedObject(big_sphere,
+        pathtrace.NewLambertianReflector(big_sphere, pathtrace.Absorb(blue)))}, background), 
+    pathtrace.NewScene([]*pathtrace.ExtendedObject{
+      pathtrace.NewExtendedObject(ground,
+        pathtrace.NewLambertianReflector(ground, pathtrace.Absorb(white))), 
+      pathtrace.NewExtendedObject(small_sphere, pathtrace.NewGlowingObject(light)),
+      pathtrace.NewExtendedObject(big_box,
+        pathtrace.NewLambertianReflector(big_box, pathtrace.Absorb(blue)))}, background), 
+    pathtrace.NewScene([]*pathtrace.ExtendedObject{
+      pathtrace.NewExtendedObject(ground,
+        pathtrace.NewLambertianReflector(ground, pathtrace.Absorb(white))), 
+      pathtrace.NewExtendedObject(small_box, pathtrace.NewGlowingObject(light)),
+      pathtrace.NewExtendedObject(big_sphere,
+        pathtrace.NewLambertianReflector(big_sphere, pathtrace.Absorb(blue)))}, background), 
+    pathtrace.NewScene([]*pathtrace.ExtendedObject{
+      pathtrace.NewExtendedObject(ground,
+        pathtrace.NewLambertianReflector(ground, pathtrace.Absorb(white))), 
+      pathtrace.NewExtendedObject(small_box, pathtrace.NewGlowingObject(light)),
+      pathtrace.NewExtendedObject(big_box,
+        pathtrace.NewLambertianReflector(big_box, pathtrace.Absorb(blue)))}, background)}
 
   var pix_u, pix_v int = 640, 480
 
@@ -54,15 +60,11 @@ func test_scene_01() {
   var maxMeanVariance float64 = .01
 
   for i, sc := range scenes {
-    fmt.Println("Running path trace test scene 01 -", i)
-    //Check if the file can be written. 
-    file, err := os.Create(fmt.Sprint("./output/test_scene_01-", i,".png"))
-    if err != nil {
-      fmt.Println("Could not write file: ", err.Error())
-      continue 
-    }
 
-    img := Snap(sc, cam_func, pix_u, pix_v, depth, minp, maxp, maxMeanVariance, .05, 1000000)
+    file := getHandleToOutputFile(fmt.Sprint("test scene 01-", i), fmt.Sprint("test_scene_01-", i,".png"))
+    if file == nil {continue}
+
+    img := pathtrace.Snapshot(sc, cam_func, pix_u, pix_v, depth, minp, maxp, maxMeanVariance, .05, 1000000)
 
     png.Encode(file, img)
   }

@@ -10,9 +10,6 @@ package main
 //TODO: update the symmetric tensor contraction functions to use the symmetric permutation loop. 
 //TODO: complete tests for basic surfaces. 
 //TODO:   complete intersection tests for higher polynomials.
-//TODO: work on materials. Materials should have glow, transmissive, and reflective components.
-//      Ultimately, each should be able to send out its own light rays. 
-//TODO:   need to make scene object first.
 //TODO: allow for a refractive index that varies over space and color. 
 //TODO: create polyhedra.
 //TODO: add a glow mode which randomly assigns some pastel color to each object so as to generate
@@ -39,18 +36,18 @@ import (
 )
 
 func main() {
-  //pathtrace_activity_01()
-  //pathtrace_activity_02(true)
-  //test_scene_01()
+  pathtrace_activity_01()
+  pathtrace_activity_02()
   pathtrace_activity_03()
-  //pathtrace_activity_04()
+  pathtrace_activity_04()
+  test_scene_01()
 }
 
-func createOutputDirectory() {
-  src, err := os.Stat("output")
+func createOutputDirectory(output string) {
+  src, err := os.Stat(output)
   if err != nil {
     if os.IsNotExist(err) {
-      os.Mkdir("output", 0777)
+      os.Mkdir(output, 0777)
       return 
     } else {
       panic(err)
@@ -61,6 +58,27 @@ func createOutputDirectory() {
     fmt.Println("Source is not a directory")
     os.Exit(1)
   }
+}
+
+func getHandleToOutputFile(activity, filename string) *os.File {
+  createOutputDirectory("output")
+  //Delete file if it exists.
+  fullname := fmt.Sprint("./output/", filename)
+  fmt.Println("Running path trace", activity)
+  if _, err := os.Stat(filename); err == nil {
+    err := os.Remove(fullname)
+    if err != nil {
+      fmt.Println("Could not delete existing file: ", err.Error())
+      return nil
+    }
+  }
+  //Check if the file can be written. 
+  file, err := os.Create(fullname)
+  if err != nil {
+    fmt.Println("Could not write file: ", err.Error())
+    return nil
+  }
+  return file
 }
 
 //The purpose of the following demos is not only to show what the

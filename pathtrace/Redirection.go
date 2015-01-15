@@ -121,4 +121,22 @@ func BasicRefraction(index float64) Redirection {
   }
 }
 
+//Scatters a ray in a random direction.
+func ScatterRedirector(degree float64) Redirection {
+  //Independent of the normal vector given it--this could even be nil! 
+  return func (direction, normal []float64) []float64 {
+
+    //Normalize the outgoing ray. 
+    vector.Normalize(direction)
+
+    //Add a random jostling. 
+    scatter := randomNormallyDistributedVector(len(normal), 0, degree)
+    for l := 0; l < len(normal); l ++ {
+      direction[l] += scatter[l]
+    }
+
+    return direction
+  }
+}
+
 //TODO Something like oren-nayer

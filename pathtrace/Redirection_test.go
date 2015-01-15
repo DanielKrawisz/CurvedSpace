@@ -6,7 +6,7 @@ import "../test"
 import "../distributions"
 import "../vector"
 
-var mat_err float64 = .00001
+var red_err float64 = .00001
 
 //Variables and functions used for mockingn the random distributions
 var sphereSurfacePoint [3]float64
@@ -76,14 +76,14 @@ func TestMirrorReflection(t *testing.T) {
   incoming := getRandomIncoming(norm)
 
   rf := MirrorReflection
-  outgoing := rf.Interact(incoming, norm)
+  outgoing := rf(incoming, norm)
   d := vector.Dot(incoming, norm)
   test_vector := make([]float64, len(norm))
   for i := 0; i < len(norm); i++ {
     test_vector[i] = incoming[i] - 2 * d * norm[i]
   }
 
-  if !test.VectorCloseEnough(test_vector, outgoing, mat_err) {
+  if !test.VectorCloseEnough(test_vector, outgoing, red_err) {
     t.Error("Mirror reflection error.",
       "incoming = ", incoming, "; outgoing = ", outgoing, "; norm = ", norm, " test_vector = ", test_vector)
   }
@@ -111,7 +111,7 @@ func TestMirrorReflection(t *testing.T) {
   outgoing_exp  := rf.Interact(incoming, norm)
   outgoing_test := sf.Interact(incoming, norm)
 
-  if test.VectorCloseEnough(vector.Minus(outgoing_test, outgoing_exp), normallyDistributedVector, mat_err) {
+  if test.VectorCloseEnough(vector.Minus(outgoing_test, outgoing_exp), normallyDistributedVector, red_err) {
     t.Error("Mirror reflection error.")
   }
 

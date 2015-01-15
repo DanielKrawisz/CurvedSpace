@@ -3,14 +3,91 @@ package vector
 import "testing"
 import "../test"
 
+var vec_err float64 = .000001
+
 func TestVectorOperations(t *testing.T) {
-  //TODO
+  V := []float64{7, 4, 4}
+  W := []float64{6, 6, 3}
+
+  if !test.CloseEnough(Dot(V, W), 78, vec_err) {
+    t.Error("vector error 1")
+  }
+  if !test.CloseEnough(Dot(V, V), 81, vec_err) {
+    t.Error("vector error 2")
+  }
+  if !test.CloseEnough(Length(V), 9, vec_err) {
+    t.Error("vector error 3")
+  }
+  if !test.CloseEnough(Length(W), 9, vec_err) {
+    t.Error("vector error 4")
+  }
+  if !test.VectorCloseEnough(Plus(V, W), []float64{13, 10, 7}, vec_err) {
+    t.Error("vector error 5")
+  }
+  if !test.VectorCloseEnough(Minus(V, W), []float64{1, -2, 1}, vec_err) {
+    t.Error("vector error 6")
+  }
+  case7 := LinearSum(2, 3, V, W)
+  if !test.VectorCloseEnough(case7, []float64{32, 26, 17}, vec_err) {
+    t.Error("vector error 7: ")
+  }
+  if !test.VectorCloseEnough(Times(-4, V), []float64{-28, -16, -16}, vec_err) {
+    t.Error("vector error 8: ")
+  }
+  if !test.VectorCloseEnough(Negative(V), []float64{28, 16, 16}, vec_err) {
+    t.Error("vector error 9: ")
+  }
+  case10 := Normalize(V)
+  if !test.VectorCloseEnough(case10, []float64{-0.77777777778, -0.44444444444, -0.44444444444}, vec_err) {
+    t.Error("vector error 10: got ", case10)
+  }
 }
 
 func TestOrthonormalize(t *testing.T) {
-  
+  //Some set trials.
+  trials :=
+    [][][][]float64{
+      [][][]float64{[][]float64{
+                      []float64{2, 0},
+                      []float64{0, -4}},
+                    [][]float64{
+                      []float64{1, 0},
+                      []float64{0, -1}}},
+      [][][]float64{[][]float64{
+                      []float64{1, 0},
+                      []float64{2, 3}},
+                    [][]float64{
+                      []float64{1, 0},
+                      []float64{0, 1}}},
+      [][][]float64{[][]float64{
+                      []float64{1, 0},
+                      []float64{2, 0},
+                      []float64{2, 1}},
+                    [][]float64{
+                      []float64{1, 0},
+                      []float64{0, 1},
+                      []float64{0, 0}}},
+      [][][]float64{[][]float64{
+                      []float64{1, 0, 0},
+                      []float64{1, 1, 0},
+                      []float64{2, 1, 0},
+                      []float64{1, 2, 0},
+                      []float64{1, 0, 1}},
+                    [][]float64{
+                      []float64{1, 0, 0},
+                      []float64{0, 1, 0},
+                      []float64{0, 0, 1},
+                      []float64{0, 0, 0},
+                      []float64{0, 0, 0}}}}
 
-  //five trials. 
+  for i, trial := range trials {
+    got := Orthonormalize(trial[0])
+    if !test.MatrixCloseEnough(got, trial[1], vec_err) {
+      t.Error("orthonormalize error trial ", i, ". expected ", trial[1], ", got ", got)
+    }
+  }
+
+  //five random trials. 
   dim := 4
   for i := 0; i < 5; i ++ {
     o := test.RandFloatMatrix(-5, 5, dim, dim)

@@ -96,9 +96,10 @@ func pathtrace_activity_02() {
 //A prototype which will eventually show off a variety of materials.
 func pathtrace_activity_03() {
 
-  var size_u, size_v int = 800, 600
+  var size_u, size_v int = 1600, 1200
 
-  pink := []float64{1.5, .6, 1.5}
+  glow_pink := []float64{1.5, .6, 1.5}
+  light_pink := []float64{.94, .75, .86}
   blue := []float64{.3, .7, 1}
   green := []float64{.2, .8, .3}
   orange := []float64{1, .6, .1}
@@ -109,7 +110,9 @@ func pathtrace_activity_03() {
     surface.NewSphere([]float64{0, 0, 26}, 14),
     surface.NewSphere([]float64{0, 0, 1}, 1),
     surface.NewSphere([]float64{2, 0, 1}, 1),
-    surface.NewSphere([]float64{-2, 0, 1}, 1),
+    surface.NewBounding(
+      surface.NewSphere([]float64{-2, 0, 1}, 1), 
+      surface.NewInsubstantialSurface(3, .001)), 
     surface.NewSphere([]float64{1, 1.73205, 1}, 1),
     surface.NewSphere([]float64{1, -1.73205, 1}, 1),
     surface.NewSphere([]float64{-1, 1.73205, 1}, 1),
@@ -120,30 +123,30 @@ func pathtrace_activity_03() {
     pathtrace.NewExtendedObject(objects[0],
       pathtrace.NewGlowingObject(light)), 
     pathtrace.NewExtendedObject(objects[1],
-      pathtrace.NewMirrorReflector(objects[1], pathtrace.GlowAbsorbAverage(pink, white, .5))), 
+      pathtrace.NewMirrorReflector(objects[1], pathtrace.GlowAbsorbAverage(glow_pink, white, .5))), 
     pathtrace.NewExtendedObject(objects[2], 
       pathtrace.NewShineyInteractor(objects[2], pathtrace.Absorb(blue), .1, .2)), 
     pathtrace.NewExtendedObject(objects[3],
-      pathtrace.NewLambertianReflector(objects[3], pathtrace.Absorb(green))), 
+      pathtrace.NewScatterTransmitter(pathtrace.GlowAbsorbAverage(white, light_pink, .2), 1.4)), 
     pathtrace.NewExtendedObject(objects[4], 
-      pathtrace.NewGlassInteractor(objects[4], pathtrace.Absorb(white), 1.6, 1, .5)), 
+      pathtrace.NewGlassInteractor(objects[4], pathtrace.Absorb(white), 1.6, .4, .8)), 
     pathtrace.NewExtendedObject(objects[5], 
-      pathtrace.NewLambertianReflector(objects[5], pathtrace.Absorb(orange))), 
+      pathtrace.NewShineyInteractor(objects[5], pathtrace.Absorb(orange), .2, .3)), 
     pathtrace.NewExtendedObject(objects[6], 
       pathtrace.NewShineyInteractor(objects[6], pathtrace.Absorb(green), .5, .4)), 
     pathtrace.NewExtendedObject(objects[7], 
-      pathtrace.NewLambertianReflector(objects[7], pathtrace.Absorb(pink))), 
+      pathtrace.NewLambertianReflector(objects[7], pathtrace.Absorb(green))), 
     pathtrace.NewExtendedObject(objects[8],
-      pathtrace.NewShineyInteractor(objects[8], pathtrace.Absorb(white), .2, .1))}, []float64{0, 0, 0})
+      pathtrace.NewShineyInteractor(objects[8], pathtrace.Absorb(white), .35, .25))}, []float64{0, 0, 0})
 
   cam_pos   := []float64{0, 3, 4}
   cam_look  := []float64{0, 0, 0}
   cam_up    := []float64{0, 0, 1}
   cam_right := []float64{-1, 0, 0}
   cam_func := pathtrace.FlatCamera(cam_pos,
-    pathtrace.CameraMatrix(cam_pos, cam_look, cam_up, cam_right), size_u, size_v, 1.33333, 1)
+    pathtrace.CameraMatrix(cam_pos, cam_look, cam_up, cam_right), size_u, size_v, 1.33333 * .85, .85)
 
-  var depth, minp, maxp int = 40, 60, 5000
+  var depth, minp, maxp int = 40, 100, 5000
   var maxMeanVariance float64 = .002
 
   file := getHandleToOutputFile("activity 03", "activity_03.png")

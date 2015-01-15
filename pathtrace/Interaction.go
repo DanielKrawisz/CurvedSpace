@@ -112,6 +112,23 @@ func NewSpecularReflector(surf surface.Surface, color ColorInteraction, scatter 
   return &redirectorInteractor{surf, color, SpecularReflection(scatter)}
 }
 
+type scatterInteractor struct {
+  color ColorInteraction
+  redirect Redirection
+}
+
+func (l *scatterInteractor) Interact(ray *LightRay) *LightRay {
+  ray.receptor, ray.emission, ray.redirected = l.color(ray.receptor, ray.emission, ray.redirected)
+  ray.direction = l.redirect(ray.direction, nil)
+  return ray
+}
+
+//May return nil.
+func NewScatterTransmitter(color ColorInteraction, degree float64) Interactor {
+  if color == nil {return nil}
+  return &scatterInteractor{color, ScatterRedirector(degree)}
+}
+
 type multipleInteractor struct {
   surf surface.Surface
   color ColorInteraction
@@ -198,7 +215,7 @@ func NewScene(objects []*ExtendedObject, background []float64) *Scene {
 func (scene *Scene) TracePath(pos, dir []float64, max_depth int, receptor_tolerance float64) []float64 {
   var last int = - 1
 
-  r := &LightRay{0, pos, dir, []float64{1, 1, 1}, []float64{0, 0, 0}, 1}
+  ray := &LightRay{0, pos, dir, []float64{1, 1, 1}, []float64{0, 0, 0}, 1}
 
   var u float64
   var s Interactor
@@ -206,14 +223,16 @@ func (scene *Scene) TracePath(pos, dir []float64, max_depth int, receptor_tolera
 
   //Follow the ray for max_depth bounces. 
   //TODO make each bounce a separate function call.
-  for r.depth = 0; r.depth < max_depth; r.depth ++ {
+  for ray.depth = 0; ray.depth < max_depth; ray.depth ++ {
     u = math.Inf(1)
     selected = -1
 
     //check every shape for intersection. 
     for l, object := range scene.objects {
-      if l != last {
-        intersection := object.surf.Intersection(r.position, r.direction)
+      if l != last { //Except not the last one, since the ray is right on the surface.
+        intersection := object.surf.Intersection(ray.position, ray.direction)
+
+        //An object can return several intersection parameters, so we have to check each one.
         for m := 0; m < len(intersection); m ++ {
           if intersection[m] < u && intersection[m] > 0 {
             u = intersection[m]
@@ -226,7 +245,7 @@ func (scene *Scene) TracePath(pos, dir []float64, max_depth int, receptor_tolera
     if selected == -1 { //The ray has diverged to infinity.
       last = -1
       for i := 0; i < 3; i ++ {
-        r.receptor[i] *= scene.background[i]
+        ray.receptor[i] *= scene.background[i]
       }
       break
     }
@@ -234,22 +253,16 @@ func (scene *Scene) TracePath(pos, dir []float64, max_depth int, receptor_tolera
     //The ray has interacted with something.
     s = scene.objects[selected].interactor
     last = selected
-    //Generate the new ray position and surface normal for the interaction.
-    for l := 0; l < 3; l ++ {
-      r.position[l] = r.position[l] + u * r.direction[l]
-    }
+    ray.Trace(u)
 
-    r = s.Interact(r)
+    //Interact with the object that the ray intersected first.
+    ray = s.Interact(ray)
 
     //check if we should bother continuing to bounce the ray.
-    if r.redirected <= receptor_tolerance {break}
+    if ray.redirected <= receptor_tolerance {break}
   }
 
-  for i := 0; i < 3; i ++ {
-    r.receptor[i] = r.receptor[i] * r.redirected + r.emission[i]
-  }
-
-  return r.receptor
+  return DeriveColor(ray.receptor, ray.emission, ray.redirected)
 }
 
 

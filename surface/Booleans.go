@@ -5,6 +5,7 @@ package surface
 
 import "math"
 import "strings"
+import "../vector"
 
 type Boolean interface {
   Surface
@@ -13,26 +14,31 @@ type Boolean interface {
 }
 
 //Addition objects include the points from both surfaces. 
-type addition struct {
+type boolean struct {
   a, b Surface 
 }
 
-func (s *addition) SurfaceA() Surface {
+func (s *boolean) SurfaceA() Surface {
   return s.a 
 }
 
-func (s *addition) SurfaceB() Surface {
+func (s *boolean) SurfaceB() Surface {
   return s.b 
-}
-
-func (s *addition) String() string {
-  return strings.Join([]string{"addition{", s.a.String(), ", ", s.b.String(), "}"}, "")
 }
 
 //Assumes that a and b have been checked to have the 
 //same dimension when the object was created. 
-func (s *addition) Dimension() int {
+func (s *boolean) Dimension() int {
   return s.a.Dimension()
+}
+
+//Addition objects include the points from both surfaces. 
+type addition struct {
+  boolean 
+}
+
+func (s *addition) String() string {
+  return strings.Join([]string{"addition{", s.a.String(), ", ", s.b.String(), "}"}, "")
 }
 
 func (s *addition) F(x []float64) float64 {
@@ -84,25 +90,11 @@ func (s *addition) Intersection(x, v []float64) []float64 {
 //Intersection objects include only the points that are
 //common to both surfaces. 
 type intersection struct {
-  a, b Surface 
-}
-
-func (s *intersection) SurfaceA() Surface {
-  return s.a 
-}
-
-func (s *intersection) SurfaceB() Surface {
-  return s.b 
+  boolean
 }
 
 func (s *intersection) String() string {
   return strings.Join([]string{"intersection{", s.a.String(), ", ", s.b.String(), "}"}, "")
-}
-
-//Assumes that a and b have been checked to have the 
-//same dimension when the object was created. 
-func (s *intersection) Dimension() int {
-  return s.a.Dimension()
 }
 
 func (s *intersection) F(x []float64) float64 {
@@ -182,27 +174,38 @@ func (s *bounding) Intersection(x, v []float64) []float64 {
   return s.intersection.findCommonIntersectionPoints(x, v, inta, intb)
 }
 
+//Open bounding objects are the same as bounding objects 
+//EXCEPT that only intersection points for object b are
+//returned. This can be used for creating a misty object
+//that is bounded by a surface but such that light rays
+//only interact with the interior, not with the surface. 
+type openBounding struct {
+  intersection
+}
+
+func (s *openBounding) Intersection(x, v []float64) []float64 {
+  intb := s.b.Intersection(x, v)
+
+  z := make([]float64, len(intb))
+  var zi int = 0
+
+  for i, u := range intb {
+    if SurfaceInterior(s.a, vector.LinearSum(1, u, x, v)) {
+      z[i] = u
+      zi ++
+    }
+  }
+
+  return z[0:zi]
+}
+
 //Subtraction objects allow one object to be cut out of another.
 type subtraction struct {
-  a, b Surface 
-}
-
-func (s *subtraction) SurfaceA() Surface {
-  return s.a 
-}
-
-func (s *subtraction) SurfaceB() Surface {
-  return s.b 
+  boolean
 }
 
 func (s *subtraction) String() string {
   return strings.Join([]string{"subtraction{", s.a.String(), ", ", s.b.String(), "}"}, "")
-}
-
-//Assumes that a and b have been checked to have the 
-//same dimension when the object was created. 
-func (s *subtraction) Dimension() int {
-  return s.a.Dimension()
 }
 
 func (s *subtraction) F(x []float64) float64 {
@@ -264,7 +267,7 @@ func NewAddition(a, b Surface) Surface {
   if a == nil || b == nil {return nil}
   if a.Dimension() != b.Dimension() {return nil}
 
-  return &addition{a, b}
+  return &addition{boolean{a, b}}
 }
 
 //Can return nil
@@ -272,7 +275,7 @@ func NewSubtraction(a, b Surface) Surface {
   if a == nil || b == nil {return nil}
   if a.Dimension() != b.Dimension() {return nil}
 
-  return &subtraction{a, b}
+  return &subtraction{boolean{a, b}}
 }
 
 //Can return nil
@@ -280,7 +283,7 @@ func NewIntersection(a, b Surface) Surface {
   if a == nil || b == nil {return nil}
   if a.Dimension() != b.Dimension() {return nil}
 
-  return &intersection{a, b}
+  return &intersection{boolean{a, b}}
 }
 
 //Can return nil
@@ -288,5 +291,13 @@ func NewBounding(a, b Surface) Surface {
   if a == nil || b == nil {return nil}
   if a.Dimension() != b.Dimension() {return nil}
 
-  return &intersection{a, b}
+  return &bounding{intersection{boolean{a, b}}}
+}
+
+//Can return nil
+func NewOpenBounding(a, b Surface) Surface {
+  if a == nil || b == nil {return nil}
+  if a.Dimension() != b.Dimension() {return nil}
+
+  return &openBounding{intersection{boolean{a, b}}}
 }

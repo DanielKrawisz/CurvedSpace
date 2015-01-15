@@ -19,6 +19,7 @@ func Snapshot(scene *Scene, cam_func GenerateRay, size_u, size_v,
   var pixels, iterations, iteration_count, total_pixels int = 0, 0, 0, size_u * size_v
   var percent, percent_monitor float64 = 0, 0
 
+  //Write to the screen information about the progress of the picture. 
   notify := func() {
     fmt.Println(percent, " complete. ", pixels, " pixels ", iterations, "iterations",
       float64(iterations) / float64(pixels), "iterations per pixel.")
@@ -55,6 +56,7 @@ func Snapshot(scene *Scene, cam_func GenerateRay, size_u, size_v,
 
         if iteration_count == minIterationNotification {notify()}
 
+        //Add the pixel to the variance monitor.
         for l := 0; l < 3; l ++ {
           pix_sum[l] += c[l]
           monitor[l].AddVariable(c[l])

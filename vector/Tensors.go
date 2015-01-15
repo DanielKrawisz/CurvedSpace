@@ -136,16 +136,18 @@ func MatrixMultiplySymmetric4Tensor(m [][]float64, v [][][][]float64) [][][][]fl
 }
 
 //Add one tensor to another. 
-func AddToSymmetricTensor(v, b [][]float64) {
+func AddToSymmetricTensor(v, b [][]float64) [][]float64 {
   dim := len(b)
   for i := 0; i < dim; i ++ {
     for j := 0; j <= i; j ++ {
       v[i][j] += b[i][j]
     }
   }
+
+  return v
 }
 
-func AddToSymmetric3Tensor(v, b [][][]float64) {
+func AddToSymmetric3Tensor(v, b [][][]float64) [][][]float64 {
   dim := len(b)
   for i := 0; i < dim; i ++ {
     for j := 0; j <= i; j ++ {
@@ -154,9 +156,11 @@ func AddToSymmetric3Tensor(v, b [][][]float64) {
       }
     }
   }
+
+  return v
 }
 
-func AddToSymmetric4Tensor(v, b [][][][]float64) {
+func AddToSymmetric4Tensor(v, b [][][][]float64) [][][][]float64 {
   dim := len(b)
   for i := 0; i < dim; i ++ {
     for j := 0; j <= i; j ++ {
@@ -167,6 +171,8 @@ func AddToSymmetric4Tensor(v, b [][][][]float64) {
       }
     }
   }
+
+  return v
 }
 
 //Some functions to multiply a tensor by a scalar. 

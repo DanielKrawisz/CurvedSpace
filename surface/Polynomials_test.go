@@ -600,7 +600,73 @@ func TestNewCubic(t *testing.T) {
     t.Error("New cubic surface error 18")
   }
 
-  //TODO test whether the surface comes out as expected. 
+  //Test whether the surface actually comes out as expected. 
+  dim := 1; 
+  var a float64
+  for i := 0; i < 20; i ++ { //TODO Normally should be 20 trials.
+    point := make([]float64, dim)
+    basis := make([][]float64, dim)
+    dbasis := make([][]float64, dim)
+    y := make([]float64, dim)
+    a = test.RandFloat(-5, 5)
+
+    for j := 0; j < dim; j ++ {
+      point[j] = test.RandFloat(-5, 5)
+      basis[j] = make([]float64, dim)
+      dbasis[j] = make([]float64, dim)
+      y[j] = test.RandFloat(-2, 2)
+
+      for k := 0; k < dim; k ++ {
+        basis[j][k] = test.RandFloat(-2, 2)
+        dbasis[j][k] = test.RandFloat(-2, 2)
+      }
+    }
+
+    ib := test.RandInt(0, dim)
+
+    vp := basis[0:ib]
+    vn := basis[ib:dim]
+
+    cubic := NewCubicSurface(point, dbasis, vp, vn, y, a)
+
+    for j := 0; j < 5; j ++ { //TODO Normally should be 5 trials.
+      test_point := make([]float64, dim)
+      tp := make([]float64, dim)
+      for k := 0; k < dim; k ++ {
+        test_point[k] = test.RandFloat(-2, 2)
+        tp[k] = test_point[k] - point[k]
+      }
+
+      f_test := cubic.F(test_point)
+
+      f_exp := a
+
+      for k := 0; k < dim; k ++ {
+        f_exp -= y[k] * tp[k]
+
+        for l := 0; l < dim; l ++ {
+          for m := 0; m < len(vp); m ++ {
+            f_exp -= tp[k] * vp[m][k] * vp[m][l] * tp[l]
+          }
+          for m := 0; m < len(vn); m ++ {
+            f_exp += tp[k] * vn[m][k] * vn[m][l] * tp[l]
+          }
+
+          for m := 0; m < dim; m ++ {
+            for n := 0; n < len(dbasis); n ++ {
+              f_exp -= dbasis[n][k] * dbasis[n][l] * dbasis[n][m] * tp[k] * tp[l] * tp[m]
+            }
+          }
+        }
+      }
+
+      if !test.CloseEnough(f_test, f_exp, .000001) {
+        t.Error("Cubic surface error for ", cubic, "; ib = ", ib, ", p = ",
+          point, ", vp = , ", vp, ", vn = ", vn, ", y = ", y, 
+          "; x = ", test_point, "; expected ", f_exp, " got ", f_test)
+      }
+    }
+  }
 }
 
 //The strategy of this test is to ensure that one point of the segment
@@ -871,7 +937,88 @@ func TestNewQuartic(t *testing.T) {
     t.Error("New quartic surface error 18")
   }
 
-  //TODO test whether the surface comes out as expected. 
+  //Test whether the surface actually comes out as expected. 
+  dim := 4; 
+  for i := 0; i < 20; i ++ {
+    point := make([]float64, dim)
+    basis := make([][]float64, dim)
+    dbasis := make([][]float64, dim)
+    ebasis := make([][]float64, dim)
+    y := make([]float64, dim)
+    a := test.RandFloat(-5, 5)
+
+    for j := 0; j < dim; j ++ {
+      point[j] = test.RandFloat(-5, 5)
+      basis[j] = make([]float64, dim)
+      dbasis[j] = make([]float64, dim)
+      ebasis[j] = make([]float64, dim)
+      y[j] = test.RandFloat(-2, 2)
+
+      for k := 0; k < dim; k ++ {
+        basis[j][k] = test.RandFloat(-2, 2)
+        dbasis[j][k] = test.RandFloat(-2, 2)
+        ebasis[j][k] = test.RandFloat(-2, 2)
+      }
+    }
+
+    ib := test.RandInt(0, dim)
+    ie := test.RandInt(0, dim)
+
+    vp := basis[0:ib]
+    vn := basis[ib:dim]
+
+    vqp := basis[0:ie]
+    vqn := basis[ie:dim]
+
+    quartic := NewQuarticSurface(point, vqp, vqn, dbasis, vp, vn, y, a)
+
+    for j := 0; j < 5; j ++ {
+      test_point := make([]float64, dim)
+      tp := make([]float64, dim)
+      for k := 0; k < dim; k ++ {
+        test_point[k] = test.RandFloat(-2, 2)
+        tp[k] = test_point[k] - point[k]
+      }
+
+      f_test := quartic.F(test_point)
+
+      f_exp := a
+
+      for k := 0; k < dim; k ++ {
+        f_exp += -y[k] * tp[k]
+
+        for l := 0; l < dim; l ++ {
+          for m := 0; m < len(vp); m ++ {
+            f_exp -= tp[k] * vp[m][k] * vp[m][l] * tp[l]
+          }
+          for m := 0; m < len(vn); m ++ {
+            f_exp += tp[k] * vn[m][k] * vn[m][l] * tp[l]
+          }
+
+          for m := 0; m < dim; m ++ {
+            for n := 0; n < len(dbasis); n ++ {
+              f_exp -= dbasis[n][k] * dbasis[n][l] * dbasis[n][m] * tp[k] * tp[l] * tp[m]
+            }
+
+            for n := 0; n < dim; n ++ {
+              for o := 0; o < len(vqp); o ++ {
+                f_exp -= vqp[o][k] * vqp[o][l] * vqp[o][m] * vqp[o][n] * tp[k] * tp[l] * tp[m] * tp[n]
+              }
+              for o := 0; o < len(vqn); o ++ {
+                f_exp += vqn[o][k] * vqn[o][l] * vqn[o][m] * vqn[o][n] * tp[k] * tp[l] * tp[m] * tp[n]
+              }
+            }
+          }
+        }
+      }
+
+      if !test.CloseEnough(f_test, f_exp, .000001) {
+        t.Error("Quartic surface error for ", quartic, "; ib = ", ib, ", p = ",
+          point, ", vp = , ", vp, ", vn = ", vn, ", y = ", y, 
+          "; x = ", test_point, "; expected ", f_exp, " got ", f_test)
+      }
+    }
+  }
 }
 
 //The strategy of this test is to ensure that one point of the segment

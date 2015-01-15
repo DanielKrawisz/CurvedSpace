@@ -35,6 +35,18 @@ func TestBooleans(t *testing.T) {
   if NewIntersection(a, nil) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
+  if NewBounding(nil, b) != nil {
+    t.Error("Non-nil value returned for invalid inputs")
+  }
+  if NewBounding(a, nil) != nil {
+    t.Error("Non-nil value returned for invalid inputs")
+  }
+  if NewOpenBounding(nil, b) != nil {
+    t.Error("Non-nil value returned for invalid inputs")
+  }
+  if NewOpenBounding(a, nil) != nil {
+    t.Error("Non-nil value returned for invalid inputs")
+  }
   if NewAddition(c, b) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
@@ -53,10 +65,24 @@ func TestBooleans(t *testing.T) {
   if NewIntersection(a, c) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
+  if NewBounding(c, b) != nil {
+    t.Error("Non-nil value returned for invalid inputs")
+  }
+  if NewBounding(a, c) != nil {
+    t.Error("Non-nil value returned for invalid inputs")
+  }
+  if NewOpenBounding(c, b) != nil {
+    t.Error("Non-nil value returned for invalid inputs")
+  }
+  if NewOpenBounding(a, c) != nil {
+    t.Error("Non-nil value returned for invalid inputs")
+  }
 
   add := NewAddition(a, b)
   sub := NewSubtraction(a, b)
   sec := NewIntersection(a, b)
+  bnd := NewBounding(a, b)
+  opb := NewOpenBounding(a, b)
 
   if add == nil {
     t.Error("nil value returned for valid inputs")
@@ -65,6 +91,12 @@ func TestBooleans(t *testing.T) {
     t.Error("nil value returned for valid inputs")
   }
   if sec == nil {
+    t.Error("nil value returned for valid inputs")
+  }
+  if bnd == nil {
+    t.Error("nil value returned for valid inputs")
+  }
+  if opb == nil {
     t.Error("nil value returned for valid inputs")
   }
 
@@ -77,15 +109,23 @@ func TestBooleans(t *testing.T) {
   if sec.Dimension() != 2 {
     t.Error("invalid dimension")
   }
+  if bnd.Dimension() != 2 {
+    t.Error("invalid dimension")
+  }
+  if opb.Dimension() != 2 {
+    t.Error("invalid dimension")
+  }
 
   //Tests for F
   test_points := [][]float64{[]float64{-2, 0}, []float64{0, 0}, []float64{2, 0}}
   interior_tests := [][]bool{
     []bool{true,  true,  true}, 
     []bool{true,  false, false},
+    []bool{false, true,  false},
+    []bool{false, true,  false},
     []bool{false, true,  false}}
 
-  for i, boolean := range []Surface{add, sub, sec} {
+  for i, boolean := range []Surface{add, sub, sec, bnd, opb} {
     for j, point := range test_points {
       if SurfaceInterior(boolean, point) != interior_tests[i][j] {
         t.Error("For boolean ", i, ", point ", point, " is on the wrong side.")
@@ -164,6 +204,48 @@ func TestBooleans(t *testing.T) {
   if !grad_test {
     t.Error("Grad test error for intersection and test point 2, ", grad_test_points[1])
   }
+
+  //bounding grad tests.
+  grad = bnd.Gradient(grad_test_points[0])
+  grad_expect = b.Gradient(grad_test_points[0])
+  grad_test = true
+  for i := 0; i < len(grad); i ++ {
+    grad_test = grad_test && (grad[i] == grad_expect[i])
+  }
+  if !grad_test {
+    t.Error("Grad test error for bounding and test point 1, ", grad_test_points[0])
+  }
+
+  grad = bnd.Gradient(grad_test_points[1])
+  grad_expect = a.Gradient(grad_test_points[1])
+  grad_test = true
+  for i := 0; i < len(grad); i ++ {
+    grad_test = grad_test && (grad[i] == grad_expect[i])
+  }
+  if !grad_test {
+    t.Error("Grad test error for bounding and test point 2, ", grad_test_points[1])
+  }
+
+  //open bounding grad tests.
+  grad = opb.Gradient(grad_test_points[0])
+  grad_expect = b.Gradient(grad_test_points[0])
+  grad_test = true
+  for i := 0; i < len(grad); i ++ {
+    grad_test = grad_test && (grad[i] == grad_expect[i])
+  }
+  if !grad_test {
+    t.Error("Grad test error for open bound and test point 1, ", grad_test_points[0])
+  }
+
+  grad = opb.Gradient(grad_test_points[1])
+  grad_expect = a.Gradient(grad_test_points[1])
+  grad_test = true
+  for i := 0; i < len(grad); i ++ {
+    grad_test = grad_test && (grad[i] == grad_expect[i])
+  }
+  if !grad_test {
+    t.Error("Grad test error for open bound and test point 2, ", grad_test_points[1])
+  }
 }
 
 func TestBooleanRayIntersections(t *testing.T) {
@@ -184,6 +266,8 @@ func TestBooleanRayIntersections(t *testing.T) {
   intAdd := make([][]float64, 4)
   intSub := make([][]float64, 4)
   intSec := make([][]float64, 4)
+  intBnd := make([][]float64, 4)
+  intOpb := make([][]float64, 4)
 
   for i := 0; i < 4; i ++ {
     int1[i] = s1.Intersection(rays[i][0], rays[i][1])
@@ -195,14 +279,20 @@ func TestBooleanRayIntersections(t *testing.T) {
   add := NewAddition(s1, s2)
   sub := NewSubtraction(s1, s2)
   sec := NewIntersection(s1, s2)
+  bnd := NewBounding(s1, s2)
+  opb := NewOpenBounding(s1, s2)
 
   for i := 0; i < 4; i ++ {
     intAdd[i] = add.Intersection(rays[i][0], rays[i][1])
     intSub[i] = sub.Intersection(rays[i][0], rays[i][1])
     intSec[i] = sec.Intersection(rays[i][0], rays[i][1])
+    intBnd[i] = bnd.Intersection(rays[i][0], rays[i][1])
+    intOpb[i] = opb.Intersection(rays[i][0], rays[i][1])
     sort.Float64s(intAdd[i])
     sort.Float64s(intSub[i])
     sort.Float64s(intSec[i])
+    sort.Float64s(intBnd[i])
+    sort.Float64s(intOpb[i])
   }
 
   expAdd := [][]float64{int1[0], int1[1], int2[2], int2[3]}
@@ -210,6 +300,8 @@ func TestBooleanRayIntersections(t *testing.T) {
     []float64{int1[1][0], int1[1][1], int2[1][0], int2[1][1]},
     []float64{}, []float64{}}
   expSec := [][]float64{[]float64{}, int2[1], int1[2], []float64{}}
+  expBnd := [][]float64{[]float64{}, int2[1], int1[2], []float64{}}
+  expOpb := [][]float64{[]float64{}, int2[1], []float64{}, []float64{}}
   sort.Float64s(expSub[1])
 
   for i := 0; i < 4; i ++ {
@@ -221,6 +313,12 @@ func TestBooleanRayIntersections(t *testing.T) {
     }
     if !test.VectorCloseEnough(intSec[i], expSec[i], b_err) {
       t.Error("boolean sec intersection error; case ", i, "; expected = ", expSec[i], "; got = ", intSec[i])
+    }
+    if !test.VectorCloseEnough(intBnd[i], expBnd[i], b_err) {
+      t.Error("boolean bnd intersection error; case ", i, "; expected = ", expBnd[i], "; got = ", intBnd[i])
+    }
+    if !test.VectorCloseEnough(intOpb[i], expOpb[i], b_err) {
+      t.Error("boolean opb intersection error; case ", i, "; expected = ", expOpb[i], "; got = ", intOpb[i])
     }
   }
 }

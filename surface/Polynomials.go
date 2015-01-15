@@ -164,7 +164,7 @@ func (s *cubicSurface) String() string {
 }
 
 func (s *cubicSurface) F(x []float64) float64 {
-  var f float64 
+  var f float64
 
   for i := 0; i < s.dimension; i ++ {
     f += s.b[i]*x[i]
@@ -590,6 +590,10 @@ func translateLinear(s *linearSurface, v []float64) Surface {
   return s
 }
 
+//The algebra is 
+//
+// c (x + p)^2 + b (x + p) + a = c x^2 + (b + 2 c p) x + (a + b p + c p^2)
+//
 func translateQuadratic(s *quadraticSurface, v []float64) Surface {
   p := vector.Negative(v)
   bp := vector.ContractSymmetricTensor(s.c, p)
@@ -598,21 +602,51 @@ func translateQuadratic(s *quadraticSurface, v []float64) Surface {
   return s
 }
 
-//TODO These next two functions are definitely incorrect.
+//The algebra is 
+//
+// d (x + p)^3 + c (x + p)^2 + b (x + p) + a
+//   = d x^3 + (c + 3 d p) x^2 + (b + 2 c p + 3 d p^2) x + (a + b p + c p^2 + d p^3)
+//
 func translateCubic(s *cubicSurface, v []float64) Surface {
-  p := vector.Negative(v)
-  s.a += vector.Dot(s.b, p)
-  s.b = vector.Plus(s.b, vector.ContractSymmetricTensor(s.c, p))
-  vector.AddToSymmetricTensor(s.c, vector.ContractSymmetric3Tensor(s.d, p))
+  p    := vector.Negative(v)
+  dp   := vector.ContractSymmetric3Tensor(s.d, p)
+  dpp  := vector.ContractSymmetricTensor(dp, p)
+  dppp := vector.Dot(dpp, p)
+  cp   := vector.ContractSymmetricTensor(s.c, p)
+  cpp  := vector.Dot(cp, p)
+  bp   := vector.Dot(s.b, p)
+
+  s.a += bp + cpp + dppp
+  s.b = vector.Plus(s.b, vector.Plus(vector.Times(2, cp), vector.Times(3, dpp)))
+  vector.AddToSymmetricTensor(s.c, vector.SymmetricTensorTimes(3, dp))
   return s
 }
 
+//The algebra is 
+//
+// e (x + p)^4 + d (x + p)^3 + c (x + p)^2 + b (x + p) + a
+//   = e x^4 + (d + 4 e p) x^3 + (c + 3 d p + 6 e p^2) x^2 + (b + 2 c p + 3 d p^2 + 4 e p^3) x 
+//     + (a + b p + c p^2 + d p^3 + e p^4)
+//
 func translateQuartic(s *quarticSurface, v[]float64) Surface {
-  p := vector.Negative(v)
-  s.a += vector.Dot(s.b, p)
-  s.b = vector.Plus(s.b, vector.ContractSymmetricTensor(s.c, p))
-  vector.AddToSymmetricTensor(s.c, vector.ContractSymmetric3Tensor(s.d, p))
-  vector.AddToSymmetric3Tensor(s.d, vector.ContractSymmetric4Tensor(s.e, p))
+  p     := vector.Negative(v)
+  ep    := vector.ContractSymmetric4Tensor(s.e, p)
+  epp   := vector.ContractSymmetric3Tensor(ep, p)
+  eppp  := vector.ContractSymmetricTensor(epp, p)
+  epppp := vector.Dot(eppp, p)
+  dp    := vector.ContractSymmetric3Tensor(s.d, p)
+  dpp   := vector.ContractSymmetricTensor(dp, p)
+  dppp  := vector.Dot(dpp, p)
+  cp    := vector.ContractSymmetricTensor(s.c, p)
+  cpp   := vector.Dot(cp, p)
+  bp    := vector.Dot(s.b, p)
+
+  s.a += bp + cpp + dppp + epppp
+  s.b = vector.Plus(s.b, vector.Plus(vector.Times(2, cp),
+    vector.Plus(vector.Times(3, dpp), vector.Times(4, eppp))))
+  vector.AddToSymmetricTensor(vector.AddToSymmetricTensor(s.c, vector.SymmetricTensorTimes(3, dp)), 
+    vector.SymmetricTensorTimes(6, epp))
+  vector.AddToSymmetric3Tensor(s.d, vector.SymmetricTensor3Times(4, ep))
   return s
 }
 
@@ -837,8 +871,8 @@ func NewQuarticSurface(p []float64, vqp, vqn, vd, vp, vn [][]float64, y[] float6
 
   //calculate c, d, and e.
   for i := 0; i < dim; i ++ {
-    d[i] = make([][]float64, i + 1)
     c[i] = make([]float64, i + 1)
+    d[i] = make([][]float64, i + 1)
     e[i] = make([][][]float64, i + 1)
 
     for j := 0; j <= i; j ++ {
@@ -854,10 +888,10 @@ func NewQuarticSurface(p []float64, vqp, vqn, vd, vp, vn [][]float64, y[] float6
 
         for l := 0; l <= k; l ++ {
           for m := 0; m < len(vqp); m ++ {
-            e[i][j][k][l] += vqp[m][i] * vqp[m][j] * vqp[m][k] * vqp[m][l]
+            e[i][j][k][l] -= vqp[m][i] * vqp[m][j] * vqp[m][k] * vqp[m][l]
           }
           for m := 0; m < len(vqn); m ++ {
-            e[i][j][k][l] -= vqn[m][i] * vqn[m][j] * vqn[m][k] * vqn[m][l]
+            e[i][j][k][l] += vqn[m][i] * vqn[m][j] * vqn[m][k] * vqn[m][l]
           }
         }
       }

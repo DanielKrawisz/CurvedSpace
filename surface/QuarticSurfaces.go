@@ -2,7 +2,15 @@ package surface
 
 import "../vector"
 
-//v should be a unit vector.
+//The torus corresponding to the equation 
+//
+//  (x.x + R^2 - r^2)^2 == 4 R^2 x.(I - v v).x
+//
+// v should be a unit vector and r < R. 
+// p is a translation vector that takes x -> x - p
+//
+// This torus is three-dimensional!!! 
+//
 //May return nil
 func NewTorus(p []float64, v []float64, R, r float64) Surface {
   if p == nil || v == nil {

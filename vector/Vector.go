@@ -14,9 +14,14 @@ func Dot(A, B []float64) (d float64) {
   return
 }
 
-func Times(a float64, v []float64) []float64 {
-  for i := 0; i < len(v); i ++ {
-    v[i] *= a
+func Length(V []float64) float64 {
+  return math.Sqrt(Dot(V, V))
+}
+
+func Normalize(v []float64) []float64 {
+  d := Length(v)
+  for j := 0; j < len(v); j ++ {
+    v[j] /= d
   }
   return v
 }
@@ -45,19 +50,31 @@ func Negative(v []float64) []float64 {
   return p
 }
 
-func Normalize(v []float64) []float64 {
-  d := Dot(v, v)
-  d = math.Sqrt(d)
-  for j := 0; j < len(v); j ++ {
-    v[j] /= d
+func Times(a float64, v []float64) []float64 {
+  for i := 0; i < len(v); i ++ {
+    v[i] *= a
   }
   return v
 }
 
+func LinearSum(a, b float64, A, B []float64) (C []float64) {
+  C = make([]float64, len(A))
+  for i := 0; i < len(A); i ++ {
+    C[i] = a * A[i] + b * B[i]
+  }
+  return
+}
+
 //Gram Schmidt process on a bunch of vectors. 
+//May not return an orthonormal set! If the set of vectors
+//is linearly dependent, some of them will end up as zero
+//vectors.
 func Orthonormalize(v [][]float64) [][]float64 {
   var d float64
-  for i := 0; i < len(v); i ++ {
+  var swap []float64
+  D := len(v)
+
+  for i := 0; i < D; i ++ {
     for j := 0; j < i; j ++ {
       d = Dot(v[i], v[j])
 
@@ -68,13 +85,22 @@ func Orthonormalize(v [][]float64) [][]float64 {
 
     d = Dot(v[i], v[i])
 
+    //Zero vectors. 
     if d == 0 {
-      for j := 0; j < len(v); j ++ {
+      for j := 0; j < len(v[i]); j ++ {
         v[i][j] = 0
       }
+      //move the zero vector to the back.
+      swap = v[i]
+      D --
+      for j := i; j < D; j ++ {
+        v[j] = v[j + 1]
+      }
+      v[D] = swap
+      i --
     } else {
       d = math.Sqrt(d)
-      for j := 0; j < len(v); j ++ {
+      for j := 0; j < len(v[i]); j ++ {
         v[i][j] /= d
       }
     }

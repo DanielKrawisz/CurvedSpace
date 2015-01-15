@@ -53,7 +53,7 @@ func TestNormal(t *testing.T) {
   x := []float64{0, 0}
 
   tests := [][]float64{[]float64{3, 4}, []float64{0, 0}}
-  expected := [][]float64{[]float64{3./5., 4./5.}, []float64{0, 0}}
+  expected := [][]float64{[]float64{-3./5., -4./5.}, []float64{0, 0}}
 
   for i, ttt := range tests {
     mock = &mockTestSurface{dim, 1, ttt, []float64{}}

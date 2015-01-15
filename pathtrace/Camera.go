@@ -237,7 +237,7 @@ func ToroidialCamera(pos []float64, R [][]float64, r [][][]float64, pix_u, pix_v
   for i := 0; i < 2; i ++ {
     if r[i] == nil || R[i] == nil { return nil }
     if len(R[i]) != 3 {return nil}
-    for j := 0; j < 2 ; ++ {
+    for j := 0; j < 2 ; j ++ {
       if r[i][j] == nil { return nil }
       if len(r[i][j]) != 3 {return nil}
     }
@@ -268,7 +268,7 @@ func InverseToroidialCamera(pos []float64, R [][]float64, r [][][]float64, pix_u
   for i := 0; i < 2; i ++ {
     if r[i] == nil || R[i] == nil { return nil }
     if len(R[i]) != 3 {return nil}
-    for j := 0; j < 2 ; ++ {
+    for j := 0; j < 2 ; j ++ {
       if r[i][j] == nil { return nil }
       if len(r[i][j]) != 3 {return nil}
     }
@@ -284,8 +284,8 @@ func InverseToroidialCamera(pos []float64, R [][]float64, r [][][]float64, pix_u
     Sov := math.Sin(ov)
 
     for k := 0; k < 3; k ++ {
-      ray_dir[k] = -Cou * (Cov * r[0][0][k] - Sov * r[0][1][k])
-        - Sou * (Cov * r[1][0][k] - Sov * r[1][1][k])
+      ray_dir[k] = -Cou * (Cov * r[0][0][k] - Sov * r[0][1][k]) -
+        Sou * (Cov * r[1][0][k] - Sov * r[1][1][k])
       ray_pos[k] = pos[k] + Cou * R[0][k] + Sou * R[1][k] - ray_dir[k]
     }
     return ray_pos, ray_dir

@@ -1,6 +1,6 @@
 package surface
 
-import "../vector"
+//import "../vector"
 
 //The torus corresponding to the equation 
 //
@@ -17,19 +17,34 @@ func NewTorus(p []float64, v []float64, R, r float64) Surface {
     return nil
   }
 
-  dim := len(p)
-  if dim != len(v) {
+  if 3 != len(v) || 3 != len(p) {
     return nil
   }
 
-  rr := r*r
-  RR := R*R
-  rR := 2*rr + 4*RR
+  rr  := r*r
+  RR  := R*R
+  rR  := 2 * (rr + RR)
+  RR4 := -RR * 4
+  var t float64 = -1./3.
 
-  return NewQuarticSurface(p, [][]float64{},
-    [][]float64{[]float64{1, 0, 0}, []float64{0, 1, 0}, []float64{0, 0, 1}}, [][]float64{},
-    [][]float64{[]float64{rR, 0, 0}, []float64{0, rR, 0}, []float64{0, 0, rR}}, 
-    [][]float64{[]float64{2*RR, 0, 0}, []float64{0, 2*RR, 0}, []float64{0, 0, 2*RR},
-      vector.Times(4*RR, v)}, 
-    []float64{0, 0, 0}, -rr*rr - RR*RR + 2 * rr * RR)
+  return translateQuartic(&quarticSurface{3,
+    [][][][]float64{
+      [][][]float64{
+        [][]float64{[]float64{-1}}},
+      [][][]float64{
+        [][]float64{[]float64{0}},
+        [][]float64{[]float64{t}, []float64{0, -1}}},
+      [][][]float64{
+        [][]float64{[]float64{0}},
+        [][]float64{[]float64{0}, []float64{0, 0}},
+        [][]float64{[]float64{t}, []float64{0, t}, []float64{0, 0, -1}}}},
+    [][][]float64{
+      [][]float64{[]float64{0}},
+      [][]float64{[]float64{0}, []float64{0, 0}},
+      [][]float64{[]float64{0}, []float64{0, 0}, []float64{0, 0, 0}}}, 
+    [][]float64{
+      []float64{rR + RR4 * v[0] * v[0]},
+      []float64{RR4 * v[1] * v[0], rR + RR4 * v[1] * v[1]},
+      []float64{RR4 * v[2] * v[0], RR4 * v[2] * v[1], rR + RR4 * v[2] * v[2]}},
+    []float64{0, 0, 0}, -rr*rr - RR*RR + 2 * rr * RR}, p)
 }

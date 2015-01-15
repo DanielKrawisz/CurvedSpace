@@ -250,31 +250,31 @@ func (s *cubicSurface) Intersection(x, v []float64) []float64 {
       cvv += 2 * s.c[i][j]*v[i]*v[j]
 
       for k := 0; k < j; k ++ {
-        dvvv += 6 * s.d[i][j][k]*v[i]*v[j]*v[k]
         dxxx += 6 * s.d[i][j][k]*x[i]*x[j]*x[k]
-        dvvx += s.d[i][j][k] * (2 * v[i]*v[j]*x[k] + 2 * v[i]*v[k]*x[j] + 2 * v[k]*v[j]*x[i])
         dvxx += s.d[i][j][k] * (2 * v[i]*x[j]*x[k] + 2 * v[j]*x[i]*x[k] + 2 * v[k]*x[j]*x[i])
+        dvvx += s.d[i][j][k] * (2 * v[i]*v[j]*x[k] + 2 * v[i]*v[k]*x[j] + 2 * v[k]*v[j]*x[i])
+        dvvv += 6 * s.d[i][j][k]*v[i]*v[j]*v[k]
       }
 
-      dvvv += 3 * s.d[i][j][j]*v[i]*v[j]*v[j]
       dxxx += 3 * s.d[i][j][j]*x[i]*x[j]*x[j]
-      dvvx += s.d[i][j][j] * (v[j]*v[j]*x[i] + 2 * v[i]*v[j]*x[j])
       dvxx += s.d[i][j][j] * (v[i]*x[j]*x[j] + 2 * v[j]*x[i]*x[j])
+      dvvx += s.d[i][j][j] * (v[j]*v[j]*x[i] + 2 * v[i]*v[j]*x[j])
+      dvvv += 3 * s.d[i][j][j]*v[i]*v[j]*v[j]
 
-      dvvv += 3 * s.d[i][i][j]*v[i]*v[i]*v[j]
       dxxx += 3 * s.d[i][i][j]*x[i]*x[i]*x[j]
+      dvxx += s.d[i][i][j] * (2 * v[i]*x[i]*x[j] + v[j]*x[i]*x[i])
       dvvx += s.d[i][i][j] * (2 * v[j]*v[i]*x[i] + v[i]*v[i]*x[j])
-      dvxx += s.d[i][i][j] * (v[i]*x[i]*x[j] + 2 * v[j]*x[i]*x[i])
+      dvvv += 3 * s.d[i][i][j]*v[i]*v[i]*v[j]
     } 
 
     cxx += s.c[i][i] * x[i] * x[i]
     cvx += s.c[i][i] * x[i] * v[i]
     cvv += s.c[i][i] * v[i] * v[i]
 
-    dvvv += s.d[i][i][i] * v[i] * v[i] * v[i]
     dxxx += s.d[i][i][i] * x[i] * x[i] * x[i]
-    dvvx += s.d[i][i][i] * v[i] * v[i] * x[i]
     dvxx += s.d[i][i][i] * v[i] * x[i] * x[i]
+    dvvx += s.d[i][i][i] * v[i] * v[i] * x[i]
+    dvvv += s.d[i][i][i] * v[i] * v[i] * v[i]
   }
 
   pa := s.a + cxx + bx + dxxx
@@ -440,56 +440,62 @@ func (s *quarticSurface) Intersection(x, v []float64) []float64 {
       cvv += 2 * s.c[i][j]*v[i]*v[j]
 
       for k := 0; k < j; k ++ {
-        dvvv += 6 * s.d[i][j][k]*v[i]*v[j]*v[k]
         dxxx += 6 * s.d[i][j][k]*x[i]*x[j]*x[k]
-        dvvx += s.d[i][j][k] * (2 * v[i]*v[j]*x[k] + 2 * v[i]*v[k]*x[j] + 2 * v[k]*v[j]*x[i])
         dvxx += s.d[i][j][k] * (2 * v[i]*x[j]*x[k] + 2 * v[j]*x[i]*x[k] + 2 * v[k]*x[j]*x[i])
+        dvvx += s.d[i][j][k] * (2 * v[i]*v[j]*x[k] + 2 * v[i]*v[k]*x[j] + 2 * v[k]*v[j]*x[i])
+        dvvv += 6 * s.d[i][j][k]*v[i]*v[j]*v[k]
 
         for l := 0; l < k; l ++ {
           evvvv += 24 * s.e[i][j][k][l] * v[i] * v[j] * v[k] * v[l]
-          evvvx += s.e[i][j][k][l] * (6 * v[i] * v[j] * v[k] * x[l] + 6 * v[i] * v[j] * v[l] * x[k] + 
-                     6 * v[i] * v[l] * v[k] * x[j] + 6 * v[l] * v[j] * v[k] * x[i])
+          evvvx += s.e[i][j][k][l] * (6 * v[i] * v[j] * v[k] * x[l] + 6 * v[i] * v[j] * x[k] * v[l] + 
+                     6 * v[i] * x[j] * v[k] * v[l] + 6 * x[i] * v[j] * v[k] * v[l])
           evvxx += s.e[i][j][k][l] * (4 * v[i] * v[j] * x[k] * x[l] + 4 * v[i] * v[k] * x[j] * x[l] + 
-                     4 * v[i] * v[l] * x[k] * x[j] + 4 * v[j] * v[k] * x[i] * x[l] + 
+                     4 * v[i] * v[l] * x[j] * x[k] + 4 * v[j] * v[k] * x[i] * x[l] + 
                      4 * v[j] * v[l] * x[i] * x[k] + 4 * v[k] * v[l] * x[i] * x[j])
-          evxxx += s.e[i][j][k][l] * (6 * v[i] * x[j] * x[k] * x[l] + 6 * v[i] * x[j] * x[k] * x[l] + 
-                     6 * v[i] * x[j] * x[k] * x[l] + 6 * v[i] * x[j] * x[k] * x[l])
+          evxxx += s.e[i][j][k][l] * (6 * v[i] * x[j] * x[k] * x[l] + 6 * x[i] * v[j] * x[k] * x[l] + 
+                     6 * x[i] * x[j] * v[k] * x[l] + 6 * x[i] * x[j] * x[k] * v[l])
           exxxx += 24 * s.e[i][j][k][l] * x[i] * x[j] * x[k] * x[l]
         }
 
         //TODO basically there is no way these formulas are all correct as written now. 
         //Testing still not done. 
         evvvv += 12 * s.e[i][j][k][k] * v[i] * v[j] * v[k] * v[k]
-        evvvx += s.e[i][j][k][k] * (6 * v[i] * v[j] * v[k] * x[k] + 3 * v[i] * v[k] * v[k] * x[j] + 3 * v[k] * v[j] * v[k] * x[i])
+        evvvx += s.e[i][j][k][k] * (6 * v[i] * v[j] * v[k] * x[k] +
+                   3 * v[i] * x[j] * v[k] * v[k] + 3 * x[i] * v[j] * v[k] * v[k])
         evvxx += s.e[i][j][k][k] * (2 * v[i] * v[j] * x[k] * x[k] + 2 * v[k] * v[k] * x[i] * x[j] +
                    4 * v[i] * v[k] * x[j] * x[k] + 4 * v[j] * v[k] * x[i] * x[k])
-        evxxx += s.e[i][j][k][k] * (3 * v[i] * x[j] * x[k] * x[k] + 3 * v[j] * x[i] * x[k] * x[k] + 6 * v[k] * x[j] * x[i] * x[k])
+        evxxx += s.e[i][j][k][k] * (3 * v[i] * x[j] * x[k] * x[k] +
+                   3 * x[i] * v[j] * x[k] * x[k] + 6 * x[i] * x[j] * v[k] * x[k])
         exxxx += 12 * s.e[i][j][k][k] * x[i] * x[j] * x[k] * x[k]
 
-        evvvv += 12 * s.e[i][j][j][k] * v[i] * v[j] * v[k] * v[k]
-        evvvx += s.e[i][j][j][k] * (6 * v[i] * v[j] * v[k] * x[j] + 3 * v[i] * v[j] * v[j] * x[k] + 3 * v[k] * v[j] * v[j] * x[i])
+        evvvv += 12 * s.e[i][j][j][k] * v[i] * v[j] * v[j] * v[k]
+        evvvx += s.e[i][j][j][k] * (6 * v[i] * v[j] * x[j] * v[k] +
+                 3 * v[i] * v[j] * v[j] * x[k] + 3 * x[i] * v[j] * v[j] * v[k])
         evvxx += s.e[i][j][j][k] * (4 * v[i] * v[j] * x[j] * x[k] + 4 * v[j] * v[k] * x[i] * x[j] +
                    2 * v[i] * v[k] * x[j] * x[j] + 2 * v[j] * v[j] * x[i] * x[k])
-        evxxx += s.e[i][j][j][k] * (3 * v[i] * x[j] * x[j] * x[k] + 3 * v[j] * x[i] * x[k] * x[k] + 6 * v[j] * x[j] * x[i] * x[k])
+        evxxx += s.e[i][j][j][k] * (3 * v[i] * x[j] * x[j] * x[k] +
+                   3 * x[i] * x[j] * x[j] * v[k] + 6 * x[i] * v[j] * x[j] * x[k])
         exxxx += 12 * s.e[i][j][j][k] * x[i] * x[j] * x[j] * x[k]
 
-        evvvv += 12 * s.e[i][j][j][k] * v[i] * v[j] * v[k] * v[k]
-        evvvx += s.e[i][j][j][k] * (6 * v[i] * v[j] * v[k] * x[i] + 3 * v[i] * v[i] * v[j] * x[k] + 3 * v[i] * v[j] * v[i] * x[k])
-        evvxx += s.e[i][j][j][k] * (4 * v[i] * v[j] * x[j] * x[k] + 4 * v[j] * v[k] * x[i] * x[j] +
-                   2 * v[i] * v[k] * x[j] * x[j] + 2 * v[j] * v[j] * x[i] * x[k])
-        evxxx += s.e[i][j][j][k] * (6 * v[i] * x[i] * x[j] * x[k] + 3 * v[j] * x[i] * x[i] * x[k] + 3 * v[k] * x[j] * x[i] * x[k])
-        exxxx += 12 * s.e[i][j][j][k] * x[i] * x[i] * x[j] * x[k]
+        evvvv += 12 * s.e[i][i][j][k] * v[i] * v[i] * v[j] * v[k]
+        evvvx += s.e[i][i][j][k] * (6 * x[i] * v[i] * v[j] * v[k] +
+                   3 * v[i] * v[i] * v[j] * x[k] + 3 * v[i] * v[i] * x[j] * v[k])
+        evvxx += s.e[i][i][j][k] * (4 * v[i] * v[j] * x[i] * x[k] + 4 * v[i] * v[k] * x[i] * x[j] +
+                   2 * v[j] * v[k] * x[i] * x[i] + 2 * v[i] * v[i] * x[j] * x[k])
+        evxxx += s.e[i][i][j][k] * (6 * v[i] * x[i] * x[j] * x[k] + 3 * x[i] * x[i] * v[j] * x[k] +
+                   3 * x[i] * x[i] * x[j] * v[k])
+        exxxx += 12 * s.e[i][i][j][k] * x[i] * x[i] * x[j] * x[k]
       }
 
-      dvvv += 3 * s.d[i][j][j]*v[i]*v[j]*v[j]
       dxxx += 3 * s.d[i][j][j]*x[i]*x[j]*x[j]
-      dvvx += s.d[i][j][j] * (v[j]*v[j]*x[i] + 2 * v[i]*v[j]*x[j])
       dvxx += s.d[i][j][j] * (v[i]*x[j]*x[j] + 2 * v[j]*x[i]*x[j])
+      dvvx += s.d[i][j][j] * (v[j]*v[j]*x[i] + 2 * v[i]*v[j]*x[j])
+      dvvv += 3 * s.d[i][j][j]*v[i]*v[j]*v[j]
 
-      dvvv += 3 * s.d[i][i][j]*v[i]*v[i]*v[j]
       dxxx += 3 * s.d[i][i][j]*x[i]*x[i]*x[j]
+      dvxx += s.d[i][i][j] * (2 * v[i]*x[i]*x[j] + v[j]*x[i]*x[i])
       dvvx += s.d[i][i][j] * (2 * v[j]*v[i]*x[i] + v[i]*v[i]*x[j])
-      dvxx += s.d[i][i][j] * (v[i]*x[i]*x[j] + 2 * v[j]*x[i]*x[i])
+      dvvv += 3 * s.d[i][i][j]*v[i]*v[i]*v[j]
 
       evvvv += 4 * s.e[i][j][j][j] * v[i] * v[j] * v[j] * v[j]
       evvvx += s.e[i][j][j][j] * (3 * v[i] * v[j] * v[j] * x[j] + v[j] * v[j] * v[j] * x[i])
@@ -497,11 +503,12 @@ func (s *quarticSurface) Intersection(x, v []float64) []float64 {
       evxxx += s.e[i][j][j][j] * (v[i] * x[j] * x[j] * x[j] + 3 * v[j] * x[i] * x[j] * x[j])
       exxxx += 4 * s.e[i][j][j][j] * x[i] * x[j] * x[j] * x[j]
 
-      evvvv += 6 * s.e[i][i][j][j] * v[i] * v[i] * v[i] * v[j]
+      evvvv += 6 * s.e[i][i][j][j] * v[i] * v[i] * v[j] * v[j]
       evvvx += s.e[i][i][j][j] * (3 * v[j] * v[j] * v[i] * x[i] + 3 * v[i] * v[i] * v[j] * x[j])
-      evvxx += s.e[i][i][j][j] * (v[i] * v[i] * x[j] * x[j] + 4 * v[i] * v[j] * x[j] * x[i] + v[j] * v[j] * x[i] * x[i])
+      evvxx += s.e[i][i][j][j] * (v[i] * v[i] * x[j] * x[j] +
+                 4 * v[i] * v[j] * x[j] * x[i] + v[j] * v[j] * x[i] * x[i])
       evxxx += s.e[i][i][j][j] * (3 * v[j] * x[j] * x[i] * x[i] + 3 * v[i] * x[i] * x[j] * x[j])
-      exxxx += 6 * s.e[i][i][j][j] * x[i] * x[i] * x[i] * x[j]
+      exxxx += 6 * s.e[i][i][j][j] * x[i] * x[i] * x[j] * x[j]
 
       evvvv += 4 * s.e[i][i][i][j] * v[i] * v[i] * v[i] * v[j]
       evvvx += s.e[i][i][i][j] * (3 * v[j] * v[i] * v[i] * x[i] + v[i] * v[i] * v[i] * x[j])

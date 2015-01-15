@@ -415,15 +415,16 @@ func TestNewQuadraticSurface(t *testing.T) {
 //being translated into a quadratic formula properly. 
 func TestQuadraticIntersection(t *testing.T) {
 
-  dim := 3
   for i := 0; i < 4; i ++ {
-    basis := [][]float64{[]float64{1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
+    basis := [][]float64{
+      []float64{1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
       []float64{test.RandFloat(-.25, .25), 1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
       []float64{test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), 1 + test.RandFloat(-.25, .25)}}
     point := []float64{test.RandFloat(-2, 2), test.RandFloat(-2, 2), test.RandFloat(-2, 2)}
+    b := []float64{test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)}
     a := test.RandFloat(8, 80)
 
-    quadratic := NewQuadraticSurface(point, basis, [][]float64{}, make([]float64, dim), a)
+    quadratic := NewQuadraticSurface(point, basis, [][]float64{}, b, a)
 
     for j := 0; j < 4; j ++ {
 
@@ -673,18 +674,44 @@ func TestNewCubic(t *testing.T) {
 //is inside and the other is outside the surface. There should always
 //be one intersection. 
 func TestCubicIntersection(t *testing.T) {
-  /*dim := 4
-  shapes := 4
-  points := 4
-  for i := 0; i < shapes; i ++ {
-    basis := [][]float64{[]float64{1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
+  dim := 3 
+  for i := 0; i < 4; i ++ { 
+    basisC := [][]float64{
+      []float64{1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
+      []float64{test.RandFloat(-.25, .25), 1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
+      []float64{test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), 1 + test.RandFloat(-.25, .25)}}
+    basisD := [][]float64{
+      []float64{1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
       []float64{test.RandFloat(-.25, .25), 1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
       []float64{test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), 1 + test.RandFloat(-.25, .25)}}
     point := []float64{test.RandFloat(-2, 2), test.RandFloat(-2, 2), test.RandFloat(-2, 2)}
     a := test.RandFloat(8, 80)
 
-    cubic := NewQuadraticSurfaceByCenterVectorList(point, basis, [][]float64{}, make([]float64, dim), a)*/
-  //TODO
+    cubic := NewCubicSurface(point, basisD, basisC, [][]float64{}, make([]float64, dim), a)
+
+    for j := 0; j < 4; j ++ { 
+
+      var p1, p2[]float64
+
+      n := 0
+      for {
+        p1 = []float64{test.RandFloat(-10, 10), test.RandFloat(-10, 10), test.RandFloat(-10, 10)}
+        n++
+        if !SurfaceInterior(cubic, p1) { break }
+        if n > 100 { return }
+      }
+
+      n = 0
+      for {
+        n++
+        p2 = []float64{test.RandFloat(point[0] - 1, point[0] + 1),
+          test.RandFloat(point[1] - 1, point[1] + 1), test.RandFloat(point[2] - 1, point[2] + 1)}
+        if SurfaceInterior(cubic, p2) { break }
+      }
+
+      intersectionTester(cubic, p1, p2, t)
+    }
+  }
 }
 
 func TestQuartic(t *testing.T) {
@@ -1025,6 +1052,48 @@ func TestNewQuartic(t *testing.T) {
 //is inside and the other is outside the surface. There should always
 //be one intersection. 
 func TestQuarticIntersection(t *testing.T) {
-  //TODO
+
+  dim := 3
+  for i := 0; i < 4; i ++ { 
+    basisC := [][]float64{
+      []float64{1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
+      []float64{test.RandFloat(-.25, .25), 1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
+      []float64{test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), 1 + test.RandFloat(-.25, .25)}}
+    basisD := [][]float64{
+      []float64{1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
+      []float64{test.RandFloat(-.25, .25), 1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
+      []float64{test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), 1 + test.RandFloat(-.25, .25)}}
+    basisE := [][]float64{
+      []float64{1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
+      []float64{test.RandFloat(-.25, .25), 1 + test.RandFloat(-.25, .25), test.RandFloat(-.25, .25)},
+      []float64{test.RandFloat(-.25, .25), test.RandFloat(-.25, .25), 1 + test.RandFloat(-.25, .25)}}
+    point := []float64{test.RandFloat(-2, 2), test.RandFloat(-2, 2), test.RandFloat(-2, 2)}
+    a := test.RandFloat(8, 80)
+
+    quartic := NewQuarticSurface(point, basisE, [][]float64{}, basisD, basisC, [][]float64{}, make([]float64, dim), a)
+
+    for j := 0; j < 4; j ++ { 
+
+      var p1, p2[]float64
+
+      n := 0
+      for {
+        p1 = []float64{test.RandFloat(-10, 10), test.RandFloat(-10, 10), test.RandFloat(-10, 10)}
+        n++
+        if !SurfaceInterior(quartic, p1) { break }
+        if n > 100 { return }
+      }
+
+      n = 0
+      for {
+        n++
+        p2 = []float64{test.RandFloat(point[0] - 1, point[0] + 1),
+          test.RandFloat(point[1] - 1, point[1] + 1), test.RandFloat(point[2] - 1, point[2] + 1)}
+        if SurfaceInterior(quartic, p2) { break }
+      }
+
+      intersectionTester(quartic, p1, p2, t)
+    }
+  }
 }
 

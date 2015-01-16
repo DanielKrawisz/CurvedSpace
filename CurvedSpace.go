@@ -36,11 +36,11 @@ import (
 )
 
 func main() {
-  //pathtrace_activity_01()
-  //pathtrace_activity_02()
+  pathtrace_activity_01()
+  pathtrace_activity_02()
   pathtrace_activity_03()
-  //pathtrace_activity_04()
-  //test_scene_01()
+  pathtrace_activity_04()
+  test_scene_01()
 }
 
 func createOutputDirectory(output string) {
@@ -80,11 +80,6 @@ func getHandleToOutputFile(activity, filename string) *os.File {
   }
   return file
 }
-
-//The purpose of the following demos is not only to show what the
-//program can do, but to prototype future features to get an idea
-//of how to design them. Thus, some of them show off things that
-//this cannot do in general yet. 
 
 //A simple demo of the differential equation solver 
 func diffeq_activity_01() {

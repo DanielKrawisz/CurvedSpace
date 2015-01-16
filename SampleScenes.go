@@ -4,7 +4,13 @@ import (
   "image/png"
   "./surface"
   "./pathtrace"
+  "./vector"
 )
+
+//The purpose of the following demos is not only to show what the
+//program can do, but to prototype future features to get an idea
+//of how to design them. Thus, some of them show off things that
+//this cannot do in general yet. 
 
 //A simple demo of the most basic form of path-tracing. There are four spheres, 
 //each with a different color, and they only emit light, but do not reflect it.
@@ -36,10 +42,10 @@ func pathtrace_activity_01() {
   cam_func := pathtrace.FlatCamera(cam_pos,
     pathtrace.CameraMatrix(cam_pos, cam_look, cam_up, cam_right), size_u, size_v, 1.33333, 1.)
 
+  img := pathtrace.Snapshot(scene_1, cam_func, size_u, size_v, 1, 1, 1, 1, 1, 100000)
+
   file := getHandleToOutputFile("activity 01", "activity_01.png")
   if file == nil {return}
-
-  img := pathtrace.Snapshot(scene_1, cam_func, size_u, size_v, 1, 1, 1, 1, 1, 100000)
 
   png.Encode(file, img)
 }
@@ -84,11 +90,11 @@ func pathtrace_activity_02() {
   //Using the new awy of calculating pixels, there should be almost no variance with each ray.
   var maxMeanVariance float64 = .00001
 
-  file := getHandleToOutputFile("activity 02", "activity_02.png")
-  if file == nil {return}
-
   img := pathtrace.Snapshot(scene_2, cam_func, size_u, size_v,
     depth, minp, maxp, maxMeanVariance, .01, 1000000)
+
+  file := getHandleToOutputFile("activity 02", "activity_02.png")
+  if file == nil {return}
 
   png.Encode(file, img)
 }
@@ -149,11 +155,11 @@ func pathtrace_activity_03() {
   var depth, minp, maxp int = 40, 100, 5000
   var maxMeanVariance float64 = .002
 
-  file := getHandleToOutputFile("activity 03", "activity_03.png")
-  if file == nil {return}
-
   img := pathtrace.Snapshot(scene_3, cam_func, size_u, size_v,
     depth, minp, maxp, maxMeanVariance, .01, 1000000)
+
+  file := getHandleToOutputFile("activity 03", "activity_03.png")
+  if file == nil {return}
 
   png.Encode(file, img)
 }
@@ -162,7 +168,7 @@ func pathtrace_activity_03() {
 func pathtrace_activity_04() {
 
   //Aspect ratio is (4/3)^3
-  var size_u, size_v int = 1536, 648
+  var size_u, size_v int = 1536, 648 // 1536, 648 // 768, 324 // 384, 162
 
   var outer_dim float64   = 30
   var room_width float64  = 18
@@ -201,9 +207,12 @@ func pathtrace_activity_04() {
           []float64{0, room_width - 1.8, 0},
           []float64{0, 0, 2}}))
 
+  torus := surface.NewTorus([]float64{9, 9, 6}, vector.Normalize([]float64{0.32, 1, 0.}), 4.5, 1.5)
+
   background  := []float64{0, 0, 0}
   white_light := []float64{4, 4, 4}
   white       := []float64{1, 1, 1}
+  blue        := []float64{.22, .56, .87}
 
   //shapes := []surface.Surface{light, room}
   scene_4 := pathtrace.NewScene(
@@ -211,24 +220,26 @@ func pathtrace_activity_04() {
       pathtrace.NewExtendedObject(light,
         pathtrace.NewGlowingObject(white_light)),
       pathtrace.NewExtendedObject(room,
-        pathtrace.NewLambertianReflector(room, pathtrace.Absorb(white)))},
+        pathtrace.NewLambertianReflector(room, pathtrace.Absorb(white))), 
+      pathtrace.NewExtendedObject(torus, 
+        pathtrace.NewShineyInteractor(torus, pathtrace.Absorb(blue), .1, .2))},
     background)
 
-  cam_pos   := []float64{2, 2, 6}
-  cam_look  := []float64{room_width, room_width, room_height}
+  cam_pos   := []float64{3, 3, 5}
+  cam_look  := []float64{room_width, room_width, room_height-2.5}
   cam_up    := []float64{0, 0, 1}
   cam_right := []float64{1, 0, 0}
   cam_func := pathtrace.CylindricalCamera(cam_pos,
-    pathtrace.CameraMatrix(cam_pos, cam_look, cam_up, cam_right), size_u, size_v, 2.37, 1)
+    pathtrace.CameraMatrix(cam_pos, cam_look, cam_up, cam_right), size_u, size_v, .7 * 2.37, .7 * 1)
 
   var depth, minp, maxp int = 10, 16, 5000
-  var maxMeanVariance float64 = .02
-
-  file := getHandleToOutputFile("activity 04", "activity_04.png")
-  if file == nil {return}
+  var maxMeanVariance float64 = .002
 
   img := pathtrace.Snapshot(scene_4, cam_func, size_u, size_v,
     depth, minp, maxp, maxMeanVariance, .01, 1000000)
+
+  file := getHandleToOutputFile("activity 04", "activity_04.png")
+  if file == nil {return}	
 
   png.Encode(file, img)
 }

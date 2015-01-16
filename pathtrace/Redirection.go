@@ -105,19 +105,30 @@ func SpecularReflection(scatter float64) Redirection {
 //This refraction does not take into account the way that refraction
 //changes with color. 
 func BasicRefraction(index float64) Redirection {
+  inv := 1/index
   return func(direction, normal []float64) []float64 {
     //Find the dot product of the normal with the incoming ray.
-    d := vector.Dot(normal, direction)
+    vector.Normalize(direction)
+    c := -vector.Dot(normal, direction)
 
-    //d = (index - 1) * d / index
-    d *= index / (index - 1)
-    //Mirror the ray in the direction of the normal. 
-    reflect := make([]float64, len(normal))
-    for l := 0; l < len(normal); l ++ {
-      reflect[l] = direction[l] - normal[l] * d
+    //Special cases for whether we are going in or coming out of the object.
+    var r, sign float64
+    if c > 0 {
+      r = inv
+      sign = -1
+    } else {
+      r = index
+      sign = 1
     }
 
-    return reflect
+    //This determines whether the ray is reflected or transmitted. 
+    rad := 1 - r * r * (1 - c * c)
+
+    if rad < 0 {
+      return MirrorReflection(direction, normal)
+    } else {
+      return vector.LinearSum(r, r * c + sign * math.Sqrt(rad), direction, normal)
+    }
   }
 }
 

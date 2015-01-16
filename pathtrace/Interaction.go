@@ -189,7 +189,7 @@ func NewGlassInteractor(surf surface.Surface, color ColorInteraction, index, a, 
     []Redirection{BasicRefraction(index), MirrorReflection})
 }
 
-//Something that interacts with a ray.
+//An object that exists in a scene. 
 type ExtendedObject struct {
   surf surface.Surface
   interactor Interactor
@@ -201,6 +201,8 @@ func NewExtendedObject(surf surface.Surface, interactor Interactor) *ExtendedObj
   return &ExtendedObject{surf, interactor}
 }
 
+//A set of objects of which a picture can be taken. 
+//TODO allow for more complex backgrounds than just single colors.
 type Scene struct {
   objects []*ExtendedObject
   background []float64
@@ -212,6 +214,7 @@ func NewScene(objects []*ExtendedObject, background []float64) *Scene {
   return &Scene{objects, background}
 }
 
+//Traces a light ray through a scene. 
 func (scene *Scene) TracePath(pos, dir []float64, max_depth int, receptor_tolerance float64) []float64 {
   var last int = - 1
 

@@ -43,7 +43,7 @@ func TestLambertianReflection(t *testing.T) {
   normal := make([]float64, dim)
   normal[0] = .5
     
-  //Should be an odd number to avoid the case
+  //Should be an odd number to avoid a divide by zero. 
   var pts int = 17
 
   for i := 0; i < pts; i ++ {
@@ -86,6 +86,27 @@ func TestMirrorReflection(t *testing.T) {
   if !test.VectorCloseEnough(test_vector, outgoing, red_err) {
     t.Error("Mirror reflection error.",
       "incoming = ", incoming, "; outgoing = ", outgoing, "; norm = ", norm, " test_vector = ", test_vector)
+  }
+}
+
+func TestBasicRefraction(t *testing.T) {
+  refract_s := BasicRefraction(2)
+  refract_q := BasicRefraction(.5)
+
+  v := []float64{0, 1}
+  n := []float64{0.70710678118654752440, -0.70710678118654752440}
+  vin_s := refract_s(v, n) //Refraction case from out to in.
+  vin_q := refract_q(v, n) //Reflection case.
+  vout  := refract_s(vin_s, vector.Negative(n)) //Refraction from in to out.
+
+  if !test.VectorCloseEnough([]float64{-0.41143782776614764763, 0.91143782776614764763}, vin_s, .00001) {
+    t.Error("refraction error 1")
+  }
+  if !test.VectorCloseEnough(v, vector.Normalize(vout), .00001) {
+    t.Error("refraction error 2 expected ", v, " got ", vout)
+  }
+  if !test.VectorCloseEnough([]float64{1, 0}, vin_q, .00001) {
+    t.Error("refraction error 3")
   }
 }
 

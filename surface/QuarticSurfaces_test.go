@@ -8,7 +8,12 @@ import "../vector"
 //Strategy: just pick a bunch of rays somewhat randomly and test that the
 //intersection points which are returned obey the torus equation. 
 func TestTorus(t *testing.T) {
-  //TODO Test failure cases.
+  if NewTorus(nil, []float64{0, 0, 1}, 3, 1) != nil { t.Error("torus error 1") }
+  if NewTorus([]float64{0, 0, 0}, nil, 3, 1) != nil { t.Error("torus error 2") }
+  if NewTorus([]float64{0, 0}, []float64{0, 0, 1}, 3, 1) != nil { t.Error("torus error 3") }
+  if NewTorus([]float64{0, 0, 0}, []float64{0, 0}, 3, 1) != nil { t.Error("torus error 4") }
+  if NewTorus([]float64{0, 0, 0, 0}, []float64{0, 0, 1}, 3, 1) != nil { t.Error("torus error 5") }
+  if NewTorus([]float64{0, 0, 0}, []float64{0, 0, 1, 0}, 3, 1) != nil { t.Error("torus error 6") }
 
   //TODO Only can do three dimensions until the unit sphere function
   //is generalized to more dimensions. 

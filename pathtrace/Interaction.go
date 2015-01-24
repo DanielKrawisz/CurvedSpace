@@ -3,27 +3,39 @@ package pathtrace
 import "math/rand"
 import "../surface"
 
-//This might be updated to be more of an interface or whatever. 
-type LightRay struct {
-  //The number of steps the ray has taken.
-  depth int
-  //The ray. 
-  position, direction []float64
-  //The wavelengths of light that this ray tracks.
-  receptor []float64
-  //The intensities of those wavelengths. 
-  color []float64
-  //As the ray bounces along, if it encounters glowing objects,
-  //these numbers keep track of how the final color should be
-  //adjusted to take these earlier interactions into account.
-  emission []float64
-  redirected float64 
+type ColorInteraction func(ray *LightRay) 
+
+//A function to make an object glow.
+func Glow(c []float64) ColorInteraction {
+  if c == nil {
+    return nil
+  } else {
+    return func(ray *LightRay) {
+      ray.Glow(c)
+    }
+  }
 }
 
-func (r *LightRay) Trace(u float64) {
-  for i := 0; i < 3; i ++ {
-    r.position[i] = r.position[i] + u * r.direction[i]
+//A function to make an object absorb light.
+func Absorb(c []float64) ColorInteraction {
+  if c == nil {
+    return nil
+  } else {
+    return func(ray *LightRay) {
+      ray.Absorb(c)
+    }
   }
+}
+
+//A function for both.
+func GlowAbsorbAverage(glow_color, transmit_color []float64, absorb float64) ColorInteraction {
+  if glow_color == nil || transmit_color == nil {
+    return nil
+  } else {
+    return func(ray *LightRay) {
+      ray.GlowAbsorbAverage(glow_color, transmit_color, absorb)
+    }
+  } 
 }
 
 //Something that interacts with a ray.
@@ -37,22 +49,23 @@ type Interactor interface {
 
 //An object that just glows.
 type glowEmitter struct {
-  glow ColorInteraction
+  glow []float64
 }
 
 func (g *glowEmitter) Interact(ray *LightRay) *LightRay {
-  ray.color, ray.emission, ray.redirected = g.glow(ray.color, ray.emission, ray.redirected)
+  ray.Glow(g.glow)
   return ray
 }
 
 func (g *glowEmitter) Trace(scene *Scene, ray *LightRay) []float64 {
-  return DeriveColor(g.glow(ray.color, ray.emission, ray.redirected))
+  ray.Glow(g.glow)
+  return ray.DeriveColor()
 }
 
 //May return nil.
 func NewGlowingObject(color []float64) Interactor {
   if color == nil { return nil }
-  return &glowEmitter{Glow(color)}
+  return &glowEmitter{color}
 }
 
 type lambertianReflector struct {
@@ -61,7 +74,7 @@ type lambertianReflector struct {
 }
 
 func (l *lambertianReflector) Interact(ray *LightRay) *LightRay {
-  ray.color, ray.emission, ray.redirected = l.color(ray.color, ray.emission, ray.redirected)
+  l.color(ray)
   ray.direction = LambertianReflection(ray.direction, surface.SurfaceNormal(l.surf, ray.position))
   return ray
 }
@@ -82,7 +95,7 @@ type mirrorReflector struct {
 }
 
 func (l *mirrorReflector) Interact(ray *LightRay) *LightRay {
-  ray.color, ray.emission, ray.redirected = l.color(ray.color, ray.emission, ray.redirected)
+  l.color(ray)
   ray.direction = MirrorReflection(ray.direction, surface.SurfaceNormal(l.surf, ray.position))
   return ray
 }
@@ -100,7 +113,7 @@ type redirectorInteractor struct {
 }
 
 func (l *redirectorInteractor) Interact(ray *LightRay) *LightRay {
-  ray.color, ray.emission, ray.redirected = l.color(ray.color, ray.emission, ray.redirected)
+  l.color(ray)
   ray.direction = l.redirect(ray.direction, surface.SurfaceNormal(l.surf, ray.position))
   return ray
 }
@@ -127,7 +140,7 @@ type scatterInteractor struct {
 }
 
 func (l *scatterInteractor) Interact(ray *LightRay) *LightRay {
-  ray.color, ray.emission, ray.redirected = l.color(ray.color, ray.emission, ray.redirected)
+  l.color(ray)
   ray.direction = l.redirect(ray.direction, nil)
   return ray
 }
@@ -149,7 +162,7 @@ type multipleInteractor struct {
 
 func (s *multipleInteractor) Interact(ray *LightRay) *LightRay {
   spin := rand.Float64()
-  ray.color, ray.emission, ray.redirected = s.color(ray.color, ray.emission, ray.redirected)
+  s.color(ray)
 
   for i, p := range s.probabilities {
     if spin < p {

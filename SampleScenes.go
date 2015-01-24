@@ -6,6 +6,7 @@ import (
   "./pathtrace"
   "./vector"
   "./color"
+  "./functions"
 )
 
 //The purpose of the following demos is not only to show what the
@@ -112,7 +113,7 @@ func pathtrace_activity_03() {
   blue := []float64{.3, .7, 1}
   green := []float64{.2, .8, .3}
   orange := []float64{1, .6, .1}
-  //yellow := []float64{.9, .83, .0}
+  yellow := []float64{.9, .83, .0}
   white := []float64{1, 1, 1}
   light := []float64{2, 2, 2}
 
@@ -129,24 +130,40 @@ func pathtrace_activity_03() {
     surface.NewSphere([]float64{-1, -1.73205, 1}, 1),
     surface.NewPlaneByPointAndNormal([]float64{0, 0, 0}, []float64{0, 0, 1})}
 
+  newEx   := pathtrace.NewExtendedObject
+  newGlow := pathtrace.NewGlowingObject
+
+  checkedOrange := func() pathtrace.InteractionFunction {
+    f := functions.Checks([]float64{0, 0, 0},
+      [][]float64{[]float64{.4, 0, 0}, []float64{0, .4, 0}, []float64{0, 0, .4}}) 
+    o := pathtrace.NewShineyInteractor(objects[5], pathtrace.Absorb(orange), .2, .3)
+    y := pathtrace.NewShineyInteractor(objects[5], pathtrace.Absorb(yellow), .15, .2)
+
+    return func(x []float64) pathtrace.Interactor {
+      if f(x) > 0 {
+        return o
+      } else {
+        return y
+      }
+    }
+  }
+
   scene_3 := pathtrace.NewScene([]*pathtrace.ExtendedObject{
-      pathtrace.NewExtendedObject(objects[0],
-        pathtrace.NewGlowingObject(light)), 
-      pathtrace.NewExtendedObject(objects[1],
+      newEx(objects[0], newGlow(light)), 
+      newEx(objects[1],
         pathtrace.NewMirrorReflector(objects[1], pathtrace.GlowAbsorbAverage(glow_pink, white, .5))), 
-      pathtrace.NewExtendedObject(objects[2], 
+      newEx(objects[2], 
         pathtrace.NewShineyInteractor(objects[2], pathtrace.Absorb(blue), .1, .2)), 
-      pathtrace.NewExtendedObject(objects[3],
+      newEx(objects[3],
         pathtrace.NewScatterTransmitter(pathtrace.GlowAbsorbAverage(white, light_pink, .2), 1.4)), 
-      pathtrace.NewExtendedObject(objects[4], 
+      newEx(objects[4], 
         pathtrace.NewGlassInteractor(objects[4], pathtrace.Absorb(white), 1.6, .4, .8)), 
-      pathtrace.NewExtendedObject(objects[5], 
-        pathtrace.NewShineyInteractor(objects[5], pathtrace.Absorb(orange), .2, .3)), 
-      pathtrace.NewExtendedObject(objects[6], 
+      pathtrace.NewTexturedExtendedObject(objects[5], checkedOrange()), 
+      newEx(objects[6], 
         pathtrace.NewShineyInteractor(objects[6], pathtrace.Absorb(green), .5, .4)), 
-      pathtrace.NewExtendedObject(objects[7], 
+      newEx(objects[7], 
         pathtrace.NewLambertianReflector(objects[7], pathtrace.Absorb(green))), 
-      pathtrace.NewExtendedObject(objects[8],
+      newEx(objects[8],
         pathtrace.NewShineyInteractor(objects[8], pathtrace.Absorb(white), .35, .25))}, 
     color.ConstantColorFunction(color.PresetColor([]float64{0,0,0})))
 
@@ -158,13 +175,13 @@ func pathtrace_activity_03() {
     pathtrace.CameraMatrix(cam_pos, cam_look, cam_up, cam_right), size_u, size_v, 1.33333 * .85, .85)
 
   var depth, minp, maxp int = 40, 100, 5000
-  var maxMeanVariance float64 = .002
+  var maxMeanVariance float64 = .0004
 
   img := pathtrace.Snapshot(scene_3, cam_func, size_u, size_v,
     depth, minp, maxp, maxMeanVariance, .01, 1000000)
 
   file := getHandleToOutputFile("activity 03", "activity_03.png")
-  if file == nil {return}
+  if file == nil { return }
 
   png.Encode(file, img)
   file.Close()

@@ -4,13 +4,21 @@ import "math"
 import "../surface"
 import "../color"
 
+type InteractionFunction func([]float64) Interactor
+
 //An object that exists in a scene. 
 type ExtendedObject struct {
   surf surface.Surface
-  interactor Interactor
+  interactor InteractionFunction
 }
 
 func NewExtendedObject(surf surface.Surface, interactor Interactor) *ExtendedObject {
+  if surf == nil || interactor == nil { return nil }
+
+  return &ExtendedObject{surf, func ([]float64) Interactor { return interactor }}
+}
+
+func NewTexturedExtendedObject(surf surface.Surface, interactor InteractionFunction) *ExtendedObject {
   if surf == nil || interactor == nil { return nil }
 
   return &ExtendedObject{surf, interactor}
@@ -70,9 +78,9 @@ func (scene *Scene) TracePath(pos, dir []float64, max_depth int, receptor_tolera
     }
 
     //The ray has interacted with something.
-    s = scene.objects[selected].interactor
-    last = selected
     ray.Trace(u)
+    s = scene.objects[selected].interactor(ray.position)
+    last = selected
 
     //Interact with the object that the ray intersected first.
     ray = s.Interact(ray)
@@ -81,7 +89,7 @@ func (scene *Scene) TracePath(pos, dir []float64, max_depth int, receptor_tolera
     if ray.redirected <= receptor_tolerance {break}
   }
 
-  return DeriveColor(ray.color, ray.emission, ray.redirected)
+  return ray.DeriveColor()
 }
 
 

@@ -5,6 +5,7 @@ import (
   "./surface"
   "./pathtrace"
   "./vector"
+  "./color"
 )
 
 //The purpose of the following demos is not only to show what the
@@ -25,7 +26,7 @@ func pathtrace_activity_01() {
     surface.NewSphere([]float64{-1./2., -0.866025, 0}, .866025),
     surface.NewSphere([]float64{0, 0, -0.8556}, .866025)}
   colors := [][]float64{[]float64{1, 1, 0}, []float64{1, 0, 1}, []float64{0, 1, 1}, []float64{1, 1, 1}}
-  background := []float64{0,0,0}
+  background := color.ConstantColorFunction(color.PresetColor([]float64{0,0,0}))
 
   //Create the objects and scene. 
   objects := make([]*pathtrace.ExtendedObject, len(spheres))
@@ -48,6 +49,7 @@ func pathtrace_activity_01() {
   if file == nil {return}
 
   png.Encode(file, img)
+  file.Close()
 }
 
 //in this demo, the spheres reflect light and produce a fractal.
@@ -67,7 +69,7 @@ func pathtrace_activity_02() {
     surface.NewSphere([]float64{-1./2., -0.866025, 0}, .866025),
     surface.NewSphere([]float64{0, 0, -0.8556}, .866025)}
   colors := [][]float64{yellow, magenta, cyan, white}
-  background := []float64{0,0,0}
+  background := color.ConstantColorFunction(color.PresetColor([]float64{0,0,0}))
 
   //Set up the scene object. 
   objects := make([]*pathtrace.ExtendedObject, len(spheres))
@@ -97,6 +99,7 @@ func pathtrace_activity_02() {
   if file == nil {return}
 
   png.Encode(file, img)
+  file.Close()
 }
 
 //A prototype which will eventually show off a variety of materials.
@@ -109,6 +112,7 @@ func pathtrace_activity_03() {
   blue := []float64{.3, .7, 1}
   green := []float64{.2, .8, .3}
   orange := []float64{1, .6, .1}
+  //yellow := []float64{.9, .83, .0}
   white := []float64{1, 1, 1}
   light := []float64{2, 2, 2}
 
@@ -126,24 +130,25 @@ func pathtrace_activity_03() {
     surface.NewPlaneByPointAndNormal([]float64{0, 0, 0}, []float64{0, 0, 1})}
 
   scene_3 := pathtrace.NewScene([]*pathtrace.ExtendedObject{
-    pathtrace.NewExtendedObject(objects[0],
-      pathtrace.NewGlowingObject(light)), 
-    pathtrace.NewExtendedObject(objects[1],
-      pathtrace.NewMirrorReflector(objects[1], pathtrace.GlowAbsorbAverage(glow_pink, white, .5))), 
-    pathtrace.NewExtendedObject(objects[2], 
-      pathtrace.NewShineyInteractor(objects[2], pathtrace.Absorb(blue), .1, .2)), 
-    pathtrace.NewExtendedObject(objects[3],
-      pathtrace.NewScatterTransmitter(pathtrace.GlowAbsorbAverage(white, light_pink, .2), 1.4)), 
-    pathtrace.NewExtendedObject(objects[4], 
-      pathtrace.NewGlassInteractor(objects[4], pathtrace.Absorb(white), 1.6, .4, .8)), 
-    pathtrace.NewExtendedObject(objects[5], 
-      pathtrace.NewShineyInteractor(objects[5], pathtrace.Absorb(orange), .2, .3)), 
-    pathtrace.NewExtendedObject(objects[6], 
-      pathtrace.NewShineyInteractor(objects[6], pathtrace.Absorb(green), .5, .4)), 
-    pathtrace.NewExtendedObject(objects[7], 
-      pathtrace.NewLambertianReflector(objects[7], pathtrace.Absorb(green))), 
-    pathtrace.NewExtendedObject(objects[8],
-      pathtrace.NewShineyInteractor(objects[8], pathtrace.Absorb(white), .35, .25))}, []float64{0, 0, 0})
+      pathtrace.NewExtendedObject(objects[0],
+        pathtrace.NewGlowingObject(light)), 
+      pathtrace.NewExtendedObject(objects[1],
+        pathtrace.NewMirrorReflector(objects[1], pathtrace.GlowAbsorbAverage(glow_pink, white, .5))), 
+      pathtrace.NewExtendedObject(objects[2], 
+        pathtrace.NewShineyInteractor(objects[2], pathtrace.Absorb(blue), .1, .2)), 
+      pathtrace.NewExtendedObject(objects[3],
+        pathtrace.NewScatterTransmitter(pathtrace.GlowAbsorbAverage(white, light_pink, .2), 1.4)), 
+      pathtrace.NewExtendedObject(objects[4], 
+        pathtrace.NewGlassInteractor(objects[4], pathtrace.Absorb(white), 1.6, .4, .8)), 
+      pathtrace.NewExtendedObject(objects[5], 
+        pathtrace.NewShineyInteractor(objects[5], pathtrace.Absorb(orange), .2, .3)), 
+      pathtrace.NewExtendedObject(objects[6], 
+        pathtrace.NewShineyInteractor(objects[6], pathtrace.Absorb(green), .5, .4)), 
+      pathtrace.NewExtendedObject(objects[7], 
+        pathtrace.NewLambertianReflector(objects[7], pathtrace.Absorb(green))), 
+      pathtrace.NewExtendedObject(objects[8],
+        pathtrace.NewShineyInteractor(objects[8], pathtrace.Absorb(white), .35, .25))}, 
+    color.ConstantColorFunction(color.PresetColor([]float64{0,0,0})))
 
   cam_pos   := []float64{0, 3, 4}
   cam_look  := []float64{0, 0, 0}
@@ -162,6 +167,7 @@ func pathtrace_activity_03() {
   if file == nil {return}
 
   png.Encode(file, img)
+  file.Close()
 }
 
 //A room in which different objects can be set. Something is wrong with this scene. 
@@ -209,8 +215,8 @@ func pathtrace_activity_04() {
 
   torus := surface.NewTorus([]float64{9, 9, 6}, vector.Normalize([]float64{0.32, 1, 0.}), 4.5, 1.5)
 
-  background  := []float64{0, 0, 0}
-  white_light := []float64{4, 4, 4}
+  background  := color.ConstantColorFunction(color.PresetColor([]float64{0,0,0}))
+  white_light := []float64{5.5, 5.5, 5.5}
   white       := []float64{1, 1, 1}
   blue        := []float64{.22, .56, .87}
 
@@ -232,7 +238,7 @@ func pathtrace_activity_04() {
   cam_func := pathtrace.CylindricalCamera(cam_pos,
     pathtrace.CameraMatrix(cam_pos, cam_look, cam_up, cam_right), size_u, size_v, .7 * 2.37, .7 * 1)
 
-  var depth, minp, maxp int = 10, 16, 5000
+  var depth, minp, maxp int = 10, 50, 5000
   var maxMeanVariance float64 = .002
 
   img := pathtrace.Snapshot(scene_4, cam_func, size_u, size_v,
@@ -242,4 +248,5 @@ func pathtrace_activity_04() {
   if file == nil {return}	
 
   png.Encode(file, img)
+  file.Close()
 }

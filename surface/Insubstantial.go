@@ -6,11 +6,15 @@ import "math/rand"
 import "math"
 import "../vector"
 
+var insubstantialRand func() float64 = rand.Float64
+
+var log2 float64 = math.Log(2)
+
 //The insubstantial "surface" is basically a mist that fills up all of space.
 //A ray randomly intersects with it over some distance. 
 type insubstantial struct {
   dimension int
-  ltau float64
+  tau float64
 }
 
 func (i *insubstantial) Dimension() int {
@@ -23,9 +27,9 @@ func (i *insubstantial) F(x []float64) float64 {
 }
 
 func (i *insubstantial) Intersection(x, v []float64) []float64 {
-  d := vector.Length(vector.Minus(v, x))
+  d := vector.Length(v)
 
-  return []float64{math.Log(1./rand.Float64()) / (i.ltau * d)}
+  return []float64{math.Log(1./insubstantialRand()) * i.tau / (log2 * d)}
 }
 
 func (i *insubstantial) Gradient(x []float64) []float64 {
@@ -33,9 +37,9 @@ func (i *insubstantial) Gradient(x []float64) []float64 {
 }
 
 func (i *insubstantial) String() string {
-  return strings.Join([]string{"insubstantial{", fmt.Sprint(i.ltau), "}"}, "")
+  return strings.Join([]string{"insubstantial{", fmt.Sprint(i.tau), "}"}, "")
 }
 
 func NewInsubstantialSurface(dim int, tau float64) Surface {
-  return &insubstantial{dim, math.Log(tau)}
+  return &insubstantial{dim, tau}
 }

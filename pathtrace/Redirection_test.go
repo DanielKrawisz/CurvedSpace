@@ -110,32 +110,27 @@ func TestBasicRefraction(t *testing.T) {
   }
 }
 
-//TODO
 //We test the specular reflection by comparing it to the mirror reflection.
-/*func TestSpecularReflection(t *testing.T) {
+func TestSpecularReflection(t *testing.T) {
   //Change function used to select random vector so that it can be mocked out. 
   randomNormallyDistributedVector = mockRandomNormallyDistributedVector
 
   var norm []float64 = distributions.RandomUnitSphereSurfacePoint()[:]
 
-  normallyDistributedVector = make([]float64, len(norm))
-
-  for i := 0; i < len(norm); i ++ {
-    normallyDistributedVector[i] = norm[i]
-  }
+  normallyDistributedVector = norm
 
   incoming := getRandomIncoming(norm)
 
-  rf := NewMirrorReflection() 
-  sf := NewSpecularReflection(1)
+  sf := SpecularReflection(1)
 
-  outgoing_exp  := rf.Interact(incoming, norm)
-  outgoing_test := sf.Interact(incoming, norm)
+  outgoing_exp  := MirrorReflection(incoming, norm)
+  outgoing_test := sf(incoming, norm)
 
-  if test.VectorCloseEnough(vector.Minus(outgoing_test, outgoing_exp), normallyDistributedVector, red_err) {
-    t.Error("Mirror reflection error.")
+  if !test.VectorCloseEnough(vector.Minus(outgoing_test, outgoing_exp), normallyDistributedVector, red_err) {
+    t.Error("specular reflection error: ", outgoing_test, outgoing_exp)
   }
 
+  /* TODO test the case where the random jostle pushes the ray below the surface. 
   for i := 0; i < len(norm); i ++ {
     normallyDistributedVector[i] = -2 * norm[i]
   }
@@ -146,12 +141,8 @@ func TestBasicRefraction(t *testing.T) {
 
   for i := 0; i < len(norm); i ++ {
     outgoing_test[i] -= norm[i]
-  }
+  }*/
 
   //Chage function back to how it was. 
   randomNormallyDistributedVector = distributions.RandomNormallyDistributedVector
 }
-
-func TestBasicRefractiveTransmission(t *testing.T) {
-  
-}*/

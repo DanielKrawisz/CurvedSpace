@@ -1,13 +1,18 @@
 package pathtrace
 
-import "math"
 import "math/rand"
 import "../surface"
 
 //This might be updated to be more of an interface or whatever. 
 type LightRay struct {
+  //The number of steps the ray has taken.
   depth int
-  position, direction, receptor []float64
+  //The ray. 
+  position, direction []float64
+  //The wavelengths of light that this ray tracks.
+  receptor []float64
+  //The intensities of those wavelengths. 
+  color []float64
   //As the ray bounces along, if it encounters glowing objects,
   //these numbers keep track of how the final color should be
   //adjusted to take these earlier interactions into account.
@@ -36,12 +41,12 @@ type glowEmitter struct {
 }
 
 func (g *glowEmitter) Interact(ray *LightRay) *LightRay {
-  ray.receptor, ray.emission, ray.redirected = g.glow(ray.receptor, ray.emission, ray.redirected)
+  ray.color, ray.emission, ray.redirected = g.glow(ray.color, ray.emission, ray.redirected)
   return ray
 }
 
 func (g *glowEmitter) Trace(scene *Scene, ray *LightRay) []float64 {
-  return DeriveColor(g.glow(ray.receptor, ray.emission, ray.redirected))
+  return DeriveColor(g.glow(ray.color, ray.emission, ray.redirected))
 }
 
 //May return nil.
@@ -56,13 +61,13 @@ type lambertianReflector struct {
 }
 
 func (l *lambertianReflector) Interact(ray *LightRay) *LightRay {
-  ray.receptor, ray.emission, ray.redirected = l.color(ray.receptor, ray.emission, ray.redirected)
+  ray.color, ray.emission, ray.redirected = l.color(ray.color, ray.emission, ray.redirected)
   ray.direction = LambertianReflection(ray.direction, surface.SurfaceNormal(l.surf, ray.position))
   return ray
 }
 
 /*func (l *lambertianReflector) Trace(scene *Scene, ray *LightRay, u float64) []float64 {
-  return DeriveColor(g.glow(ray.receptor, ray.emission, ray.redirected))
+  return DeriveColor(g.glow(ray.color, ray.emission, ray.redirected))
 }*/
 
 //May return nil.
@@ -77,7 +82,7 @@ type mirrorReflector struct {
 }
 
 func (l *mirrorReflector) Interact(ray *LightRay) *LightRay {
-  ray.receptor, ray.emission, ray.redirected = l.color(ray.receptor, ray.emission, ray.redirected)
+  ray.color, ray.emission, ray.redirected = l.color(ray.color, ray.emission, ray.redirected)
   ray.direction = MirrorReflection(ray.direction, surface.SurfaceNormal(l.surf, ray.position))
   return ray
 }
@@ -95,21 +100,25 @@ type redirectorInteractor struct {
 }
 
 func (l *redirectorInteractor) Interact(ray *LightRay) *LightRay {
-  ray.receptor, ray.emission, ray.redirected = l.color(ray.receptor, ray.emission, ray.redirected)
+  ray.color, ray.emission, ray.redirected = l.color(ray.color, ray.emission, ray.redirected)
   ray.direction = l.redirect(ray.direction, surface.SurfaceNormal(l.surf, ray.position))
   return ray
 }
 
+//May return nil
+func NewRedirectorInteractor(surf surface.Surface, color ColorInteraction, redirect Redirection) Interactor {
+  if surf == nil || color == nil || redirect == nil {return nil}
+  return &redirectorInteractor{surf, color, redirect}
+}
+
 //May return nil.
 func NewBasicRefractiveTransmitor(surf surface.Surface, color ColorInteraction, index float64) Interactor {
-  if surf == nil || color == nil {return nil}
-  return &redirectorInteractor{surf, color, BasicRefraction(index)}
+  return NewRedirectorInteractor(surf, color, BasicRefraction(index))
 }
 
 //May return nil.
 func NewSpecularReflector(surf surface.Surface, color ColorInteraction, scatter float64) Interactor {
-  if surf == nil || color == nil {return nil}
-  return &redirectorInteractor{surf, color, SpecularReflection(scatter)}
+  return NewRedirectorInteractor(surf, color, SpecularReflection(scatter))
 }
 
 type scatterInteractor struct {
@@ -118,7 +127,7 @@ type scatterInteractor struct {
 }
 
 func (l *scatterInteractor) Interact(ray *LightRay) *LightRay {
-  ray.receptor, ray.emission, ray.redirected = l.color(ray.receptor, ray.emission, ray.redirected)
+  ray.color, ray.emission, ray.redirected = l.color(ray.color, ray.emission, ray.redirected)
   ray.direction = l.redirect(ray.direction, nil)
   return ray
 }
@@ -140,12 +149,12 @@ type multipleInteractor struct {
 
 func (s *multipleInteractor) Interact(ray *LightRay) *LightRay {
   spin := rand.Float64()
-  ray.receptor, ray.emission, ray.redirected = s.color(ray.receptor, ray.emission, ray.redirected)
+  ray.color, ray.emission, ray.redirected = s.color(ray.color, ray.emission, ray.redirected)
 
   for i, p := range s.probabilities {
     if spin < p {
       for j := 0; j < 3; j ++ {
-        ray.receptor[j] *= s.factors[i]
+        ray.color[j] *= s.factors[i]
       }
       ray.direction = s.redirects[i](ray.direction, surface.SurfaceNormal(s.surf, ray.position))
       break 
@@ -158,7 +167,7 @@ func (s *multipleInteractor) Interact(ray *LightRay) *LightRay {
 }
 
 /*func (s *surfaceInteractor) Trace(scene *Scene, ray *LightRay, u float64) []float64 {
-  ray.receptor, ray.emission, ray.redirected = s.color(ray.receptor, ray.emission, ray.redirected)
+  ray.color, ray.emission, ray.redirected = s.color(ray.color, ray.emission, ray.redirected)
 
   
 }*/
@@ -188,84 +197,3 @@ func NewGlassInteractor(surf surface.Surface, color ColorInteraction, index, a, 
   return NewMultipleInteractor(surf, color,  []float64{a / ab, b / ab}, []float64{ab, ab}, 
     []Redirection{BasicRefraction(index), MirrorReflection})
 }
-
-//An object that exists in a scene. 
-type ExtendedObject struct {
-  surf surface.Surface
-  interactor Interactor
-}
-
-func NewExtendedObject(surf surface.Surface, interactor Interactor) *ExtendedObject {
-  if surf == nil || interactor == nil { return nil }
-
-  return &ExtendedObject{surf, interactor}
-}
-
-//A set of objects of which a picture can be taken. 
-//TODO allow for more complex backgrounds than just single colors.
-type Scene struct {
-  objects []*ExtendedObject
-  background []float64
-}
-
-func NewScene(objects []*ExtendedObject, background []float64) *Scene {
-  if objects == nil || background == nil { return nil }
-
-  return &Scene{objects, background}
-}
-
-//Traces a light ray through a scene. 
-func (scene *Scene) TracePath(pos, dir []float64, max_depth int, receptor_tolerance float64) []float64 {
-  var last int = - 1
-
-  ray := &LightRay{0, pos, dir, []float64{1, 1, 1}, []float64{0, 0, 0}, 1}
-
-  var u float64
-  var s Interactor
-  var selected int
-
-  //Follow the ray for max_depth bounces. 
-  //TODO make each bounce a separate function call.
-  for ray.depth = 0; ray.depth < max_depth; ray.depth ++ {
-    u = math.Inf(1)
-    selected = -1
-
-    //check every shape for intersection. 
-    for l, object := range scene.objects {
-      if l != last { //Except not the last one, since the ray is right on the surface.
-        intersection := object.surf.Intersection(ray.position, ray.direction)
-
-        //An object can return several intersection parameters, so we have to check each one.
-        for m := 0; m < len(intersection); m ++ {
-          if intersection[m] < u && intersection[m] > 0 {
-            u = intersection[m]
-            selected = l
-          }
-        }
-      }
-    }
-
-    if selected == -1 { //The ray has diverged to infinity.
-      last = -1
-      for i := 0; i < 3; i ++ {
-        ray.receptor[i] *= scene.background[i]
-      }
-      break
-    }
-
-    //The ray has interacted with something.
-    s = scene.objects[selected].interactor
-    last = selected
-    ray.Trace(u)
-
-    //Interact with the object that the ray intersected first.
-    ray = s.Interact(ray)
-
-    //check if we should bother continuing to bounce the ray.
-    if ray.redirected <= receptor_tolerance {break}
-  }
-
-  return DeriveColor(ray.receptor, ray.emission, ray.redirected)
-}
-
-

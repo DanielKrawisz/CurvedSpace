@@ -8,12 +8,15 @@ package main
 
 //Short-term goals. 
 //TODO: update the symmetric tensor contraction functions to use the symmetric permutation loop. 
-//TODO: complete tests for basic surfaces. 
-//TODO:   complete intersection tests for higher polynomials.
 //TODO: allow for a refractive index that varies over space and color. 
 //TODO: create polyhedra.
+//TODO: polygon objects.
 //TODO: add a glow mode which randomly assigns some pastel color to each object so as to generate
 //      quick test images of a scene. 
+//TODO  conformal transformations.
+//TODO  arbitrary precision arithmetic. 
+//TODO    Normed division algebras. 
+//TODO      fractals. 
 
 //Longer-term goals.
 //TODO enable multithreaded computation. Path-tracing can be paralellized! 

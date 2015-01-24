@@ -4,6 +4,7 @@ import "fmt"
 import "image/png"
 import "./surface"
 import "./pathtrace"
+import "./color"
 
 func test_scene_01() {
 
@@ -15,7 +16,7 @@ func test_scene_01() {
   big_box      := surface.NewParallelpipedByCornerAndEdges([]float64{-8, -3, 0},
                     [][]float64{[]float64{6, 0, 0}, []float64{0, 6, 0}, []float64{0, 0, 6}})
 
-  background := []float64{0, 0, 0}
+  background := color.ConstantColorFunction(color.PresetColor([]float64{0,0,0}))
   light := []float64{4, 4, 4}
   white := []float64{.8, .8, .8}
   blue := []float64{0, .5, .8}

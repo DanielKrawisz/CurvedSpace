@@ -32,7 +32,7 @@ package main
 import (
   "fmt"
   "os"
-  "bufio"
+  //"bufio"
   "./diffeq"
   "./geometry"
   //"./BlackHoles"
@@ -81,9 +81,9 @@ func getHandleToOutputFile(activity, filename string) *os.File {
     fmt.Println("Could not write file: ", err.Error())
     return nil
   }
-  fmt.Println("Press any key to write file.")
+  /*fmt.Println("Press any key to write file.")
   bio := bufio.NewReader(os.Stdin)
-  _, _, _ = bio.ReadLine()
+  _, _, _ = bio.ReadLine()*/
   return file
 }
 

@@ -1,8 +1,8 @@
 package pathtrace
 
 import "testing"
-import "../test"
-import "../vector"
+import "github.com/DanielKrawisz/CurvedSpace/test"
+import "github.com/DanielKrawisz/CurvedSpace/vector"
 
 //Just testing some particular conditions here. 
 

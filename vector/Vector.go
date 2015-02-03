@@ -1,7 +1,7 @@
 package vector
 
 import "math"
-import "../combinatorics"
+import "github.com/DanielKrawisz/CurvedSpace/combinatorics"
 
 //TODO tests. 
 //TODO There are some places around this program that should be using

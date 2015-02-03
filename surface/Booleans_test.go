@@ -2,7 +2,7 @@ package surface
 
 import "testing"
 import "sort"
-import "../test"
+import "github.com/DanielKrawisz/CurvedSpace/test"
 
 var b_err float64 = .00001
 

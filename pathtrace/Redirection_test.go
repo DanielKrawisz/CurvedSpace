@@ -2,9 +2,9 @@ package pathtrace
 
 import "testing"
 import "math"
-import "../test"
-import "../distributions"
-import "../vector"
+import "github.com/DanielKrawisz/CurvedSpace/test"
+import "github.com/DanielKrawisz/CurvedSpace/distributions"
+import "github.com/DanielKrawisz/CurvedSpace/vector"
 
 var red_err float64 = .00001
 

@@ -33,8 +33,8 @@ import (
   "fmt"
   "os"
   //"bufio"
-  "./diffeq"
-  "./geometry"
+  "github.com/DanielKrawisz/CurvedSpace/diffeq"
+  "github.com/DanielKrawisz/CurvedSpace/geometry"
   //"./BlackHoles"
 )
 

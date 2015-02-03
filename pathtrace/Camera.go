@@ -2,7 +2,7 @@ package pathtrace
 
 import "math"
 import "math/rand"
-import "../vector"
+import "github.com/DanielKrawisz/CurvedSpace/vector"
 
 //TODO allow the cameras to have a focal point. 
 

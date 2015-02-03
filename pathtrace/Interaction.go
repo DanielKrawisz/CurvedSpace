@@ -1,7 +1,7 @@
 package pathtrace
 
 import "math/rand"
-import "../surface"
+import "github.com/DanielKrawisz/CurvedSpace/surface"
 
 type ColorInteraction func(ray *LightRay) 
 

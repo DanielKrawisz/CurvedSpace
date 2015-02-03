@@ -2,8 +2,8 @@ package pathtrace
 
 import "math/rand"
 import "math"
-import "../distributions"
-import "../vector"
+import "github.com/DanielKrawisz/CurvedSpace/distributions"
+import "github.com/DanielKrawisz/CurvedSpace/vector"
 
 //TODO turn these back into objects so that they can trace multiple rays.
 

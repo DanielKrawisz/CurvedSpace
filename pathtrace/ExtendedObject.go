@@ -1,8 +1,8 @@
 package pathtrace
 
 import "math"
-import "../surface"
-import "../color"
+import "github.com/DanielKrawisz/CurvedSpace/surface"
+import "github.com/DanielKrawisz/CurvedSpace/color"
 
 type InteractionFunction func([]float64) Interactor
 

@@ -2,8 +2,8 @@ package surface
 
 import "testing"
 import "math"
-import "../test"
-import "../vector"
+import "github.com/DanielKrawisz/CurvedSpace/test"
+import "github.com/DanielKrawisz/CurvedSpace/vector"
 
 //For both these next two, I only have to test that
 //a given point is interior or exterior to the complex.

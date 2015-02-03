@@ -1,8 +1,8 @@
 package pathtrace
 
 import "testing"
-import "../vector"
-import "../test"
+import "github.com/DanielKrawisz/CurvedSpace/vector"
+import "github.com/DanielKrawisz/CurvedSpace/test"
 
 var mat_err float64 = .00001
 

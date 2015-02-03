@@ -3,8 +3,8 @@ package surface
 import "testing"
 import "math"
 //import "fmt"
-import "../test"
-import "../vector"
+import "github.com/DanielKrawisz/CurvedSpace/test"
+import "github.com/DanielKrawisz/CurvedSpace/vector"
 
 //The strategy for testing here is to create inefficient functions to 
 //perform the tensor algebra that can be used to check all the 

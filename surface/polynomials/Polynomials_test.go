@@ -2,7 +2,7 @@ package polynomials
 
 import "testing"
 import "sort"
-import "../../test"
+import "github.com/DanielKrawisz/CurvedSpace/test"
 
 //The error parameter.
 var e float64 = .000001

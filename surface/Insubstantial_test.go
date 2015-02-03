@@ -2,7 +2,7 @@ package surface
 
 import "testing"
 import "math/rand"
-import "../test"
+import "github.com/DanielKrawisz/CurvedSpace/test"
 
 var mockInsubstantialValue float64
 

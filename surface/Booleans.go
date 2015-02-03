@@ -5,7 +5,7 @@ package surface
 
 import "math"
 import "strings"
-import "../vector"
+import "github.com/DanielKrawisz/CurvedSpace/vector"
 
 type Boolean interface {
   Surface

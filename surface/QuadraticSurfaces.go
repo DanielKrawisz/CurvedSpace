@@ -1,6 +1,6 @@
 package surface
 
-import "./polynomials"
+import "github.com/DanielKrawisz/CurvedSpace/surface/polynomials"
 import "fmt"
 import "strings"
 import "math"

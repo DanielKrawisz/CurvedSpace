@@ -3,7 +3,7 @@ package pathtrace
 import "image"
 import "image/color"
 import "math"
-import "../distributions"
+import "github.com/DanielKrawisz/CurvedSpace/distributions"
 import "fmt"
 import "time"
 

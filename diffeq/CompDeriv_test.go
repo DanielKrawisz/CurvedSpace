@@ -1,7 +1,7 @@
 package diffeq
 
 import "testing"
-import "../test"
+import "github.com/DanielKrawisz/CurvedSpace/test"
 
 var err_cd float64 = .000001
 

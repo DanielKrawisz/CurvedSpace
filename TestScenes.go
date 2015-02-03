@@ -2,9 +2,9 @@ package main
 
 import "fmt"
 import "image/png"
-import "./surface"
-import "./pathtrace"
-import "./color"
+import "github.com/DanielKrawisz/CurvedSpace/surface"
+import "github.com/DanielKrawisz/CurvedSpace/pathtrace"
+import "github.com/DanielKrawisz/CurvedSpace/color"
 
 func test_scene_01() {
 

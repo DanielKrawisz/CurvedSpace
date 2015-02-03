@@ -3,7 +3,7 @@ package surface
 import "math"
 import "errors"
 //import "fmt"
-import "../vector"
+import "github.com/DanielKrawisz/CurvedSpace/vector"
 
 //A surface is here defined as an equation f(x_i) == 0, although
 //this is slightly different from what a surface normally is

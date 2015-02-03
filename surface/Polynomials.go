@@ -2,8 +2,8 @@ package surface
 
 import "strings"
 import "fmt"
-import "./polynomials"
-import "../vector"
+import "github.com/DanielKrawisz/CurvedSpace/surface/polynomials"
+import "github.com/DanielKrawisz/CurvedSpace/vector"
 
 //Polynomial surfaces for degrees 1 to 4.
 //Since the solutions to the polynomials are already given, 

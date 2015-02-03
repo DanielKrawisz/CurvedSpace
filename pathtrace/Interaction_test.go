@@ -1,8 +1,8 @@
 package pathtrace
 
 import "testing"
-import "../surface"
-import "../test"
+import "github.com/DanielKrawisz/CurvedSpace/surface"
+import "github.com/DanielKrawisz/CurvedSpace/test"
 
 func TestGlowInteractor(t *testing.T) {
   if NewGlowingObject(nil ) != nil { t.Error("glow error 1") }

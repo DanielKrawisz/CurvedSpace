@@ -1,6 +1,6 @@
 package functions
 
-import "../vector"
+import "github.com/DanielKrawisz/CurvedSpace/vector"
 
 //These two are actually the same type, but the spherical color function
 //is supposed to depend only on the direction of the vector given it.
@@ -11,7 +11,7 @@ type SphericalFunction func([]float64) float64
 
 func ConstantFunction(z float64) (func([]float64) float64) {
   return func([]float64) float64 {
-   return z
+    return z
   }
 }
 

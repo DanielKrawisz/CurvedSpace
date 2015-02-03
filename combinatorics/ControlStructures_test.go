@@ -1,7 +1,7 @@
 package combinatorics
 
 import "testing"
-import "../test"
+import "github.com/DanielKrawisz/CurvedSpace/test"
 
 //The mock test iterator just counts the right number of iterations have taken place.
 type mockTestIterator struct {

@@ -4,7 +4,7 @@ import "strings"
 import "fmt"
 import "math/rand"
 import "math"
-import "../vector"
+import "github.com/DanielKrawisz/CurvedSpace/vector"
 
 var insubstantialRand func() float64 = rand.Float64
 

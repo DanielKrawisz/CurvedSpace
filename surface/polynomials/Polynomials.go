@@ -27,6 +27,13 @@ func QuadraticFormula(a, b float64) []float64 {
   }
 }
 
+//constants for the cubic formula. 
+const (
+  half   = -1./2.
+  third  = 1./3.
+  sqrt32 = 0.86602540378443864676
+)
+
 //Solutions for the equation
 //
 //  x^3 + b x + a == 0
@@ -40,18 +47,19 @@ func QuadraticFormula(a, b float64) []float64 {
 //TODO: make some constants for the numbers in here. 
 func simplifiedCubicFormula(a, b float64) []float64 {
   desc := a * a / 4. + b * b * b / 27.
+  a2 := -a/2.
   //If the descriminant is negative, then there should be three real roots. 
   if desc < 0 {
     d := math.Sqrt(-desc)
-    p := cmplx.Pow(complex(-a/2., d), 1.0/3.0)
-    q := cmplx.Pow(complex(-a/2., -d), 1.0/3.0)
-    cw := complex(-1./2., -math.Sqrt(3)/2.)
-    ccw := complex(-1./2., math.Sqrt(3)/2.)
+    p := cmplx.Pow(complex(a2, d), third)
+    q := cmplx.Pow(complex(a2, -d), third)
+    cw := complex(half, -sqrt32)
+    ccw := complex(half, sqrt32)
     return []float64{real(p) + real(q), real(cw * p) + real(ccw * q), real(ccw * p) + real(cw * q)}
   } else { //If it is positive, then there will only be one real root. 
     d := math.Sqrt(desc)
-    r1 := -a/2. + d
-    r2 := -a/2. - d
+    r1 := a2 + d
+    r2 := a2 - d
     var s1, s2 float64
     if r1 < 0 {
       s1 = -1;
@@ -63,7 +71,7 @@ func simplifiedCubicFormula(a, b float64) []float64 {
     } else {
       s2 = 1;
     }
-    return []float64{s1*math.Pow(s1*r1, 1.0/3.0) + s2*math.Pow(s2*r2, 1.0/3.0)}
+    return []float64{s1*math.Pow(s1*r1, third) + s2*math.Pow(s2*r2, third)}
   }
 }
 
@@ -71,11 +79,12 @@ func simplifiedCubicFormula(a, b float64) []float64 {
 //
 //  x^3 + c x^2 + b x + a == 0
 //
-//TODO optimize the formula. 
 func CubicFormula(a, b, c float64) []float64 {
-  Z := simplifiedCubicFormula(a + 2*c*c*c/27. - (b*c)/3., b - c*c/3.)
+  cc := c * c
+  c3 := c/3.
+  Z := simplifiedCubicFormula(a + 2*c*cc/27. - (b*c)/3., b - cc/3.)
   for i := 0; i < len(Z); i++ {
-    Z[i] -= c/3.
+    Z[i] -= c3
   }
   return Z
 }
@@ -97,7 +106,8 @@ func simplifiedQuarticFormula(a, b, c float64) []float64 {
   // square when there are two real roots. 
   //It doesn't matter which root is used, but it appears always to be possible to choose
   // a root which makes Ad and Bd positive. No proof for that, but the tests always pass.
-  Zl := CubicFormula((c * c * c - a * c - b * b / 4.0)/2., 2. * c * c - a, (5./2.) * c)
+  cc := c * c
+  Zl := CubicFormula((cc * c - a * c - b * b / 4.0)/2., 2. * cc - a, (5./2.) * c)
   var Z, Bd float64
 
   for _, Z = range Zl{
@@ -122,26 +132,30 @@ func simplifiedQuarticFormula(a, b, c float64) []float64 {
     bs = 1
   } //Necessary to ensure that -b / 2 == A B. 
 
+  Bd4 := Bd / 4.
+
   //Ensure desc2 >= desc1. 
-  var desc1, desc2, s0 float64
+  var desc1, desc2, s float64
   if A >= 0 {
-    desc1 = Bd/4. - A - oo
-    desc2 = Bd/4. + A - oo
-    s0 = 1
+    desc1 = Bd4 - A - oo
+    desc2 = Bd4 + A - oo
+    s = 1
   } else {
-    desc1 = Bd/4. + A - oo
-    desc2 = Bd/4. - A - oo
-    s0 = -1
+    desc1 = Bd4 + A - oo
+    desc2 = Bd4 - A - oo
+    s = -1
   }
+
+  sbsB2 := s*bs*B/2.
 
   if desc2 >= 0 {
     if desc1 >= 0 { //Four real solutions.
       d1 := math.Sqrt(desc1)
       d2 := math.Sqrt(desc2)
-      return []float64{s0*bs*B/2. - d1, s0*bs*B/2. + d1, -s0*bs*B/2. + d2, -s0*bs*B/2. - d2}
+      return []float64{sbsB2 - d1, sbsB2 + d1, -sbsB2 + d2, -sbsB2 - d2}
     } else { //Two real solutions.
       d := math.Sqrt(desc2)
-      return []float64{-s0*bs*B/2. + d, -s0*bs*B/2. - d} 
+      return []float64{-sbsB2 + d, -sbsB2 - d} 
     }
   } else { //No real solutions.
     return []float64{}
@@ -155,9 +169,11 @@ func simplifiedQuarticFormula(a, b, c float64) []float64 {
 //Three possibilities: all solutions are complex, 
 //two solutions are real, or four solutions are real. 
 func QuarticFormula(a, b, c, d float64) []float64 {
-  Z := simplifiedQuarticFormula(a - b*d/4. + c*d*d/16. - 3*d*d*d*d/256., b - c*d/2. + d*d*d/8., c - 3*d*d/8)
+  dd := d * d
+  d4 := d/4.
+  Z := simplifiedQuarticFormula(a - b*d/4. + c*dd/16. - 3*dd*dd/256., b - c*d/2. + d*dd/8., c - 3*dd/8)
   for i := 0; i < len(Z); i++ {
-    Z[i] -= d/4
+    Z[i] -= d4
   }
   return Z
 }

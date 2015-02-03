@@ -1,9 +1,9 @@
 package surface
 
 import "testing"
-import "../distributions"
-import "../test"
-import "../vector"
+import "github.com/DanielKrawisz/CurvedSpace/distributions"
+import "github.com/DanielKrawisz/CurvedSpace/test"
+import "github.com/DanielKrawisz/CurvedSpace/vector"
 
 //Strategy: just pick a bunch of rays somewhat randomly and test that the
 //intersection points which are returned obey the torus equation. 

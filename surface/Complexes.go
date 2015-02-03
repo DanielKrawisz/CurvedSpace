@@ -1,6 +1,6 @@
 package surface
 
-import "../vector"
+import "github.com/DanielKrawisz/CurvedSpace/vector"
 
 //A simplex given as a list of points. This should
 //be an n * (n + 1) matrix. 

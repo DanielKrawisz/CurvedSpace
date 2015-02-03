@@ -2,11 +2,11 @@ package main
 
 import (
   "image/png"
-  "./surface"
-  "./pathtrace"
-  "./vector"
-  "./color"
-  "./functions"
+  "github.com/DanielKrawisz/CurvedSpace/surface"
+  "github.com/DanielKrawisz/CurvedSpace/pathtrace"
+  "github.com/DanielKrawisz/CurvedSpace/vector"
+  "github.com/DanielKrawisz/CurvedSpace/color"
+  "github.com/DanielKrawisz/CurvedSpace/functions"
 )
 
 //The purpose of the following demos is not only to show what the

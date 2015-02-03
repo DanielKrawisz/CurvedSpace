@@ -5,7 +5,7 @@ package diffeq
 import "testing"
 import "math"
 import "fmt"
-import "../test"
+import "github.com/DanielKrawisz/CurvedSpace/test"
 
 //NewNewtonianParticle should alwys return nil in this test.
 func TestNewNewtonianParticleFailureConditions(t *testing.T) {

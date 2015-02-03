@@ -1,7 +1,7 @@
 package surface
 
 import "testing"
-import "../test"
+import "github.com/DanielKrawisz/CurvedSpace/test"
 
 //This mock object is for testing the Interior and Normal functions.
 type mockTestSurface struct {

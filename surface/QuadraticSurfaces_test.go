@@ -1,7 +1,7 @@
 package surface
 
 import "testing"
-import "../test"
+import "github.com/DanielKrawisz/CurvedSpace/test"
 import "sort"
 import "math"
 

@@ -1,7 +1,7 @@
 package color
 
-import "../vector"
-import "../functions"
+import "github.com/DanielKrawisz/CurvedSpace/vector"
+import "github.com/DanielKrawisz/CurvedSpace/functions"
 
 //A color is actually a function over the wavelengths of light. 
 type Color func([]float64) []float64

@@ -44,7 +44,6 @@ const (
 //
 //If desc is negative, then there are three real roots
 //and if it is positive, there is one. 
-//TODO: make some constants for the numbers in here. 
 func simplifiedCubicFormula(a, b float64) []float64 {
   desc := a * a / 4. + b * b * b / 27.
   a2 := -a/2.
@@ -135,27 +134,20 @@ func simplifiedQuarticFormula(a, b, c float64) []float64 {
   Bd4 := Bd / 4.
 
   //Ensure desc2 >= desc1. 
-  var desc1, desc2, s float64
-  if A >= 0 {
-    desc1 = Bd4 - A - oo
-    desc2 = Bd4 + A - oo
-    s = 1
-  } else {
-    desc1 = Bd4 + A - oo
-    desc2 = Bd4 - A - oo
-    s = -1
-  }
+  //var desc1, desc2 float64
+  desc1 := Bd4 - A - oo
+  desc2 := Bd4 + A - oo
 
-  sbsB2 := s*bs*B/2.
+  bsB2 := bs*B/2.
 
   if desc2 >= 0 {
     if desc1 >= 0 { //Four real solutions.
       d1 := math.Sqrt(desc1)
       d2 := math.Sqrt(desc2)
-      return []float64{sbsB2 - d1, sbsB2 + d1, -sbsB2 + d2, -sbsB2 - d2}
+      return []float64{bsB2 - d1, bsB2 + d1, -bsB2 + d2, -bsB2 - d2}
     } else { //Two real solutions.
       d := math.Sqrt(desc2)
-      return []float64{-sbsB2 + d, -sbsB2 - d} 
+      return []float64{-bsB2 + d, -bsB2 - d} 
     }
   } else { //No real solutions.
     return []float64{}

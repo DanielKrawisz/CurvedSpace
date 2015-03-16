@@ -1,17 +1,26 @@
-package combinatorics
+package combinatorics_test
 
 import "testing"
+import "github.com/DanielKrawisz/CurvedSpace/combinatorics"
+
+func factorial(i uint64) uint64 {
+  if i == 0 {
+    return 1
+  } else {
+    return i * factorial(i - 1)
+  }
+}
 
 func TestFactorial(t *testing.T) {
   var i uint
   var exp uint64
   for i = 0; i < 25; i++ {
-    f := Factorial(i)
+    f := combinatorics.Factorial(i)
 
     if i > 20 {
       exp = 0
     } else {
-      exp = factorial[i]
+      exp = factorial(uint64(i))
     }
 
     if f != exp {
@@ -40,7 +49,7 @@ func TestBinomial(t *testing.T) {
   for i, test_case := range test_cases {
     exp := expected[i] 
 
-    test := Binomial(test_case[0], test_case[1])
+    test := combinatorics.Binomial(test_case[0], test_case[1])
 
     if exp != test {
       t.Error("Binomial error: input ", test_case, " expected ", exp, " got ", test)
@@ -63,7 +72,7 @@ func TestFigurate(t *testing.T) {
   for i, test_case := range test_cases {
     exp := expected[i] 
 
-    test := Figurate(test_case[0], test_case[1])
+    test := combinatorics.Figurate(test_case[0], test_case[1])
 
     if exp != test {
       t.Error("Figurate error: input ", test_case, " expected ", exp, " got ", test)
@@ -82,7 +91,7 @@ func TestPermutations(t *testing.T) {
   for i, test_case := range test_cases {
     exp := expected[i] 
 
-    test := Permutations(test_case)
+    test := combinatorics.Permutations(test_case)
 
     if exp != test {
       t.Error("Figurate error: input ", test_case, " expected ", exp, " got ", test)
@@ -103,7 +112,7 @@ func TestPower(t *testing.T) {
   for i, test_case := range test_cases {
     exp := expected[i] 
 
-    test := Power(test_case[0], uint(test_case[1]))
+    test := combinatorics.Power(test_case[0], uint(test_case[1]))
 
     if exp != test {
       t.Error("Binomial error: input ", test_case, " expected ", exp, " got ", test)

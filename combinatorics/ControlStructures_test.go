@@ -1,7 +1,8 @@
-package combinatorics
+package combinatorics_test
 
 import "testing"
 import "github.com/DanielKrawisz/CurvedSpace/test"
+import "github.com/DanielKrawisz/CurvedSpace/combinatorics"
 
 //The mock test iterator just counts the right number of iterations have taken place.
 type mockTestIterator struct {
@@ -21,7 +22,7 @@ func TestNestedFor(t *testing.T) {
 
     I := &mockTestIterator{0, 0}
 
-    NestedFor(I, limit)
+    combinatorics.NestedFor(I, limit)
     if I.n != uint64(0) {
       t.Error("degenerate nested for error. Limit = ", limit)
     }
@@ -42,7 +43,7 @@ func TestNestedFor(t *testing.T) {
 
     I := &mockTestIterator{0, 0}
 
-    NestedFor(I, limit)
+    combinatorics.NestedFor(I, limit)
 
     if I.n != uint64(exp) {
       t.Error("Nested for error. Limit = ", limit, "; exp = ", exp, "; n = ", I.n)
@@ -52,12 +53,12 @@ func TestNestedFor(t *testing.T) {
 
 //TODO these next three tests do not ensure that all permutations
 //fed to the iteration loop are correct.
-func TestNestedForPermutations(t *testing.T) {
-  for n := uint(1); n < 8; n ++ {
+func TestNestedForPermutation(t *testing.T) {
+  for n := uint(0); n < 8; n ++ {
     I := &mockTestIterator{0, 0}
-    NestedForPermutation(I, n)
+    combinatorics.NestedForPermutation(I, n)
 
-    if I.n != factorial[n] {
+    if I.n != combinatorics.Factorial(n) {
       t.Error("Nested permutation for error: limit ", n, ", count ", I.n)
     }
   }
@@ -69,13 +70,13 @@ func TestNestedForAsymmetric(t *testing.T) {
   for rank := uint(0); rank < 6; rank ++ {
     for dim := uint(0); dim < 6; dim ++ {
       I := &mockTestIterator{0, 0}
-      NestedForAsymmetric(I, rank, dim)
+      combinatorics.NestedForAsymmetric(I, rank, dim)
 
       var exp uint64
       if dim == 0 {
         exp = 0
       } else {
-        exp = Binomial(dim, rank)
+        exp = combinatorics.Binomial(dim, rank)
       }
 
       if I.n != exp {
@@ -90,13 +91,13 @@ func TestNestedForSymmetric(t *testing.T) {
   for rank := uint(0); rank < 6; rank ++ {
     for dim := uint(0); dim < 4; dim ++ {
       I := &mockTestIterator{0, 0}
-      NestedForSymmetric(I, rank, dim)
+      combinatorics.NestedForSymmetric(I, rank, dim)
 
       var exp_m int64
       var exp_n uint64
       if dim != 0 {
-        exp_m = Power(int(dim), rank)
-        exp_n = Figurate(rank, dim)
+        exp_m = combinatorics.Power(int(dim), rank)
+        exp_n = combinatorics.Figurate(rank, dim)
       } else {
         exp_m = 0
         exp_n = 0

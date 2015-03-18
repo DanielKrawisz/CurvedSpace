@@ -1,8 +1,11 @@
-package surface
+package booleans_test
 
 import "testing"
 import "sort"
 import "github.com/DanielKrawisz/CurvedSpace/test"
+import "github.com/DanielKrawisz/CurvedSpace/surface"
+import "github.com/DanielKrawisz/CurvedSpace/surface/booleans"
+import "github.com/DanielKrawisz/CurvedSpace/surface/polynomialsurfaces"
 
 var b_err float64 = .00001
 
@@ -13,76 +16,76 @@ func TestBooleans(t *testing.T) {
   p2 := []float64{2,0}
   p3 := []float64{0,0,0}
   var r float64 = 3
-  a := NewSphere(p1, r)
-  b := NewSphere(p2, r)
-  c := NewSphere(p3, r)
+  a := polynomialsurfaces.NewSphere(p1, r)
+  b := polynomialsurfaces.NewSphere(p2, r)
+  c := polynomialsurfaces.NewSphere(p3, r)
 
-  if NewAddition(nil, b) != nil {
+  if booleans.NewAddition(nil, b) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewAddition(a, nil) != nil {
+  if booleans.NewAddition(a, nil) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewSubtraction(nil, b) != nil {
+  if booleans.NewSubtraction(nil, b) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewSubtraction(a, nil) != nil {
+  if booleans.NewSubtraction(a, nil) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewIntersection(nil, b) != nil {
+  if booleans.NewIntersection(nil, b) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewIntersection(a, nil) != nil {
+  if booleans.NewIntersection(a, nil) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewBounding(nil, b) != nil {
+  if booleans.NewBounding(nil, b) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewBounding(a, nil) != nil {
+  if booleans.NewBounding(a, nil) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewOpenBounding(nil, b) != nil {
+  if booleans.NewOpenBounding(nil, b) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewOpenBounding(a, nil) != nil {
+  if booleans.NewOpenBounding(a, nil) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewAddition(c, b) != nil {
+  if booleans.NewAddition(c, b) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewAddition(a, c) != nil {
+  if booleans.NewAddition(a, c) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewSubtraction(c, b) != nil {
+  if booleans.NewSubtraction(c, b) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewSubtraction(a, c) != nil {
+  if booleans.NewSubtraction(a, c) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewIntersection(c, b) != nil {
+  if booleans.NewIntersection(c, b) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewIntersection(a, c) != nil {
+  if booleans.NewIntersection(a, c) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewBounding(c, b) != nil {
+  if booleans.NewBounding(c, b) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewBounding(a, c) != nil {
+  if booleans.NewBounding(a, c) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewOpenBounding(c, b) != nil {
+  if booleans.NewOpenBounding(c, b) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
-  if NewOpenBounding(a, c) != nil {
+  if booleans.NewOpenBounding(a, c) != nil {
     t.Error("Non-nil value returned for invalid inputs")
   }
 
-  add := NewAddition(a, b)
-  sub := NewSubtraction(a, b)
-  sec := NewIntersection(a, b)
-  bnd := NewBounding(a, b)
-  opb := NewOpenBounding(a, b)
+  add := booleans.NewAddition(a, b)
+  sub := booleans.NewSubtraction(a, b)
+  sec := booleans.NewIntersection(a, b)
+  bnd := booleans.NewBounding(a, b)
+  opb := booleans.NewOpenBounding(a, b)
 
   if add == nil {
     t.Error("nil value returned for valid inputs")
@@ -125,9 +128,9 @@ func TestBooleans(t *testing.T) {
     []bool{false, true,  false},
     []bool{false, true,  false}}
 
-  for i, boolean := range []Surface{add, sub, sec, bnd, opb} {
+  for i, boolean := range []surface.Surface{add, sub, sec, bnd, opb} {
     for j, point := range test_points {
-      if SurfaceInterior(boolean, point) != interior_tests[i][j] {
+      if surface.SurfaceInterior(boolean, point) != interior_tests[i][j] {
         t.Error("For boolean ", i, ", point ", point, " is on the wrong side.")
       }
 
@@ -252,8 +255,8 @@ func TestBooleanRayIntersections(t *testing.T) {
   p1 := []float64{-2,0}
   p2 := []float64{2,0}
   var r float64 = 4
-  s1 := NewSphere(p1, r)
-  s2 := NewSphere(p2, r)
+  s1 := polynomialsurfaces.NewSphere(p1, r)
+  s2 := polynomialsurfaces.NewSphere(p2, r)
 
   rays := [][][]float64{
     [][]float64{[]float64{-3, -5}, []float64{0, 1}},
@@ -276,11 +279,11 @@ func TestBooleanRayIntersections(t *testing.T) {
     sort.Float64s(int2[i])
   }
 
-  add := NewAddition(s1, s2)
-  sub := NewSubtraction(s1, s2)
-  sec := NewIntersection(s1, s2)
-  bnd := NewBounding(s1, s2)
-  opb := NewOpenBounding(s1, s2)
+  add := booleans.NewAddition(s1, s2)
+  sub := booleans.NewSubtraction(s1, s2)
+  sec := booleans.NewIntersection(s1, s2)
+  bnd := booleans.NewBounding(s1, s2)
+  opb := booleans.NewOpenBounding(s1, s2)
 
   for i := 0; i < 4; i ++ {
     intAdd[i] = add.Intersection(rays[i][0], rays[i][1])

@@ -1,7 +1,8 @@
-package vector
+package vector_test
 
 import "testing"
-import "../test"
+import "github.com/DanielKrawisz/CurvedSpace/test"
+import "github.com/DanielKrawisz/CurvedSpace/vector"
 
 var vec_err float64 = .000001
 
@@ -9,35 +10,35 @@ func TestVectorOperations(t *testing.T) {
   V := []float64{7, 4, 4}
   W := []float64{6, 6, 3}
 
-  if !test.CloseEnough(Dot(V, W), 78, vec_err) {
+  if !test.CloseEnough(vector.Dot(V, W), 78, vec_err) {
     t.Error("vector error 1")
   }
-  if !test.CloseEnough(Dot(V, V), 81, vec_err) {
+  if !test.CloseEnough(vector.Dot(V, V), 81, vec_err) {
     t.Error("vector error 2")
   }
-  if !test.CloseEnough(Length(V), 9, vec_err) {
+  if !test.CloseEnough(vector.Length(V), 9, vec_err) {
     t.Error("vector error 3")
   }
-  if !test.CloseEnough(Length(W), 9, vec_err) {
+  if !test.CloseEnough(vector.Length(W), 9, vec_err) {
     t.Error("vector error 4")
   }
-  if !test.VectorCloseEnough(Plus(V, W), []float64{13, 10, 7}, vec_err) {
+  if !test.VectorCloseEnough(vector.Plus(V, W), []float64{13, 10, 7}, vec_err) {
     t.Error("vector error 5")
   }
-  if !test.VectorCloseEnough(Minus(V, W), []float64{1, -2, 1}, vec_err) {
+  if !test.VectorCloseEnough(vector.Minus(V, W), []float64{1, -2, 1}, vec_err) {
     t.Error("vector error 6")
   }
-  case7 := LinearSum(2, 3, V, W)
+  case7 := vector.LinearSum(2, 3, V, W)
   if !test.VectorCloseEnough(case7, []float64{32, 26, 17}, vec_err) {
     t.Error("vector error 7: ")
   }
-  if !test.VectorCloseEnough(Times(-4, V), []float64{-28, -16, -16}, vec_err) {
+  if !test.VectorCloseEnough(vector.Times(-4, V), []float64{-28, -16, -16}, vec_err) {
     t.Error("vector error 8: ")
   }
-  if !test.VectorCloseEnough(Negative(V), []float64{28, 16, 16}, vec_err) {
+  if !test.VectorCloseEnough(vector.Negative(V), []float64{28, 16, 16}, vec_err) {
     t.Error("vector error 9: ")
   }
-  case10 := Normalize(V)
+  case10 := vector.Normalize(V)
   if !test.VectorCloseEnough(case10, []float64{-0.77777777778, -0.44444444444, -0.44444444444}, vec_err) {
     t.Error("vector error 10: got ", case10)
   }
@@ -81,7 +82,7 @@ func TestOrthonormalize(t *testing.T) {
                       []float64{0, 0, 0}}}}
 
   for i, trial := range trials {
-    got := Orthonormalize(trial[0])
+    got := vector.Orthonormalize(trial[0])
     if !test.MatrixCloseEnough(got, trial[1], vec_err) {
       t.Error("orthonormalize error trial ", i, ". expected ", trial[1], ", got ", got)
     }
@@ -92,16 +93,16 @@ func TestOrthonormalize(t *testing.T) {
   for i := 0; i < 5; i ++ {
     o := test.RandFloatMatrix(-5, 5, dim, dim)
 
-    Orthonormalize(o)
+    vector.Orthonormalize(o)
 
     for j := 0; j < dim; j ++ {
       for k := 0; k < j ; k ++ {
-        if !test.CloseEnough(Dot(o[j], o[k]), 0, .000001) {
+        if !test.CloseEnough(vector.Dot(o[j], o[k]), 0, .000001) {
           t.Error("Orthonormalization error: ", o)
         }
       }
 
-      if !test.CloseEnough(Dot(o[j], o[j]), 1, .000001) {
+      if !test.CloseEnough(vector.Dot(o[j], o[j]), 1, .000001) {
         t.Error("Orthonormalization error.")
       }
     }
@@ -120,7 +121,7 @@ func TestDot(t *testing.T) {
   expected := []float64{0, 1, 2, 6, 0, 26}
 
   for i := 0; i < len(cases); i ++ {
-    test_dot := Dot(cases[i][0], cases[i][1])
+    test_dot := vector.Dot(cases[i][0], cases[i][1])
 
     if !test.CloseEnough(test_dot, expected[i], .00001) {
       t.Error("Dot error! test case ", cases[i], "; expected ", expected[i], "; got ", test_dot)
@@ -169,7 +170,7 @@ func TestDet(t *testing.T) {
   det_exp := []float64{0, 8, -2, 1, 0, 0, -1, 0.262221, 0.262221, 0.658136}
 
   for i := 0; i < len(cases); i ++ {
-    det_test := Det(cases[i])
+    det_test := vector.Det(cases[i])
     if !test.CloseEnough(det_test, det_exp[i], .00001) {
       t.Error("Det error! test case ", cases[i], "; expected ", det_exp[i], "; got ", det_test)
     }
@@ -194,7 +195,7 @@ func TestCross(t *testing.T) {
           []float64{0, 0, 0, 1}}}
 
   for i := 0; i < len(cases); i ++ {
-    cross := Cross(cases[i][:len(cases[i]) - 1])
+    cross := vector.Cross(cases[i][:len(cases[i]) - 1])
     if !test.VectorCloseEnough(cross, cases[i][len(cases[i]) - 1], .00001) {
       t.Error("Cross error: test case ", cases[i], ", got ", cross)
     }
@@ -245,7 +246,7 @@ func TestTranspose(t *testing.T) {
       test_corner[i] = m[test_corner_ind[i][0]][test_corner_ind[i][1]]
     }
 
-    Transpose(m)
+    vector.Transpose(m)
 
     for i := 0; i < 2; i ++ {
       if m[test_diag_ind[i]][test_diag_ind[i]] != test_diag[i] {
@@ -304,7 +305,7 @@ func TestInverse(t *testing.T) {
           []float64{0.05961613437008792, 0.48781915012990057}}}
 
   for i := 0; i < len(cases); i ++ {
-    inv_test := Inverse(cases[i])
+    inv_test := vector.Inverse(cases[i])
     if inv_test == nil {
       if expected[i] != nil {
         t.Error("inverse error, case ", i)
@@ -315,4 +316,8 @@ func TestInverse(t *testing.T) {
       }
     }
   }
+}
+
+func TestMatrixMultiply(t *testing.T) {
+  
 }

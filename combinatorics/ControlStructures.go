@@ -72,7 +72,7 @@ func (al *permutationIterationLoop) Iterate(index []uint, x int) {
 func NestedForPermutation(i IterationLoop, dim uint) {
   if dim == 0 { return }
   //Special degenerate case. 
-  if dim == 1 {
+  if dim <= 1 {
     i.Iterate([]uint{0}, 1)
     return
   }

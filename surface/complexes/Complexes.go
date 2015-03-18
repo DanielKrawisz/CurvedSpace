@@ -1,18 +1,21 @@
-package surface
+package complexes
 
-import "github.com/DanielKrawisz/CurvedSpace/vector"
+//import "github.com/DanielKrawisz/CurvedSpace/vector"
+import "github.com/DanielKrawisz/CurvedSpace/surface/"
+import "github.com/DanielKrawisz/CurvedSpace/surface/polynomialsurfaces"
+import "github.com/DanielKrawisz/CurvedSpace/surface/booleans"
 
 //A simplex given as a list of points. This should
 //be an n * (n + 1) matrix. 
 //Note: the simplex will be inside-out if the points
 //are not given in the right order. 
-func NewSimplex(p [][]float64) Surface {
+func NewSimplex(p [][]float64) surface.Surface {
   if p == nil { return nil }
   l := len(p)
   dim := l - 1
   if dim < 1 { return nil }
 
-  var s, g Surface = nil, nil
+  var s, g surface.Surface = nil, nil
 
   p_sub := make([][]float64, dim)
   var sig int = 1
@@ -25,7 +28,7 @@ func NewSimplex(p [][]float64) Surface {
       q ++ 
     }
 
-    g = NewPlaneByPointsAndSignature(p_sub, 2 * ((sig + dim) % 2) - 1)
+    g = polynomialsurfaces.NewPlaneByPointsAndSignature(p_sub, 2 * ((sig + dim) % 2) - 1)
     sig += dim
     if g == nil {
       return nil
@@ -36,7 +39,7 @@ func NewSimplex(p [][]float64) Surface {
     if s == nil {
       s = g
     } else {
-      s = NewIntersection(g, s)
+      s = booleans.NewIntersection(g, s)
     }
   }
 
@@ -45,7 +48,7 @@ func NewSimplex(p [][]float64) Surface {
 
 //A parallelpiped is given here by a corner point and 
 //an n * n matrix. 
-func NewParallelpipedByCornerAndEdges(P []float64, V [][]float64) Surface {
+func NewParallelpipedByCornerAndEdges(P []float64, V [][]float64, right_side_out bool) surface.Surface {
   if P == nil || V == nil {
     return nil
   }
@@ -70,9 +73,13 @@ func NewParallelpipedByCornerAndEdges(P []float64, V [][]float64) Surface {
     }
   }
 
-  m := vector.Inverse(vector.Transpose(v))
+  var inside float64
+  if right_side_out { inside = -1 } else { inside = 1 }
 
-  var s, g Surface = nil, nil
+  //TODO get this working again. 
+  /*m := vector.Inverse(vector.Transpose(v))
+
+  var s, g surface.Surface = nil, nil
 
   for i := 0; i < dim; i ++ {
     c := make([][]float64, dim)
@@ -81,27 +88,29 @@ func NewParallelpipedByCornerAndEdges(P []float64, V [][]float64) Surface {
       c[j] = make([]float64, j + 1)
       for k := 0; k <= j; k ++ {
         if j == k && j == i {
-          c[j][k] = -1
+          c[j][k] = inside
         } else {
           c[j][k] = 0
         }
       }
     }
 
-    q := &quadraticSurface{dim, c, b, 1}
+    q := &quadraticSurface{dim, c, b, -inside}
+    if q == nil {
+      return nil
+    }
     coordinateShiftQuadratic(q, m)
     translateQuadratic(q, p)
     g = q
 
-    if g == nil {
-      return nil
-    }
     if s == nil {
       s = g
     } else {
-      s = NewIntersection(g, s)
+      s = booleans.NewIntersection(g, s)
     }
   }
 
-  return s
+  return s*/
+
+  return nil
 }

@@ -42,8 +42,9 @@ func main() {
   pathtrace_activity_01()
   pathtrace_activity_02()
   pathtrace_activity_03()
-  pathtrace_activity_04()
-  test_scene_01()
+  //pathtrace_activity_04()
+  //pathtrace_activity_05()
+  //test_scene_01()
 }
 
 func createOutputDirectory(output string) {

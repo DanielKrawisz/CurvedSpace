@@ -1,4 +1,4 @@
-package surface
+package booleans
 
 //Booleans allow several different objects to be merged
 //into a single object in various ways. 
@@ -6,23 +6,24 @@ package surface
 import "math"
 import "strings"
 import "github.com/DanielKrawisz/CurvedSpace/vector"
+import "github.com/DanielKrawisz/CurvedSpace/surface"
 
 type Boolean interface {
-  Surface
-  SurfaceA() Surface
-  SurfaceB() Surface
+  surface.Surface
+  SurfaceA() surface.Surface
+  SurfaceB() surface.Surface
 }
 
 //Addition objects include the points from both surfaces. 
 type boolean struct {
-  a, b Surface 
+  a, b surface.Surface 
 }
 
-func (s *boolean) SurfaceA() Surface {
+func (s *boolean) SurfaceA() surface.Surface {
   return s.a 
 }
 
-func (s *boolean) SurfaceB() Surface {
+func (s *boolean) SurfaceB() surface.Surface {
   return s.b 
 }
 
@@ -67,7 +68,7 @@ func (s *addition) Intersection(x, v []float64) []float64 {
       p[j] = x[j] + inta[i] * v[j]
     }
 
-    if !SurfaceInterior(s.b, p) {
+    if !surface.SurfaceInterior(s.b, p) {
       z[zi] = inta[i]
       zi ++
     }
@@ -78,7 +79,7 @@ func (s *addition) Intersection(x, v []float64) []float64 {
       p[j] = x[j] + intb[i] * v[j]
     }
 
-    if !SurfaceInterior(s.a, p) {
+    if !surface.SurfaceInterior(s.a, p) {
       z[zi] = intb[i]
       zi ++
     }
@@ -121,7 +122,7 @@ func (s *intersection) findCommonIntersectionPoints(x, v, inta, intb []float64) 
       p[j] = x[j] + inta[i] * v[j]
     }
 
-    if SurfaceInterior(s.b, p) {
+    if surface.SurfaceInterior(s.b, p) {
       z[zi] = inta[i]
       zi ++
     }
@@ -132,7 +133,7 @@ func (s *intersection) findCommonIntersectionPoints(x, v, inta, intb []float64) 
       p[j] = x[j] + intb[i] * v[j]
     }
 
-    if SurfaceInterior(s.a, p) {
+    if surface.SurfaceInterior(s.a, p) {
       z[zi] = intb[i]
       zi ++
     }
@@ -190,7 +191,7 @@ func (s *openBounding) Intersection(x, v []float64) []float64 {
   var zi int = 0
 
   for i, u := range intb {
-    if SurfaceInterior(s.a, vector.LinearSum(1, u, x, v)) {
+    if surface.SurfaceInterior(s.a, vector.LinearSum(1, u, x, v)) {
       z[i] = u
       zi ++
     }
@@ -242,7 +243,7 @@ func (s *subtraction) Intersection(x, v []float64) []float64 {
       p[j] = x[j] + inta[i] * v[j]
     }
 
-    if !SurfaceInterior(s.b, p) {
+    if !surface.SurfaceInterior(s.b, p) {
       z[zi] = inta[i]
       zi ++
     }
@@ -253,7 +254,7 @@ func (s *subtraction) Intersection(x, v []float64) []float64 {
       p[j] = x[j] + intb[i] * v[j]
     }
 
-    if SurfaceInterior(s.a, p) {
+    if surface.SurfaceInterior(s.a, p) {
       z[zi] = intb[i]
       zi ++
     }
@@ -263,7 +264,7 @@ func (s *subtraction) Intersection(x, v []float64) []float64 {
 }
 
 //Can return nil
-func NewAddition(a, b Surface) Surface {
+func NewAddition(a, b surface.Surface) surface.Surface {
   if a == nil || b == nil {return nil}
   if a.Dimension() != b.Dimension() {return nil}
 
@@ -271,7 +272,7 @@ func NewAddition(a, b Surface) Surface {
 }
 
 //Can return nil
-func NewSubtraction(a, b Surface) Surface {
+func NewSubtraction(a, b surface.Surface) surface.Surface {
   if a == nil || b == nil {return nil}
   if a.Dimension() != b.Dimension() {return nil}
 
@@ -279,7 +280,7 @@ func NewSubtraction(a, b Surface) Surface {
 }
 
 //Can return nil
-func NewIntersection(a, b Surface) Surface {
+func NewIntersection(a, b surface.Surface) surface.Surface {
   if a == nil || b == nil {return nil}
   if a.Dimension() != b.Dimension() {return nil}
 
@@ -287,7 +288,7 @@ func NewIntersection(a, b Surface) Surface {
 }
 
 //Can return nil
-func NewBounding(a, b Surface) Surface {
+func NewBounding(a, b surface.Surface) surface.Surface {
   if a == nil || b == nil {return nil}
   if a.Dimension() != b.Dimension() {return nil}
 
@@ -295,7 +296,7 @@ func NewBounding(a, b Surface) Surface {
 }
 
 //Can return nil
-func NewOpenBounding(a, b Surface) Surface {
+func NewOpenBounding(a, b surface.Surface) surface.Surface {
   if a == nil || b == nil {return nil}
   if a.Dimension() != b.Dimension() {return nil}
 

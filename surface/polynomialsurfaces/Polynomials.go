@@ -1,8 +1,9 @@
-package surface
+package polynomialsurfaces
 
 import "strings"
 import "fmt"
-import "github.com/DanielKrawisz/CurvedSpace/surface/polynomials"
+import "github.com/DanielKrawisz/CurvedSpace/surface"
+import "github.com/DanielKrawisz/CurvedSpace/surface/polynomialsurfaces/polynomials"
 import "github.com/DanielKrawisz/CurvedSpace/vector"
 
 //Polynomial surfaces for degrees 1 to 4.
@@ -558,18 +559,22 @@ func (s *quarticSurface) Intersection(x, v []float64) []float64 {
 }
 
 //May return nil
-func NewPlaneByPointAndNormal(point, norm []float64) Surface {
+func NewPlaneByPointAndNormal(point, norm []float64, right_side_out bool) surface.Surface {
   if point == nil || norm == nil {return nil}
   if len(point) != len(norm) {return nil}
 
   if vector.Dot(norm, norm) == 0 {return nil}
-  return &linearSurface{len(norm), vector.Negative(norm), vector.Dot(norm, point)}
+  if right_side_out {
+    return &linearSurface{len(norm), vector.Negative(norm), vector.Dot(norm, point)}
+  } else {
+    return &linearSurface{len(norm), norm, -vector.Dot(norm, point)}
+  }
 }
 
 //Takes n points and returns the n-1 dimensional
 //flat surface that has those n points on it. 
 //May return nil
-func NewPlaneByPointsAndSignature(p [][]float64, sig int) Surface {
+func NewPlaneByPointsAndSignature(p [][]float64, sig int) surface.Surface {
   if p == nil { return nil }
   dim := len(p)
   if dim <= 0 { return nil }
@@ -587,11 +592,11 @@ func NewPlaneByPointsAndSignature(p [][]float64, sig int) Surface {
   }
 
   b := vector.Cross(v)
-  return NewPlaneByPointAndNormal(p[0], vector.Times(-float64(sig), b))
+  return NewPlaneByPointAndNormal(p[0], vector.Times(-float64(sig), b), true)
 }
 
 //Functions that translate a polynomial object along a given vector.
-func translateLinear(s *linearSurface, v []float64) Surface {
+func translateLinear(s *linearSurface, v []float64) surface.Surface {
   p := vector.Negative(v)
   s.a += vector.Dot(s.b, p)
   return s
@@ -601,7 +606,7 @@ func translateLinear(s *linearSurface, v []float64) Surface {
 //
 // c (x + p)^2 + b (x + p) + a = c x^2 + (b + 2 c p) x + (a + b p + c p^2)
 //
-func translateQuadratic(s *quadraticSurface, v []float64) Surface {
+func translateQuadratic(s *quadraticSurface, v []float64) surface.Surface {
   p := vector.Negative(v)
   bp := vector.ContractSymmetricTensor(s.c, p)
   s.a += vector.Dot(s.b, p) + vector.Dot(bp, p)
@@ -614,7 +619,7 @@ func translateQuadratic(s *quadraticSurface, v []float64) Surface {
 // d (x + p)^3 + c (x + p)^2 + b (x + p) + a
 //   = d x^3 + (c + 3 d p) x^2 + (b + 2 c p + 3 d p^2) x + (a + b p + c p^2 + d p^3)
 //
-func translateCubic(s *cubicSurface, v []float64) Surface {
+func translateCubic(s *cubicSurface, v []float64) surface.Surface {
   p    := vector.Negative(v)
   dp   := vector.ContractSymmetric3Tensor(s.d, p)
   dpp  := vector.ContractSymmetricTensor(dp, p)
@@ -635,7 +640,7 @@ func translateCubic(s *cubicSurface, v []float64) Surface {
 //   = e x^4 + (d + 4 e p) x^3 + (c + 3 d p + 6 e p^2) x^2 + (b + 2 c p + 3 d p^2 + 4 e p^3) x 
 //     + (a + b p + c p^2 + d p^3 + e p^4)
 //
-func translateQuartic(s *quarticSurface, v[]float64) Surface {
+func translateQuartic(s *quarticSurface, v[]float64) surface.Surface {
   p     := vector.Negative(v)
   ep    := vector.ContractSymmetric4Tensor(s.e, p)
   epp   := vector.ContractSymmetric3Tensor(ep, p)
@@ -697,7 +702,7 @@ func coordinateShiftQuartic(s *quarticSurface, A [][]float64) {
 //  p.v_i v_i.p - 2 x.v_i v_i.p + x.v_i v_i.x + y.x + y.p + r2 == 0
 //
 //May return nil
-func NewQuadraticSurface(p []float64, vp, vn [][]float64, y[] float64, r2 float64) Surface {
+func NewQuadraticSurface(p []float64, vp, vn [][]float64, y[] float64, r2 float64) surface.Surface {
   if p == nil || vp == nil || vn == nil || y == nil {
     return nil
   }
@@ -758,7 +763,7 @@ func NewQuadraticSurface(p []float64, vp, vn [][]float64, y[] float64, r2 float6
 //    + (- w_i.p w_i.p w_i.p + p.v_i v_i.p + y.p + r3) == 0
 //
 //May return nil
-func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r3 float64) Surface {
+func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r3 float64) surface.Surface {
   if p == nil || vp == nil || vn == nil || y == nil || vd == nil{
     return nil
   }
@@ -836,7 +841,7 @@ func NewCubicSurface(p []float64, vd, vp, vn [][]float64, y[] float64, r3 float6
 //    + ((u_i.p)^4 - w_i.p w_i.p w_i.p + p.v_i v_i.p + y.p + r4) == 0
 //
 //May return nil
-func NewQuarticSurface(p []float64, vqp, vqn, vd, vp, vn [][]float64, y[] float64, r4 float64) Surface {
+func NewQuarticSurface(p []float64, vqp, vqn, vd, vp, vn [][]float64, y[] float64, r4 float64) surface.Surface {
   if p == nil || vp == nil || vn == nil || y == nil || vd == nil || vqp == nil || vqn == nil {
     return nil
   }

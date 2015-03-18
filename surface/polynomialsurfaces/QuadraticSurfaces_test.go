@@ -1,7 +1,8 @@
-package surface
+package polynomialsurfaces
 
 import "testing"
 import "github.com/DanielKrawisz/CurvedSpace/test"
+import "github.com/DanielKrawisz/CurvedSpace/surface"
 import "sort"
 import "math"
 
@@ -62,7 +63,7 @@ func TestSphereF(t *testing.T) {
           ". F error at point ", test_point, ". Expected ", f_exp, "; got ", f)
       }
 
-      if (f > 0) != (SurfaceInterior(s, test_point)) {
+      if (f > 0) != (surface.SurfaceInterior(s, test_point)) {
         t.Error("Sphere error p = ", p, ", r = ", r, ". Interior error at point ", test_point)
       }
 
@@ -163,7 +164,7 @@ func TestSphereIntersection(t *testing.T) {
         }
       }
 
-      intersectionTester(sphere, p1, p2, t)
+      test.IntersectionTester(sphere, p1, p2, t)
     }
   }
 }

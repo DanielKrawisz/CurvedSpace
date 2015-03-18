@@ -1,6 +1,8 @@
-package surface
+package polynomialsurfaces
 
-import "github.com/DanielKrawisz/CurvedSpace/surface/polynomials"
+import "github.com/DanielKrawisz/CurvedSpace/surface"
+import "github.com/DanielKrawisz/CurvedSpace/surface/polynomialsurfaces/polynomials"
+import "github.com/DanielKrawisz/CurvedSpace/surface/booleans"
 import "fmt"
 import "strings"
 import "math"
@@ -11,7 +13,7 @@ import "math"
 //TODO cone, paraboloid, hyperboloid
 
 type Sphere interface {
-  Surface
+  surface.Surface
   X() []float64
   R2() float64
 }
@@ -91,7 +93,7 @@ func NewSphere(p []float64, r float64) Sphere {
 //an elipsoid if the parameters are all positive, but the
 //function does not require them to be. 
 //May return nil
-func NewEllipsoid(point []float64, vec [][]float64, param []float64) Surface {
+func NewEllipsoid(point []float64, vec [][]float64, param []float64) surface.Surface {
   if point == nil || vec == nil || param == nil {
     return nil
   }
@@ -123,13 +125,13 @@ func NewEllipsoid(point []float64, vec [][]float64, param []float64) Surface {
 //A surface that is infinite in some directions and finite in others.
 //The vectors define the finite directions. 
 //May return nil. 
-func NewInfiniteCylinder(p []float64, vector [][]float64) Surface {
+func NewInfiniteCylinder(p []float64, vector [][]float64) surface.Surface {
 
   return NewQuadraticSurface(p, vector, [][]float64{}, make([]float64, len(p)), 1)
 }
 
 //Vectors are made to be orthonormal. 
-func NewInfiniteHyperboloid(p []float64, vp, vn [][]float64) Surface {
+func NewInfiniteHyperboloid(p []float64, vp, vn [][]float64) surface.Surface {
   return NewQuadraticSurface(p, vp, vn, []float64{}, 1)
 }
 
@@ -137,19 +139,19 @@ func NewInfiniteHyperboloid(p []float64, vp, vn [][]float64) Surface {
 //a set of vectors defining the symmetric tensor and a set
 //defining the vector part of the quadratic surface. 
 //May return nil.
-func NewInfiniteParaboloid(p []float64, vc [][]float64, vb []float64) Surface {
+func NewInfiniteParaboloid(p []float64, vc [][]float64, vb []float64) surface.Surface {
   return NewQuadraticSurface(p, vc, [][]float64{}, vb, 0)
 }
 
 //The first set of vectors define what is inside the cone, the rest define
 //what is outside. 
-func NewInfiniteCone(p []float64, vp [][]float64, vn [][]float64) Surface {
+func NewInfiniteCone(p []float64, vp [][]float64, vn [][]float64) surface.Surface {
   return NewQuadraticSurface(p, vp, vn, []float64{}, 0)
 }
 
 //The intersection of two conic sections into something which has a finite area
 //if the vectors defining it are non zero. 
-func NewCompoundConic(p []float64, vp, vn [][]float64) Surface {
+func NewCompoundConic(p []float64, vp, vn [][]float64) surface.Surface {
   //TODO
   return nil
 }
@@ -158,7 +160,7 @@ func NewCompoundConic(p []float64, vp, vn [][]float64) Surface {
 //just becomes a regular cylinder. Param gives the radii of the cylinder
 //in each direction. (so you can have an elliptical cylinder too)
 //May return nil
-func NewCylinder(p []float64, vp, vn [][]float64, param []float64) Surface {
+func NewCylinder(p []float64, vp, vn [][]float64, param []float64) surface.Surface {
   if p == nil || vp == nil || vn == nil || param == nil {
     return nil
   }
@@ -180,10 +182,10 @@ func NewCylinder(p []float64, vp, vn [][]float64, param []float64) Surface {
     }
   }
 
-  return NewIntersection(NewInfiniteCylinder(p, vp), NewInfiniteCylinder(p, vn))
+  return booleans.NewIntersection(NewInfiniteCylinder(p, vp), NewInfiniteCylinder(p, vn))
 }
 
-func NewCone(p []float64, axis []float64, v[][]float64,  param []float64) Surface {
+func NewCone(p []float64, axis []float64, v[][]float64,  param []float64) surface.Surface {
   if p == nil || param == nil || axis == nil || v == nil {
     return nil 
   }
@@ -197,17 +199,17 @@ func NewCone(p []float64, axis []float64, v[][]float64,  param []float64) Surfac
   return nil
 }
 
-func NewConoid(p []float64, vp, vn [][]float64, param []float64) Surface {
+func NewConoid(p []float64, vp, vn [][]float64, param []float64) surface.Surface {
   //TODO
   return nil
 }
 
-func NewParaboloid(p []float64, vp, vn [][]float64, param []float64) Surface {
+func NewParaboloid(p []float64, vp, vn [][]float64, param []float64) surface.Surface {
   //TODO
   return nil
 }
 
-func NewHyperboloid(p []float64, vp, vn [][]float64, param []float64) Surface {
+func NewHyperboloid(p []float64, vp, vn [][]float64, param []float64) surface.Surface {
   //TODO
   return nil
 }

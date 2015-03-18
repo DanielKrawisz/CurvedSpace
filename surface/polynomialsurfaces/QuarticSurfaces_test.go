@@ -1,9 +1,10 @@
-package surface
+package polynomialsurfaces
 
 import "testing"
 import "github.com/DanielKrawisz/CurvedSpace/distributions"
 import "github.com/DanielKrawisz/CurvedSpace/test"
 import "github.com/DanielKrawisz/CurvedSpace/vector"
+import "github.com/DanielKrawisz/CurvedSpace/surface"
 
 //Strategy: just pick a bunch of rays somewhat randomly and test that the
 //intersection points which are returned obey the torus equation. 
@@ -74,11 +75,11 @@ func TestTorusInterior(t *testing.T) {
     return 
   }
 
-  if SurfaceInterior(torus, p) {
+  if surface.SurfaceInterior(torus, p) {
     t.Error("torus error: torus is inside-out 1! ", torus.F(p)) 
   }
 
-  if !SurfaceInterior(torus, []float64{2, 0, 0}) {
+  if !surface.SurfaceInterior(torus, []float64{2, 0, 0}) {
     t.Error("torus error: torus is inside-out 2! ", torus.F([]float64{2, 0, 0})) 
   }
 }

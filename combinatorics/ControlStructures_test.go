@@ -54,13 +54,20 @@ func TestNestedFor(t *testing.T) {
 //TODO these next three tests do not ensure that all permutations
 //fed to the iteration loop are correct.
 func TestNestedForPermutation(t *testing.T) {
-  for n := uint(0); n < 8; n ++ {
+  for n := uint(1); n < 8; n ++ {
     I := &mockTestIterator{0, 0}
     combinatorics.NestedForPermutation(I, n)
 
     if I.n != combinatorics.Factorial(n) {
       t.Error("Nested permutation for error: limit ", n, ", count ", I.n)
     }
+  }
+
+  //Degenerate case.
+  I := &mockTestIterator{0, 0}
+  combinatorics.NestedForPermutation(I, 0)
+  if I.n != 0 {
+    t.Error("Nested permutation for error: limit ", 0, ", count ", I.n)
   }
 }
 

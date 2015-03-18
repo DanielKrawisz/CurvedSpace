@@ -1,6 +1,6 @@
-package surface
+package polynomialsurfaces
 
-//import "../vector"
+import "github.com/DanielKrawisz/CurvedSpace/surface"
 
 //The torus corresponding to the equation 
 //
@@ -12,7 +12,7 @@ package surface
 // This torus is three-dimensional!!! 
 //
 //May return nil
-func NewTorus(p []float64, v []float64, R, r float64) Surface {
+func NewTorus(p []float64, v []float64, R, r float64) surface.Surface {
   if p == nil || v == nil {
     return nil
   }

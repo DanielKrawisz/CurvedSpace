@@ -1,10 +1,11 @@
-package surface
+package polynomialsurfaces
 
 import "testing"
 import "math"
 //import "fmt"
 import "github.com/DanielKrawisz/CurvedSpace/test"
 import "github.com/DanielKrawisz/CurvedSpace/vector"
+import "github.com/DanielKrawisz/CurvedSpace/surface"
 
 //The strategy for testing here is to create inefficient functions to 
 //perform the tensor algebra that can be used to check all the 
@@ -43,7 +44,7 @@ func TestLinear(t *testing.T) {
       }
 
       grad := surface.Gradient(point)
-      grad_exp := testGradient(surface, point, err_poly)
+      grad_exp := test.GradientTester(surface, point, err_poly)
 
       if !test.VectorCloseEnough(grad, grad_exp, 00001) {
         t.Error("linear surface defined by b = ", b, "grad error. Expected ", grad_exp, ", got ", grad)
@@ -65,23 +66,23 @@ func TestLinearIntersection(t *testing.T) {
       p2 := []float64{test.RandFloat(4, 6), test.RandFloat(4, 6), test.RandFloat(4, 6)}
       p1 := []float64{test.RandFloat(-4, -6), test.RandFloat(-4, -6), test.RandFloat(-4, -6)}
 
-      intersectionTester(plane, p1, p2, t)
+      test.IntersectionTester(plane, p1, p2, t)
     }
   }
 }
 
 func TestNewPlane(t *testing.T) {
-  if nil != NewPlaneByPointAndNormal(nil, []float64{1, 0}) {
+  if nil != NewPlaneByPointAndNormal(nil, []float64{1, 0}, true) {
     t.Error("New linear surface error 1")
   }
-  if nil != NewPlaneByPointAndNormal([]float64{1, 0}, nil) {
+  if nil != NewPlaneByPointAndNormal([]float64{1, 0}, nil, true) {
     t.Error("New linear surface error 2")
   }
-  if nil != NewPlaneByPointAndNormal([]float64{1, 0}, []float64{0, 0}) {
+  if nil != NewPlaneByPointAndNormal([]float64{1, 0}, []float64{0, 0}, true) {
     t.Error("New linear surface error 3")
   }
 
-  if nil == NewPlaneByPointAndNormal([]float64{1, 0}, []float64{1, 0}) {
+  if nil == NewPlaneByPointAndNormal([]float64{1, 0}, []float64{1, 0}, true) {
     t.Error("New linear surface error 4")
   }
 
@@ -114,8 +115,9 @@ func TestNewPlane(t *testing.T) {
 
     point := test.RandFloatVector(-10, 10, dim)
     normal := test.RandFloatVector(-4, 4, dim)
+    right_side_out := test.RandBool()
 
-    plane := NewPlaneByPointAndNormal(point, normal)
+    plane := NewPlaneByPointAndNormal(point, normal, right_side_out)
 
     for j := 0; j < dim; j ++ {
       test_point := test.RandFloatVector(-10, 10, dim)
@@ -123,6 +125,7 @@ func TestNewPlane(t *testing.T) {
       test_f := plane.F(test_point)
 
       exp := -vector.Dot(vector.Minus(test_point, point), normal)
+      if !right_side_out {exp *= -1}
 
       if !test.CloseEnough(test_f, exp, err_poly) {
         t.Error("plane error: point ", point[j], "; expected ", exp, " got ", test_f)
@@ -155,7 +158,7 @@ func TestNewPlane(t *testing.T) {
     point := test.RandFloatVector(-10, 10, dim)
     normal := test.RandFloatVector(-5, 5, dim)
 
-    plane := NewPlaneByPointAndNormal(point, normal)
+    plane := NewPlaneByPointAndNormal(point, normal, true)
 
     for j := 0; j < dim; j ++ {
       test_p := test.RandFloatVector(-5, 5, dim)
@@ -207,7 +210,7 @@ func TestQuadratic(t *testing.T) {
       }
 
       grad := surface.Gradient(point)
-      grad_exp := testGradient(surface, point, h_d)
+      grad_exp := test.GradientTester(surface, point, h_d)
 
       var grad_match bool = true
 
@@ -259,7 +262,7 @@ func TestQuadratic(t *testing.T) {
       }
 
       grad := surface.Gradient(point)
-      grad_exp := testGradient(surface, point, err_poly)
+      grad_exp := test.GradientTester(surface, point, err_poly)
 
       var grad_match bool = true
 
@@ -434,7 +437,7 @@ func TestQuadraticIntersection(t *testing.T) {
       for {
         p1 = []float64{test.RandFloat(-10, 10), test.RandFloat(-10, 10), test.RandFloat(-10, 10)}
         n++
-        if !SurfaceInterior(quadratic, p1) { break }
+        if !surface.SurfaceInterior(quadratic, p1) { break }
         if n > 100 { return }
       }
 
@@ -443,10 +446,10 @@ func TestQuadraticIntersection(t *testing.T) {
         n++
         p2 = []float64{test.RandFloat(point[0] - 1, point[0] + 1),
           test.RandFloat(point[1] - 1, point[1] + 1), test.RandFloat(point[2] - 1, point[2] + 1)}
-        if SurfaceInterior(quadratic, p2) { break }
+        if surface.SurfaceInterior(quadratic, p2) { break }
       }
 
-      intersectionTester(quadratic, p1, p2, t)
+      test.IntersectionTester(quadratic, p1, p2, t)
     }
   }
 }
@@ -501,7 +504,7 @@ func TestCubic(t *testing.T) {
       }
 
       grad := surface.Gradient(point)
-      grad_exp := testGradient(surface, point, err_poly)
+      grad_exp := test.GradientTester(surface, point, err_poly)
 
       var grad_match bool = true
 
@@ -604,7 +607,7 @@ func TestNewCubic(t *testing.T) {
   //Test whether the surface actually comes out as expected. 
   dim := 1; 
   var a float64
-  for i := 0; i < 20; i ++ { //TODO Normally should be 20 trials.
+  for i := 0; i < 20; i ++ { 
     point := make([]float64, dim)
     basis := make([][]float64, dim)
     dbasis := make([][]float64, dim)
@@ -630,7 +633,7 @@ func TestNewCubic(t *testing.T) {
 
     cubic := NewCubicSurface(point, dbasis, vp, vn, y, a)
 
-    for j := 0; j < 5; j ++ { //TODO Normally should be 5 trials.
+    for j := 0; j < 5; j ++ { 
       test_point := make([]float64, dim)
       tp := make([]float64, dim)
       for k := 0; k < dim; k ++ {
@@ -697,7 +700,7 @@ func TestCubicIntersection(t *testing.T) {
       for {
         p1 = []float64{test.RandFloat(-10, 10), test.RandFloat(-10, 10), test.RandFloat(-10, 10)}
         n++
-        if !SurfaceInterior(cubic, p1) { break }
+        if !surface.SurfaceInterior(cubic, p1) { break }
         if n > 100 { return }
       }
 
@@ -706,10 +709,10 @@ func TestCubicIntersection(t *testing.T) {
         n++
         p2 = []float64{test.RandFloat(point[0] - 1, point[0] + 1),
           test.RandFloat(point[1] - 1, point[1] + 1), test.RandFloat(point[2] - 1, point[2] + 1)}
-        if SurfaceInterior(cubic, p2) { break }
+        if surface.SurfaceInterior(cubic, p2) { break }
       }
 
-      intersectionTester(cubic, p1, p2, t)
+      test.IntersectionTester(cubic, p1, p2, t)
     }
   }
 }
@@ -841,7 +844,7 @@ func TestQuartic(t *testing.T) {
       }
 
       grad := surface.Gradient(point)
-      grad_exp := testGradient(surface, point, err_poly)
+      grad_exp := test.GradientTester(surface, point, err_poly)
 
       var grad_match bool = true
 
@@ -1080,7 +1083,7 @@ func TestQuarticIntersection(t *testing.T) {
       for {
         p1 = []float64{test.RandFloat(-10, 10), test.RandFloat(-10, 10), test.RandFloat(-10, 10)}
         n++
-        if !SurfaceInterior(quartic, p1) { break }
+        if !surface.SurfaceInterior(quartic, p1) { break }
         if n > 100 { return }
       }
 
@@ -1089,10 +1092,10 @@ func TestQuarticIntersection(t *testing.T) {
         n++
         p2 = []float64{test.RandFloat(point[0] - 1, point[0] + 1),
           test.RandFloat(point[1] - 1, point[1] + 1), test.RandFloat(point[2] - 1, point[2] + 1)}
-        if SurfaceInterior(quartic, p2) { break }
+        if surface.SurfaceInterior(quartic, p2) { break }
       }
 
-      intersectionTester(quartic, p1, p2, t)
+      test.IntersectionTester(quartic, p1, p2, t)
     }
   }
 }

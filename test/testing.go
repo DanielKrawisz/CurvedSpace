@@ -31,6 +31,11 @@ func RandSign() int {
   return 2 * rand.Intn(2) - 1
 }
 
+func RandBool() bool {
+  if !seed_set {setSeed()}
+  return rand.Intn(2) > 0
+}
+
 func RandFloat(min, max float64) float64 {
   if !seed_set {setSeed()}
   return min + (max - min) * rand.Float64()

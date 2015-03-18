@@ -2,20 +2,22 @@ package main
 
 import "fmt"
 import "image/png"
-import "github.com/DanielKrawisz/CurvedSpace/surface"
+//import "github.com/DanielKrawisz/CurvedSpace/surface"
 import "github.com/DanielKrawisz/CurvedSpace/pathtrace"
 import "github.com/DanielKrawisz/CurvedSpace/color"
+import "github.com/DanielKrawisz/CurvedSpace/surface/polynomialsurfaces"
+import "github.com/DanielKrawisz/CurvedSpace/surface/complexes"
 
 func test_scene_01() {
 
   scene := func(i int) *pathtrace.Scene {
-    ground := surface.NewPlaneByPointAndNormal([]float64{0, 0, 0}, []float64{0, 0, 1})
-    small_sphere := surface.NewSphere([]float64{0, 0, 2}, 2)
-    small_box    := surface.NewParallelpipedByCornerAndEdges([]float64{-2, -2, 0},
-                      [][]float64{[]float64{4, 0, 0}, []float64{0, 4, 0}, []float64{0, 0, 4}})
-    big_sphere   := surface.NewSphere([]float64{-5, 0, 3}, 3)
-    big_box      := surface.NewParallelpipedByCornerAndEdges([]float64{-8, -3, 0},
-                      [][]float64{[]float64{6, 0, 0}, []float64{0, 6, 0}, []float64{0, 0, 6}})
+    ground := polynomialsurfaces.NewPlaneByPointAndNormal([]float64{0, 0, 0}, []float64{0, 0, 1}, true)
+    small_sphere := polynomialsurfaces.NewSphere([]float64{0, 0, 2}, 2)
+    small_box    := complexes.NewParallelpipedByCornerAndEdges([]float64{-2, -2, 0},
+                      [][]float64{[]float64{4, 0, 0}, []float64{0, 4, 0}, []float64{0, 0, 4}}, true)
+    big_sphere   := polynomialsurfaces.NewSphere([]float64{-5, 0, 3}, 3)
+    big_box      := complexes.NewParallelpipedByCornerAndEdges([]float64{-8, -3, 0},
+                      [][]float64{[]float64{6, 0, 0}, []float64{0, 6, 0}, []float64{0, 0, 6}}, true)
 
     background := color.ConstantColorFunction(color.PresetColor([]float64{0,0,0}))
     light := []float64{4, 4, 4}

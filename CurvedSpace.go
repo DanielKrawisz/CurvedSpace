@@ -7,22 +7,23 @@ package main
 // some ways that light rays can interact with a surface.
 
 // Short-term goals.
-// TODO: update the symmetric tensor contraction functions to use the symmetric permutation loop.
-// TODO: allow for a refractive index that varies over space and color.
-// TODO: create polyhedra.
-// TODO: polygon objects.
-// TODO: add a glow mode which randomly assigns some pastel color to each object so as to generate
+// TODO update the symmetric tensor contraction functions to use the symmetric permutation loop.
+// TODO allow for a refractive index that varies over space and color.
+// TODO create polyhedra.
+// TODO polygon objects.
+// TODO add a glow mode which randomly assigns some pastel color to each object so as to generate
 //      quick test images of a scene.
 // TODO  conformal transformations.
+// TODO functions which can be transformed.
 // TODO  arbitrary precision arithmetic.
 // TODO    Normed division algebras.
 // TODO      fractals.
 
 // Longer-term goals.
-// TODO enable multithreaded computation. Path-tracing can be paralellized!
 // TODO It is very easy to make images that are over- or under-exposed.
 // Allow the program to handle this gracefully.
-// TODO image is very grainy. Make less grainy.
+// TODO image is very grainy. Make less grainy by employing more uniform preset
+//		distributions of points.
 // TODO allow for solid objects that affect the light ray during its entire
 // course through it.
 // TODO other kinds of boundary conditions: elliptic and hyperbolic geometry!
